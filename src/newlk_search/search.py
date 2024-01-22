@@ -18,18 +18,20 @@ from astropy.utils import deprecated
 from memoization import cached
 from requests import HTTPError
 
+
 from . import PACKAGEDIR, conf, config
-from lightkurve.collections import LightCurveCollection, TargetPixelFileCollection
-from lightkurve.io import read
-from lightkurve.targetpixelfile import TargetPixelFile
-from lightkurve.utils import (
-    LightkurveDeprecationWarning,
-    LightkurveError,
-    LightkurveWarning,
-    suppress_stdout,
-)
+from lightkurve.collections import * #LightCurveCollection, TargetPixelFileCollection
+from lightkurve.io import * #read
+from lightkurve.targetpixelfile import * #TargetPixelFile
+from lightkurve.utils import * # (
+    #LightkurveDeprecationWarning,
+    #LightkurveError,
+    #LightkurveWarning,
+    #suppress_stdout,
+#)
 
 log = logging.getLogger(__name__)
+
 
 __all__ = [
     "search_targetpixelfile",
@@ -41,6 +43,8 @@ __all__ = [
 
 
 # Which external links should we display in the SearchResult repr?
+# Do we need need to maintain this?  Probably Yes.  Can we automate this for HLSPs in a MAST standard? 
+
 AUTHOR_LINKS = {
     "Kepler": "https://archive.stsci.edu/kepler/data_products.html",
     "K2": "https://archive.stsci.edu/k2/data_products.html",

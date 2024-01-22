@@ -19,12 +19,12 @@ from astropy.table import Table
 import lightkurve as lk
 
 from lightkurve.utils import LightkurveWarning, LightkurveError
-from lightkurve.search import (
+from src.newlk_search.search import (
     search_lightcurve,
     search_targetpixelfile,
     search_tesscut,
-    SearchResult,
     SearchError,
+    SearchResult,
     log,
 )
 from lightkurve import (
