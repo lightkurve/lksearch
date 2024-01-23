@@ -50,7 +50,7 @@ def remove_custom_config():
     lk.conf.reload()
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_search_targetpixelfile():
     # EPIC 210634047 was observed twice in long cadence
     assert len(search_targetpixelfile("EPIC 210634047", mission="K2").table) == 2
@@ -99,7 +99,7 @@ def test_search_targetpixelfile():
     assert len(search_targetpixelfile("pi Men")[-1]) == 1
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_search_split_campaigns():
     """Searches should should work for split campaigns.
 
@@ -114,7 +114,7 @@ def test_search_split_campaigns():
         assert len(search) == 2
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_search_lightcurve(caplog):
     # We should also be able to resolve it by its name instead of KIC ID
     # The name Kepler-10 somehow no longer works on MAST. So we use 2MASS instead:
@@ -161,7 +161,7 @@ def test_search_lightcurve(caplog):
     assert len(search_lightcurve("pi Mensae", author="SPOC", sector=1).table) == 1
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_search_tesscut():
     # Cutout by target name
     assert len(search_tesscut("pi Mensae", sector=1).table) == 1
@@ -180,7 +180,7 @@ def test_search_tesscut():
     assert len(search_edge.table) == 0
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_search_tesscut_download(caplog):
     """Can we download TESS cutouts via `search_cutout().download()?"""
     try:
@@ -228,7 +228,7 @@ def test_search_tesscut_download(caplog):
             raise exc
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_search_with_skycoord():
     """Can we pass both names, SkyCoord objects, and coordinate strings?"""
     sr_name = search_targetpixelfile("KIC 11904151", mission="Kepler", cadence="long")
@@ -263,7 +263,7 @@ def test_search_with_skycoord():
     )
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_searchresult():
     sr = search_lightcurve("KIC 11904151", mission="Kepler")
     assert len(sr) == len(sr.table)  # Tests SearchResult.__len__
@@ -273,7 +273,7 @@ def test_searchresult():
     assert "kplr" in sr._repr_html_()
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_month():
     # In short cadence, if we specify both quarter and month
     sr = search_targetpixelfile("KIC 11904151", quarter=11, month=1, cadence="short")
@@ -282,7 +282,7 @@ def test_month():
     assert len(sr) == 2
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_collections():
     # TargetPixelFileCollection class
     assert (
@@ -317,7 +317,7 @@ def test_collections():
         )
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_properties():
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
     assert_almost_equal(search_targetpixelfile(c, quarter=6).ra, 297.5835)
@@ -326,7 +326,7 @@ def test_properties():
     assert len(search_targetpixelfile(c, quarter=6).obsid) == 1
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_source_confusion():
     # Regression test for issue #148.
     # When obtaining the TPF for target 6507433, @benmontet noticed that
@@ -348,7 +348,7 @@ def test_empty_searchresult():
         sr.download_all()
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_issue_472():
     """Regression test for https://github.com/lightkurve/lightkurve/issues/472"""
     # The line below previously threw an exception because the target was not
@@ -361,7 +361,7 @@ def test_issue_472():
     assert isinstance(search, SearchResult)
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_corrupt_download_handling_case_empty():
     """When a corrupt file exists in the cache, make sure the user receives
     a helpful error message.
@@ -393,7 +393,7 @@ def test_corrupt_download_handling_case_empty():
         assert expected_fn in err.value.args[0]
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_mast_http_error_handling(monkeypatch):
     """Regression test for #1211; ensure downloads yields an error when MAST download result in an error."""
     from astroquery.mast import Observations
@@ -420,7 +420,7 @@ def test_mast_http_error_handling(monkeypatch):
         assert remote_url in str(excinfo.value)
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_indexerror_631():
     """Regression test for #631; avoid IndexError."""
     # This previously triggered an exception:
@@ -431,7 +431,7 @@ def test_indexerror_631():
 @pytest.mark.skip(
     reason="TODO: issue re-appeared on 2020-01-11; needs to be revisited."
 )
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_name_resolving_regression_764():
     """Due to a bug, MAST resolved "EPIC250105131" to a different position than
     "EPIC 250105131". This regression test helps us verify that the bug does
@@ -444,7 +444,7 @@ def test_name_resolving_regression_764():
     assert c1.separation(c2).to("arcsec").value < 0.1
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_overlapping_targets_718():
     """Regression test for #718."""
     # Searching for the following targets without radius should only return
@@ -467,14 +467,14 @@ def test_overlapping_targets_718():
     assert len(search) == 1
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_tesscut_795():
     """Regression test for #795: make sure the __repr__.of a TESSCut
     SearchResult works."""
     str(search_tesscut("KIC 8462852"))  # This raised a KeyError
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_download_flux_column():
     """Can we pass reader keyword arguments to the download method?"""
     lc = search_lightcurve("Pi Men", author="SPOC", sector=12).download(
@@ -483,7 +483,7 @@ def test_download_flux_column():
     assert_array_equal(lc.flux, lc.sap_flux)
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_exptime_filtering():
     """Can we pass "fast", "short", exposure time to the cadence argument?"""
     # Try `cadence="fast"`
@@ -517,7 +517,7 @@ def test_exptime_filtering():
     assert "fast" in res.table["productFilename"][0]
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_search_slicing_regression():
     # Regression test: slicing after calling __repr__ failed.
     res = search_lightcurve("AU Mic", exptime=20)
@@ -525,7 +525,7 @@ def test_search_slicing_regression():
     res[res.exptime.value < 100]
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_ffi_hlsp():
     """Can SPOC, QLP (FFI), and TESS-SPOC (FFI) light curves be accessed?"""
     search = search_lightcurve(
@@ -540,7 +540,7 @@ def test_ffi_hlsp():
     assert "SPOC" in search.table["author"]
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_qlp_ffi_lightcurve():
     """Can we search and download an MIT QLP FFI light curve?"""
     search = search_lightcurve("TrES-2b", sector=26, author="qlp")
@@ -551,7 +551,7 @@ def test_qlp_ffi_lightcurve():
     all(lc.flux == lc.kspsap_flux)
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_spoc_ffi_lightcurve():
     """Can we search and download a SPOC FFI light curve?"""
     search = search_lightcurve("TrES-2b", sector=26, author="tess-spoc")
@@ -562,7 +562,7 @@ def test_spoc_ffi_lightcurve():
     all(lc.flux == lc.pdcsap_flux)
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_split_k2_campaigns():
     """Do split K2 campaign sections appear separately in search results?"""
     # Campaign 9
@@ -579,7 +579,7 @@ def test_split_k2_campaigns():
     assert search_c11.table["mission"][1] == "K2 Campaign 11b"
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_customize_search_result_display():
     search = search_lightcurve("TIC390021728")
     # default display does not have proposal id
@@ -616,7 +616,7 @@ def test_customize_search_result_display():
     assert 'sequence_number' in search.__repr__()
 
 
-@pytest.mark.remote_data
+#@pytest.mark.remote_data
 def test_customize_search_result_display_case_nonexistent_column():
 
     # Ensure that if an extra column specified are not in search result

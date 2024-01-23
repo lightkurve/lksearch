@@ -8,6 +8,9 @@ import os
 import re
 import warnings
 
+from typing import Union
+import numpy.typing as npt
+
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -1097,25 +1100,25 @@ def _search_products(
             masked_result = None
         return SearchResult(masked_result)
 
-
 def _query_mast(
-    target,
-    radius=None,
-    project=("Kepler", "K2", "TESS"),
-    provenance_name=None,
-    exptime=(0, 9999),
-    sequence_number=None,
+    target: Union[str, SkyCoord],
+    radius: Union[float, u.Quantity, None] = None,
+    project: Union[str, List[str]] = ["Kepler", "K2", "TESS"],
+    provenance_name: Union[str, List[str], None] = None,
+    exptime: Union[int, float, tuple] = (0, 9999),
+    sequence_number: Union[int, List[int], None] = None,
     **extra_query_criteria,
-):
+
+) -> Table:
     """Helper function which wraps `astroquery.mast.Observations.query_criteria()`
-    to return a table of all Kepler/K2/TESS observations of a given target.
+    to return a table of all project [Kepler/K2/TESS] observations of a given target.
 
     By default only the official data products are returned, but this can be
     adjusted by adding alternative data product names into `provenance_name`.
 
     Parameters
     ----------
-    target : str, int, or `astropy.coordinates.SkyCoord` object
+    target : str, or `astropy.coordinates.SkyCoord` object
         See docstrings above.
     radius : float or `astropy.units.Quantity` object
         Conesearch radius.  If a float is given it will be assumed to be in
@@ -1127,13 +1130,15 @@ def _query_mast(
         Provenance of the observation.  Common options include 'Kepler', 'K2',
         'SPOC', 'K2SFF', 'EVEREST', 'KEPSEISMIC'.
         This parameter is case-insensitive.
-    exptime : (float, float) tuple
-        Exposure time range in seconds. Common values include `(59, 61)`
+    exptime : (float, float) tuple or float
+        if tuple, Exposure time range in seconds. Common values include `(59, 61)`
         for Kepler short cadence and `(1799, 1801)` for Kepler long cadence.
+        If float, search for exact exposure time
     sequence_number : int, list of int
-        Quarter, Campaign, or Sector number.
+        Quarter (Kepler) Campaign (K2), or Sector (TESS) number.
     **extra_query_criteria : kwargs
         Extra criteria to be passed to `astroquery.mast.Observations.query_criteria`.
+        See https://mast.stsci.edu/api/v0/_c_a_o_mfields.html
 
     Returns
     -------
