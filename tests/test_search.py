@@ -33,7 +33,21 @@ from lightkurve import (
     TargetPixelFileCollection,
 )
 
-from .test_conf import use_custom_config_file, remove_custom_config
+#Added the below from this file
+#from src.test_conf import use_custom_config_file, remove_custom_config
+
+def use_custom_config_file(cfg_filepath):
+    """Copy the config file in the given path (in tests) to the default lightkurve config file """
+    cfg_dest_path = Path(lk.config.get_config_dir(), 'lightkurve.cfg')
+    cfg_src_path = get_pkg_data_filename(cfg_filepath)
+    shutil.copy(cfg_src_path, cfg_dest_path)
+    lk.conf.reload()
+
+
+def remove_custom_config():
+    cfg_dest_path = Path(lk.config.get_config_dir(), 'lightkurve.cfg')
+    cfg_dest_path.unlink()
+    lk.conf.reload()
 
 
 @pytest.mark.remote_data

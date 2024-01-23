@@ -20,15 +20,15 @@ from requests import HTTPError
 
 
 from . import PACKAGEDIR, conf, config
-from lightkurve.collections import * #LightCurveCollection, TargetPixelFileCollection
-from lightkurve.io import * #read
-from lightkurve.targetpixelfile import * #TargetPixelFile
-from lightkurve.utils import * # (
-    #LightkurveDeprecationWarning,
-    #LightkurveError,
-    #LightkurveWarning,
-    #suppress_stdout,
-#)
+from lightkurve.collections import LightCurveCollection, TargetPixelFileCollection
+from lightkurve.io import read
+from lightkurve.targetpixelfile import TargetPixelFile
+from lightkurve.utils import  (
+    LightkurveDeprecationWarning,
+    LightkurveError,
+    LightkurveWarning,
+    suppress_stdout,
+)
 
 log = logging.getLogger(__name__)
 
