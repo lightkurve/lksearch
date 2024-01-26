@@ -20,6 +20,7 @@ from astropy.time import Time
 from astropy.utils import deprecated
 from memoization import cached
 from requests import HTTPError
+import pandas as pd
 
 
 from . import PACKAGEDIR, conf, config
@@ -123,8 +124,12 @@ class SearchResult(object):
 
     def __init__(self, table=None):
         if table is None:
-            self.table = Table()
+            self.table = pd.DataFrame()
+
         else:
+            if isinstace(table, Table):
+                log.warning("Search Result Now Expects a pandas dataframe but an astropy Table was given; converting astropy.table to pandas")
+                table = table.to_pandas()
             self.table = table
             if len(table) > 0:
                 self._add_columns()
@@ -142,25 +147,31 @@ class SearchResult(object):
         This ordering is not a judgement on the quality of one product vs another,
         because we love all pipelines!
         """
-        sort_priority = {"Kepler": 1, "K2": 1, "SPOC": 1, "KBONUS-BKG":2, "TESS-SPOC": 2, "QLP": 3}
+        sort_priority = {"Kepler": 1, 
+                         "K2": 1, 
+                         "SPOC": 1, 
+                         "TESS-SPOC": 2, 
+                         "QLP": 3}
         self.table["sort_order"] = [
             sort_priority.get(author, 9) for author in self.table["author"]
         ]
-        self.table.sort(["distance", "project", "sort_order", "year", "exptime"])
+        self.table.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"])
 
     def _add_columns(self):
         """Adds a user-friendly index (``#``) column and adds column unit
         and display format information.
         """
+        '''
+        Will eliminate this, depending on how we do units
         if "#" not in self.table.columns:
             self.table["#"] = None
         self.table["exptime"].unit = "s"
         self.table["exptime"].format = ".0f"
-        self.table["distance"].unit = "arcsec"
+        self.table["distance"].unit = "arcsec"'''
 
         # Add the year column from `t_min` or `productFilename`
-        year = np.floor(Time(self.table["t_min"], format="mjd").decimalyear)
-        self.table["year"] = year.astype(int)
+        self.table['year'] = self.table['start_time'].dt.year #Assumes 'start_time' is a pandas datetime object
+  
         # `t_min` is incorrect for Kepler products, so we extract year from the filename for those =(
         for idx in np.where(self.table["author"] == "Kepler")[0]:
             self.table["year"][idx] = re.findall(
@@ -215,11 +226,9 @@ class SearchResult(object):
         return self.__repr__(html=True)
 
     def __getitem__(self, key):
-        """Implements indexing and slicing, e.g. SearchResult[2:5]."""
-        selection = self.table[key]
-        # Indexing a Table with an integer will return a Row
-        if isinstance(selection, Row):
-            selection = Table(selection)
+        """Implements indexing and slicing."""
+        selection = self.table.loc[key]
+
         return SearchResult(table=selection)
 
     def __len__(self):
@@ -230,12 +239,11 @@ class SearchResult(object):
     def unique_targets(self):
         """Returns a table of targets and their RA & dec values produced by search"""
         mask = ["target_name", "s_ra", "s_dec"]
-        return Table.from_pandas(
+        return 
             self.table[mask]
-            .to_pandas()
             .drop_duplicates("target_name")
             .reset_index(drop=True)
-        )
+        
 
     @property
     def obsid(self):
@@ -245,45 +253,53 @@ class SearchResult(object):
     @property
     def ra(self):
         """Right Ascension coordinate for each data product found."""
-        return self.table["s_ra"].data.data
+        return self.table["s_ra"].values
 
     @property
     def dec(self):
         """Declination coordinate for each data product found."""
-        return self.table["s_dec"].data.data
+        return self.table["s_dec"].values
 
     @property
     def mission(self):
         """Kepler quarter or TESS sector names for each data product found."""
-        return self.table["mission"].data
+        return self.table["mission"].values
 
     @property
     def year(self):
         """Year the observation was made."""
-        return self.table["year"].data
+        return self.table["year"].values
 
     @property
     def author(self):
         """Pipeline name for each data product found."""
-        return self.table["author"].data
+        return self.table["author"].values
 
     @property
     def target_name(self):
         """Target name for each data product found."""
-        return self.table["target_name"].data
+        return self.table["target_name"].values
 
     @property
     def exptime(self):
         """Exposure time for each data product found."""
-        return self.table["exptime"].quantity
+        # TODO: return with quantities
+        return self.table["exptime"].values 
 
     @property
     def distance(self):
         """Distance from the search position for each data product found."""
-        return self.table["distance"].quantity
+        # TODO: return with quantities
+        return self.table["distance"].values
 
+    # @magiccachedecorator
     def _download_one(
-        self, table, quality_bitmask, download_dir, cutout_size, **kwargs
+        self, 
+        table,
+        quality_bitmask, 
+        download_dir, 
+        cutout_size, 
+        **kwargs
     ):
         """Private method used by `download()` and `download_all()` to download
         exactly one file from the MAST archive.
@@ -304,8 +320,8 @@ class SearchResult(object):
                     "".format(table[0]["target_name"], table[0]["sequence_number"])
                 )
                 path = self._fetch_tesscut_path(
-                    table[0]["target_name"],
-                    table[0]["sequence_number"],
+                    table.loc[0]["target_name"],
+                    table.loc[0]["sequence_number"],
                     download_dir,
                     cutout_size,
                 )
@@ -327,7 +343,7 @@ class SearchResult(object):
                     )
 
             return read(
-                path, quality_bitmask=quality_bitmask, targetid=table[0]["targetid"]
+                path, quality_bitmask=quality_bitmask, targetid=table.loc[0]["targetid"]
             )
 
         else:
@@ -373,7 +389,11 @@ class SearchResult(object):
 
     @suppress_stdout
     def download(
-        self, quality_bitmask="default", download_dir=None, cutout_size=None, **kwargs
+        self, 
+        quality_bitmask: Union[str, int]="default", 
+        download_dir: str =  None, 
+        cutout_size: Union[int, tuple(int)]=None, 
+        **kwargs
     ):
         """Download and open the first data product in the search result.
 
@@ -598,114 +618,43 @@ class SearchResult(object):
         return path
 
 
+@deprecated(
+    "2.0", alternative="search_cubedata()", warning_type=LightkurveDeprecationWarning
+)
+def search_targetpixelfile(*args, **kwargs):
+    product="Target Pixel"
+    return search_cubedata(*args,product=product, **kwargs)
+
+@deprecated(
+    "2.0", alternative="search_cubedata()", warning_type=LightkurveDeprecationWarning
+)
+def search_tesscut(*args, **kwargs):
+    product="ffi"
+    mission="TESS"
+    return search_cubedata(*args,product=product,mission=mission, **kwargs)
+
+
 @cached
-def search_targetpixelfile(
-    target,
-    radius=None,
-    exptime=None,
-    cadence=None,
-    mission=("Kepler", "K2", "TESS"),
-    author=None,
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+def search_cubedata(
+    target:  Union[str, int, SkyCoord],
+    radius:  Union[float, u.Quantity] = None,
+    exptime:  Union[str, int, tuple] = None,
+    cadence: Union[str, int, tuple] = None,
+    mission: Union[str, tuple] = ("Kepler", "K2", "TESS"),
+    product: Union[str, tuple[str]] = ("Target Pixel","ffi"),
+    author:  Union[str, tuple] = None,
+    quarter:  Union[int, list[int]] = None,
+    month:    Union[int, list[int]] = None,
+    campaign: Union[int, list[int]] = None,
+    sector:   Union[int, list[int]] = None,
+    limit:    int = None,
 ):
-    """Search the `MAST data archive <https://archive.stsci.edu>`_ for target pixel files.
-
-    This function fetches a data table that lists the Target Pixel Files (TPFs)
-    that fall within a region of sky centered around the position of `target`
-    and within a cone of a given `radius`. If no value is provided for `radius`,
-    only a single target will be returned.
-
-    Parameters
-    ----------
-    target : str, int, or `astropy.coordinates.SkyCoord` object
-        Target around which to search. Valid inputs include:
-
-            * The name of the object as a string, e.g. "Kepler-10".
-            * The KIC or EPIC identifier as an integer, e.g. 11904151.
-            * A coordinate string in decimal format, e.g. "285.67942179 +50.24130576".
-            * A coordinate string in sexagesimal format, e.g. "19:02:43.1 +50:14:28.7".
-            * An `astropy.coordinates.SkyCoord` object.
-    radius : float or `astropy.units.Quantity` object
-        Conesearch radius.  If a float is given it will be assumed to be in
-        units of arcseconds.  If `None` then we default to 0.0001 arcsec.
-    exptime : 'long', 'short', 'fast', or float
-        'long' selects 10-min and 30-min cadence products;
-        'short' selects 1-min and 2-min products;
-        'fast' selects 20-sec products.
-        Alternatively, you can pass the exact exposure time in seconds as
-        an int or a float, e.g., ``exptime=600`` selects 10-minute cadence.
-        By default, all cadence modes are returned.
-    cadence : 'long', 'short', 'fast', or float
-        Synonym for `exptime`. Will likely be deprecated in the future.
-    mission : str, tuple of str
-        'Kepler', 'K2', or 'TESS'. By default, all will be returned.
-    author : str, tuple of str, or "any"
-        Author of the data product (`provenance_name` in the MAST API).
-        Official Kepler, K2, and TESS pipeline products have author names
-        'Kepler', 'K2', and 'SPOC'.
-        By default, all light curves are returned regardless of the author.
-    quarter, campaign, sector : int, list of ints
-        Kepler Quarter, K2 Campaign, or TESS Sector number.
-        By default all quarters/campaigns/sectors will be returned.
-    month : 1, 2, 3, 4 or list of int
-        For Kepler's prime mission, there are three short-cadence
-        TargetPixelFiles for each quarter, each covering one month.
-        Hence, if ``exptime='short'`` you can specify month=1, 2, 3, or 4.
-        By default all months will be returned.
-    limit : int
-        Maximum number of products to return.
-
-    Returns
-    -------
-    result : :class:`SearchResult` object
-        Object detailing the data products found.
-
-    Examples
-    --------
-    This example demonstrates how to use the `search_targetpixelfile()` function
-    to query and download data. Before instantiating a
-    `~lightkurve.targetpixelfile.KeplerTargetPixelFile` object or
-    downloading any science products, we can identify potential desired targets
-    with `search_targetpixelfile()`::
-
-        >>> search_result = search_targetpixelfile('Kepler-10')  # doctest: +SKIP
-        >>> print(search_result)  # doctest: +SKIP
-
-    The above code will query mast for Target Pixel Files (TPFs) available for
-    the known planet system Kepler-10, and display a table containing the
-    available science products. Because Kepler-10 was observed during 15 Quarters,
-    the table will have 15 entries. To obtain a
-    `~lightkurve.collections.TargetPixelFileCollection` object containing all
-    15 observations, use::
-
-        >>> search_result.download_all()  # doctest: +SKIP
-
-    or we can download a single product by limiting our search::
-
-        >>> tpf = search_targetpixelfile('Kepler-10', quarter=2).download()  # doctest: +SKIP
-
-    The above line of code will only download Quarter 2 and create a single
-    `~lightkurve.targetpixelfile.KeplerTargetPixelFile` object called `tpf`.
-
-    We can also pass a radius into `search_targetpixelfile` to perform a cone search::
-
-        >>> search_targetpixelfile('Kepler-10', radius=100).targets  # doctest: +SKIP
-
-    This will display a table containing all targets within 100 arcseconds of Kepler-10.
-    We can download a `~lightkurve.collections.TargetPixelFileCollection` object
-    containing all available products for these targets in Quarter 4 with::
-
-        >>> search_targetpixelfile('Kepler-10', radius=100, quarter=4).download_all()  # doctest: +SKIP
-    """
+    
     try:
         return _search_products(
             target,
             radius=radius,
-            filetype="Target Pixel",
+            filetype=product,
             exptime=exptime or cadence,
             mission=mission,
             provenance_name=author,
@@ -719,27 +668,31 @@ def search_targetpixelfile(
         log.error(exc)
         return SearchResult(None)
 
-
 @deprecated(
-    "2.0", alternative="search_lightcurve()", warning_type=LightkurveDeprecationWarning
+    "2.0", alternative="search_timeseries()", warning_type=LightkurveDeprecationWarning
 )
 def search_lightcurvefile(*args, **kwargs):
     return search_lightcurve(*args, **kwargs)
 
+@deprecated(
+    "2.0", alternative="search_timeseries()", warning_type=LightkurveDeprecationWarning
+)
+def search_lightcurve(*args, **kwargs):
+    return search_timeseries(*args, **kwargs)
 
 @cached
-def search_lightcurve(
-    target,
-    radius=None,
-    exptime=None,
-    cadence=None,
-    mission=("Kepler", "K2", "TESS"),
-    author=None,
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+def search_timeseries(
+    target:  Union[str, int, SkyCoord],
+    radius:  Union[float, u.Quantity] = None,
+    exptime:  Union[str, int, tuple] = None,
+    cadence: Union[str, int, tuple] = None,
+    mission: Union[str, tuple] = ("Kepler", "K2", "TESS"),
+    author:  Union[str, tuple] = None,
+    quarter:  Union[int, list[int]] = None,
+    month:    Union[int, list[int]] = None,
+    campaign: Union[int, list[int]] = None,
+    sector:   Union[int, list[int]] = None,
+    limit:    int = None,
 ):
     """Search the `MAST data archive <https://archive.stsci.edu>`_ for light curves.
 
@@ -859,54 +812,18 @@ def search_lightcurve(
         return SearchResult(None)
 
 
-@cached
-def search_tesscut(target, sector=None):
-    """Search the `MAST TESSCut service <https://mast.stsci.edu/tesscut/>`_ for a region
-    of sky that is available as a TESS Full Frame Image cutout.
-
-    This feature uses the `TESScut service <https://mast.stsci.edu/tesscut/>`_
-    provided by the TESS data archive at MAST.  If you use this service in
-    your work, please `cite TESScut <https://ascl.net/code/v/2239>`_ in your
-    publications.
-
-    Parameters
-    ----------
-    target : str, int, or `astropy.coordinates.SkyCoord` object
-        Target around which to search. Valid inputs include:
-
-            * The name of the object as a string, e.g. "Kepler-10".
-            * The KIC or EPIC identifier as an integer, e.g. 11904151.
-            * A coordinate string in decimal format, e.g. "285.67942179 +50.24130576".
-            * A coordinate string in sexagesimal format, e.g. "19:02:43.1 +50:14:28.7".
-            * An `astropy.coordinates.SkyCoord` object.
-    sector : int or list
-        TESS Sector number. Default (None) will return all available sectors. A
-        list of desired sectors can also be provided.
-
-    Returns
-    -------
-    result : :class:`SearchResult` object
-        Object detailing the data products found.
-    """
-    try:
-        return _search_products(target, filetype="ffi", mission="TESS", sector=sector)
-    except SearchError as exc:
-        log.error(exc)
-        return SearchResult(None)
-
-
 def _search_products(
-    target,
-    radius=None,
-    filetype="Lightcurve",
-    mission=("Kepler", "K2", "TESS"),
-    provenance_name=None,
-    exptime=(0, 9999),
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+    target : Union[str, int, SkyCoord],
+    radius : Union[float, u.Quantity] = None,
+    filetype : Union[str, list[str]] = "Lightcurve",
+    mission : Union[str, list[str]] = ("Kepler", "K2", "TESS"),
+    provenance_name : Union[str, list[str]] = None,
+    exptime : Union[float, tuple[float]]=(0, 9999),
+    quarter : Union[int, list[int]] = None,
+    month : Union[int, list[int]] = None,
+    campaign : Union[int, list[int]] = None,
+    sector : Union[int, list[int]] = None,
+    limit : int = None,
     **extra_query_criteria,
 ):
     """Helper function which returns a SearchResult object containing MAST
@@ -964,12 +881,23 @@ def _search_products(
             )
 
     # Specifying quarter, campaign, or quarter should constrain the mission
+    # Can we specify multiple?   If so, warn but search for all specified products
+    mission=set(mission)
+    mission_constraint = 0
     if quarter is not None:
-        mission = "Kepler"
+        mission.add("Kepler")
+        mission_constraint += 1
     if campaign is not None:
-        mission = "K2"
+        mission.add("K2")
+        mission_constraint += 1
     if sector is not None:
-        mission = "TESS"
+        mission.add("TESS")
+        mission_constraint += 1
+
+    if (mission_constraint > 1):
+        log.warning("Ambiguity warning; multiple quarter/campaign/sector specified."
+                    "Searching for {mission} products")
+    
     # Ensure mission is a list
     mission = np.atleast_1d(mission).tolist()
 
@@ -999,15 +927,14 @@ def _search_products(
         **extra_query_criteria,
     )
     log.debug(
-        "MAST found {} observations. "
+        f"MAST found {len(observations)} observations. "
         "Now querying MAST for the corresponding data products."
-        "".format(len(observations))
     )
     if len(observations) == 0:
         raise SearchError('No data found for target "{}".'.format(target))
 
     # Light curves and target pixel files
-    if filetype.lower() != "ffi":
+    if "ffi" is in filetype.lower():
         from astroquery.mast import Observations
 
         products = Observations.get_product_list(observations)
@@ -1019,7 +946,7 @@ def _search_products(
             uniq_col_name="{col_name}{table_name}",
             table_names=["", "_products"],
         )
-        result.sort(["distance", "obs_id"])
+        result.sort(["distance", "obs_id"]).to_pandas()
 
         # Add the user-friendly 'author' column (synonym for 'provenance_name')
         result["author"] = result["provenance_name"]
@@ -1060,7 +987,7 @@ def _search_products(
             sector=sector,
             limit=limit,
         )
-        log.debug("MAST found {} matching data products.".format(len(masked_result)))
+        log.debug(f"MAST found {len(masked_result)} matching data products.")
         masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
         return SearchResult(masked_result)
 
