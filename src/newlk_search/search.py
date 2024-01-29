@@ -1273,42 +1273,32 @@ def _mask_kepler_products(products, quarter=None, month=None):
         is_shortcadence = mask & products['description'].str.contains("Short")
 
         for idx in np.where(is_shortcadence)[0]:
-            quarter = int(
-                products["description"][idx].split(" - ")[-1][1:].replace("-", "")
-            )
-            date = products["dataURI"][idx].split("/")[-1].split("-")[1].split("_")[0]
-            permitted_dates = []
-            for m in month:
-                try:
-                    permitted_dates.append(
-                        table["StartTime"][
-                            np.where(
-                                (table["Month"] == m) & (table["Quarter"] == quarter)
-                            )[0][0]
-                        ]
-                    )
-                except IndexError:
-                    pass
-            if not (date in permitted_dates):
+            quarter = np.atleast_1d(int(products["description"][idx].split(" - ")[-1].replace("-", "")[1:]))
+            date = products['dataURI'][idx].split("/")[-1].split("-")[1].split("_")[0]
+            # Check if the observation date matches the specified Quarter/month from the lookup table
+            if date not in table["StartTime"][table['Month'].isin(month) & table['Quarter'].isin(quarter)].values:
                 mask[idx] = False
 
     return mask
 
 
 def _mask_by_exptime(products, exptime):
-    """Helper function to filter by exposure time."""
+    """Helper function to filter by exposure time.
+       Returns a boolean array """
     mask = np.ones(len(products), dtype=bool)
     if isinstance(exptime, (int, float)):
         mask &= products["exptime"] == exptime
+    elif isinstance(exptime, tuple):
+        mask &= (products["exptime"] >= min(exptime) & (products["exptime"] <= max(exptime)))
     elif isinstance(exptime, str):
         exptime = exptime.lower()
         if exptime in ["fast"]:
-            mask &= products["exptime"] < 60
+            mask &= products["exptime"] <= 60
         elif exptime in ["short"]:
-            mask &= (products["exptime"] >= 60) & (products["exptime"] < 300)
+            mask &= (products["exptime"] > 60) & (products["exptime"] <= 120)
         elif exptime in ["long", "ffi"]:
-            mask &= products["exptime"] >= 300
-    return mask
+            mask &= products["exptime"] > 120
+    return mask.values
 
 
 def _resolve_object(target):
