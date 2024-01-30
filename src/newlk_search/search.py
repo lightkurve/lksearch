@@ -152,9 +152,7 @@ class SearchResult(object):
                          "SPOC": 1, 
                          "TESS-SPOC": 2, 
                          "QLP": 3}
-        self.table["sort_order"] = [
-            sort_priority.get(author, 9) for author in self.table["author"]
-        ]
+        self.table["sort_order"] = self.table['author'].map(sort_priority).fillna(9)
         self.table.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"])
 
     def _add_columns(self):
