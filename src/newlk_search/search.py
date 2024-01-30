@@ -934,38 +934,44 @@ def _search_products(
             uniq_col_name="{col_name}{table_name}",
             table_names=["", "_products"],
         )
+        return joint_table
+
         joint_table = joint_table.to_pandas()
 
         # Add the user-friendly 'author' column (synonym for 'provenance_name')
         joint_table["author"] = joint_table["provenance_name"]
-        return joint_table
         # Add the user-friendly 'mission' column
-        joint_table["mission"] = None
+        joint_table["smission"] = None
         obs_prefix = {"Kepler": "Quarter", "K2": "Campaign", "TESS": "Sector"}
-        for idx in range(len(joint_table)):
-            obs_project = joint_table.iloc[idx]["project"]
-            tmp_seqno = joint_table.iloc[idx]["sequence_number"]
-            if(tmp_seqno is not "N/A"): 
-                obs_seqno = f"{tmp_seqno:02d}"
-        
-            # Kepler sequence_number values were not populated at the time of
-            # writing this code, so we parse them from the description field.
-            if obs_project == "Kepler" and joint_table.iloc[idx]["sequence_number"]:
-                try:
-                    tmp_seqno = re.findall(r".*Q(\d+)", joint_table["description"][idx])[0]
-                    obs_seqno = f"{int(tmp_seqno):02d}"
-                except IndexError:
-                    obs_seqno = ""
-            # K2 campaigns 9, 10, and 11 were split into two sections, which are
-            # listed separately in the table with suffixes "a" and "b"
-            if obs_project == "K2" and joint_table["sequence_number"][idx] in [9, 10, 11]:
-                for half, letter in zip([1, 2], ["a", "b"]):
-                    if f"c{tmp_seqno}{half}" in joint_table["productFilename"][idx]:
-                        obs_seqno = f"{int(tmp_seqno):02d}{letter}"
-            joint_table.iloc[idx]["mission"] = "{} {} {}".format(
-                obs_project, obs_prefix.get(obs_project, ""), obs_seqno
-            )
 
+        #Carry over all sequence numbers where they exist
+        seq_num = joint_table["sequence_number"].values.astype(str)
+
+        mask = joint_table["sequence_number"].notna()
+        seq_num[mask] = [f"{item[0]:02d}" if item else "" for item in joint_table.loc[mask,["sequence_number"]].values]
+
+        # Kepler sequence_number values were not populated at the time of
+        # writing this code, so we parse them from the description field.
+        mask = ((joint_table["project"] == "Kepler") &
+                joint_table["sequence_number"].isna())
+        re_expr = r".*Q(\d+)"
+        seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in joint_table.loc[mask,["description"]].values]
+
+        # K2 campaigns 9, 10, and 11 were split into two sections, which are
+        # listed separately in the table with suffixes "a" and "b"        
+        mask = ((joint_table["project"] == "K2") & 
+                (joint_table["sequence_number"].values in [9, 10, 11]))
+        for item in joint_table.loc[mask,:]:
+            for half, letter in zip([1,2],["a","b"]):
+                if f"c{item['sequence_number']}{half}" in joint_table["productFilename"][idx]:
+                    seq_num[item.index.values] = f"{int(item['sequence_number']):02d}{letter}"
+
+        joint_table["mission"] = [f" {proj} {pref} {seq}" 
+                                  for proj, pref, seq in zip(
+                                      joint_table['project'], 
+                                      obs_prefix.get(joint_table['project'], ''),
+                                      seq_num)]
+        
         masked_result = _filter_products(
             joint_table,
             filetype=filetype,
