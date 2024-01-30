@@ -1049,7 +1049,7 @@ def _query_mast(
         Conesearch radius.  If a float is given it will be assumed to be in
         units of arcseconds.  If `None` then we default to 0.0001 arcsec.
     project : str, list of str
-        Mission name.  Typically 'Kepler', 'K2', or 'TESS'.
+        Mission name.  Typically 'Kepler', 'K2', and/or 'TESS'.
         This parameter is case-insensitive.
     provenance_name : str, list of str
         Provenance of the observation.  Common options include 'Kepler', 'K2',
@@ -1076,7 +1076,11 @@ def _query_mast(
 
     # If passed a SkyCoord, convert it to an "ra, dec" string for MAST
     if isinstance(target, SkyCoord):
-        target = "{}, {}".format(target.ra.deg, target.dec.deg)
+        target = f"{target.ra.deg}, {target.dec.deg}"
+    
+    # exptime must be a range, so if int change a tuple 
+    if isinstance(exptime, int):
+        exptime = (exptime, exptime)
 
     # We pass the following `query_criteria` to MAST regardless of whether
     # we search by position or target name:
@@ -1088,8 +1092,10 @@ def _query_mast(
     if exptime is not None:
         query_criteria["t_exptime"] = exptime
 
-    # If an exact KIC ID is passed, we will search by the exact `target_name`
-    # under which MAST will know the object to prevent source confusion.
+
+    # If an exact Mission ID (KIC, TIC, EPIC) is passed, we can search 
+    #by the exact `target_name' under which MAST will know the object 
+    # to prevent source confusion.
     # For discussion, see e.g. GitHub issues #148, #718.
     exact_target_name = None
     target_lower = str(target).lower()
@@ -1118,7 +1124,7 @@ def _query_mast(
                 target_name=exact_target_name, **query_criteria
             )
         if len(obs) > 0:
-            # We use `exptime` as an alias for `t_exptime`
+            # We use `exptime` as a convenient alias for `t_exptime`
             obs["exptime"] = obs["t_exptime"]
             # astroquery does not report distance when querying by `target_name`;
             # we add it here so that the table returned always has this column.
@@ -1127,7 +1133,7 @@ def _query_mast(
         else:
             log.debug(f"No observations found. Now performing a cone search instead.")
 
-    # If the above did not return a result, then do a cone search using the MAST name resolver
+    # Only if the above did not return a result, do a cone search using the MAST name resolver
     # `radius` defaults to 0.0001 and unit arcsecond
     if radius is None:
         radius = 0.0001 * u.arcsec
@@ -1145,7 +1151,7 @@ def _query_mast(
             warnings.filterwarnings("ignore", message="t_exptime is continuous")
             obs = Observations.query_criteria(objectname=target, **query_criteria)
         obs.sort("distance")
-        # We use `exptime` as an alias for `t_exptime`
+        # We use `exptime` as a convenient alias for `t_exptime`
         obs["exptime"] = obs["t_exptime"]
         return obs
     except ResolverError as exc:
