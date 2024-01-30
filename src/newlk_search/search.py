@@ -178,49 +178,26 @@ class SearchResult(object):
                 r"\d+.(\d{4})\d+", self.table["productFilename"][idx]
             )[0]
 
-    def __repr__(self, html=False):
-        def to_tess_gi_url(proposal_id):
-            if re.match("^G0[12].+", proposal_id) is not None:
-                return f"https://heasarc.gsfc.nasa.gov/docs/tess/approved-programs-primary.html#:~:text={proposal_id}"
-            elif re.match("^G0[34].+", proposal_id) is not None:
-                return f"https://heasarc.gsfc.nasa.gov/docs/tess/approved-programs-em1.html#:~:text={proposal_id}"
-            else:
-                return f"https://heasarc.gsfc.nasa.gov/docs/tess/approved-programs.html#:~:text={proposal_id}"
-
-        out = "SearchResult containing {} data products.".format(len(self.table))
+    def __repr__(self, html=True):
+        print(f"SearchResult containing {len(self.table)} data products.")
         if len(self.table) == 0:
             return out
         columns = REPR_COLUMNS_BASE
         if self.display_extra_columns is not None:
             columns = REPR_COLUMNS_BASE + self.display_extra_columns
+        
+        # NO LONGER A TESSCUT SO THIS WILL LIKELY NOT BE NEEDED
         # search_tesscut() has fewer columns, ensure we don't try to display columns that do not exist
-        columns = [c for c in columns if c in self.table.colnames]
+        # columns = [c for c in columns if c in self.table.colnames]
 
-        self.table["#"] = [idx for idx in range(len(self.table))]
-        out += "\n\n" + "\n".join(self.table[columns].pformat(max_width=300, html=html))
+        out = df[columns]
         # Make sure author names show up as clickable links
         if html:
-            for author, url in AUTHOR_LINKS.items():
-                out = out.replace(f">{author}<", f"><a href='{url}'>{author}</a><")
-            # special HTML formating for TESS proposal_id
-            tess_table = self.table[self.table["project"] == "TESS"]
-            if "proposal_id" in tess_table.colnames:
-                proposal_id_col = np.unique(tess_table["proposal_id"])
-            else:
-                proposal_id_col = []
-            for p_ids in proposal_id_col:
-                # for CDIPS products, proposal_id is a np MaskedConstant, not a string
-                if p_ids == "N/A" or (not isinstance(p_ids, str)):
-                    continue
-                # e.g., handle cases with multiple proposals, e.g.,  G12345_G67890
-                p_id_links = [
-                    f"""\
-<a href='{to_tess_gi_url(p_id)}'>{p_id}</a>\
-"""
-                    for p_id in p_ids.split("_")
-                ]
-                out = out.replace(f">{p_ids}<", f">{' , '.join(p_id_links)}<")
+            out = out.assign(author=out['author'].apply(lambda x: f'<a href="{AUTHOR_LINKS[x]}">{x}</a>'))
+            out = HTML(out.to_html(escape=False, max_rows=10))
+
         return out
+
 
     def _repr_html_(self):
         return self.__repr__(html=True)
@@ -1055,7 +1032,7 @@ def _query_mast(
         Conesearch radius.  If a float is given it will be assumed to be in
         units of arcseconds.  If `None` then we default to 0.0001 arcsec.
     project : str, list of str
-        Mission name.  Typically 'Kepler', 'K2', or 'TESS'.
+        Mission name.  Typically 'Kepler', 'K2', and/or 'TESS'.
         This parameter is case-insensitive.
     provenance_name : str, list of str
         Provenance of the observation.  Common options include 'Kepler', 'K2',
@@ -1082,7 +1059,11 @@ def _query_mast(
 
     # If passed a SkyCoord, convert it to an "ra, dec" string for MAST
     if isinstance(target, SkyCoord):
-        target = "{}, {}".format(target.ra.deg, target.dec.deg)
+        target = f"{target.ra.deg}, {target.dec.deg}"
+    
+    # exptime must be a range, so if int change a tuple 
+    if isinstance(exptime, int):
+        exptime = (exptime, exptime)
 
     # We pass the following `query_criteria` to MAST regardless of whether
     # we search by position or target name:
@@ -1094,8 +1075,10 @@ def _query_mast(
     if exptime is not None:
         query_criteria["t_exptime"] = exptime
 
-    # If an exact KIC ID is passed, we will search by the exact `target_name`
-    # under which MAST will know the object to prevent source confusion.
+
+    # If an exact Mission ID (KIC, TIC, EPIC) is passed, we can search 
+    #by the exact `target_name' under which MAST will know the object 
+    # to prevent source confusion.
     # For discussion, see e.g. GitHub issues #148, #718.
     exact_target_name = None
     target_lower = str(target).lower()
@@ -1124,7 +1107,7 @@ def _query_mast(
                 target_name=exact_target_name, **query_criteria
             )
         if len(obs) > 0:
-            # We use `exptime` as an alias for `t_exptime`
+            # We use `exptime` as a convenient alias for `t_exptime`
             obs["exptime"] = obs["t_exptime"]
             # astroquery does not report distance when querying by `target_name`;
             # we add it here so that the table returned always has this column.
@@ -1133,7 +1116,7 @@ def _query_mast(
         else:
             log.debug(f"No observations found. Now performing a cone search instead.")
 
-    # If the above did not return a result, then do a cone search using the MAST name resolver
+    # Only if the above did not return a result, do a cone search using the MAST name resolver
     # `radius` defaults to 0.0001 and unit arcsecond
     if radius is None:
         radius = 0.0001 * u.arcsec
@@ -1151,7 +1134,7 @@ def _query_mast(
             warnings.filterwarnings("ignore", message="t_exptime is continuous")
             obs = Observations.query_criteria(objectname=target, **query_criteria)
         obs.sort("distance")
-        # We use `exptime` as an alias for `t_exptime`
+        # We use `exptime` as a convenient alias for `t_exptime`
         obs["exptime"] = obs["t_exptime"]
         return obs
     except ResolverError as exc:
