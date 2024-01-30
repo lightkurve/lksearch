@@ -388,7 +388,7 @@ class SearchResult(object):
         self, 
         quality_bitmask: Union[str, int]="default", 
         download_dir: str =  None, 
-        cutout_size: Union[int, tuple(int)]=None, 
+        cutout_size: Union[int, tuple[int]]=None, 
         **kwargs
     ):
         """Download and open the first data product in the search result.
@@ -868,9 +868,9 @@ def _search_products(
     # Specifying quarter, campaign, or quarter should constrain the mission
     # Can we specify multiple?   No, throw an error if so
 
-    if sum((bool(quarter), 
-             bool(campaign),
-             bool(sector)) > 1):
+    if [bool(quarter), 
+        bool(campaign),
+        bool(sector)].count(True) > 1:
        raise LightkurveError("Ambiguity Error; multiple quarter/campaign/sector specified accross different missions."
                     "If searching for specific data across different missions, perform separate searches")
 
@@ -895,14 +895,10 @@ def _search_products(
 
     # Speed up by restricting the MAST query if we don't want FFI image data
     extra_query_criteria = {}
-    if 'ffi' not in filetype.lower():
+    if not any(['ffi' in ftype.lower() for ftype in filetype]):
         # At MAST, non-FFI Kepler pipeline products are known as "cube" products,
         # and non-FFI TESS pipeline products are listed as "timeseries".
         extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
-    # Make sure `search_tesscut` always performs a cone search (i.e. always
-    # passed a radius value), because strict target name search does not apply.
-    if "ffi" in filetype.lower() and radius is None:
-        radius = 0.0001 * u.arcsec
 
     # Query Mast to get a list of observations
     observations = _query_mast(
@@ -926,11 +922,11 @@ def _search_products(
     ffi_result = pd.DataFrame()
 
     # Light curves and target pixel files have similar query structure
-    if  set(["Lightcurve", "Target Pixel"]) & set(filetype):
+    if  set(["Lightcurve", "Target Pixel"]) & set(np.atleast_1d(filetype)):
         from astroquery.mast import Observations
 
         products = Observations.get_product_list(observations)
-        result = join(
+        joint_table = join(
             observations,
             products,
             keys="obs_id",
@@ -938,37 +934,40 @@ def _search_products(
             uniq_col_name="{col_name}{table_name}",
             table_names=["", "_products"],
         )
-        result.sort(["distance", "obs_id"]).to_pandas()
+        joint_table = joint_table.to_pandas()
 
         # Add the user-friendly 'author' column (synonym for 'provenance_name')
-        result["author"] = result["provenance_name"]
+        joint_table["author"] = joint_table["provenance_name"]
+        return joint_table
         # Add the user-friendly 'mission' column
-        result["mission"] = None
+        joint_table["mission"] = None
         obs_prefix = {"Kepler": "Quarter", "K2": "Campaign", "TESS": "Sector"}
-        for idx in range(len(result)):
-            obs_project = result["project"][idx]
-            tmp_seqno = result["sequence_number"][idx]
-            obs_seqno = f"{tmp_seqno:02d}" if tmp_seqno else ""
+        for idx in range(len(joint_table)):
+            obs_project = joint_table.iloc[idx]["project"]
+            tmp_seqno = joint_table.iloc[idx]["sequence_number"]
+            if(tmp_seqno is not "N/A"): 
+                obs_seqno = f"{tmp_seqno:02d}"
+        
             # Kepler sequence_number values were not populated at the time of
             # writing this code, so we parse them from the description field.
-            if obs_project == "Kepler" and result["sequence_number"].mask[idx]:
+            if obs_project == "Kepler" and joint_table.iloc[idx]["sequence_number"]:
                 try:
-                    tmp_seqno = re.findall(r".*Q(\d+)", result["description"][idx])[0]
+                    tmp_seqno = re.findall(r".*Q(\d+)", joint_table["description"][idx])[0]
                     obs_seqno = f"{int(tmp_seqno):02d}"
                 except IndexError:
                     obs_seqno = ""
             # K2 campaigns 9, 10, and 11 were split into two sections, which are
             # listed separately in the table with suffixes "a" and "b"
-            if obs_project == "K2" and result["sequence_number"][idx] in [9, 10, 11]:
+            if obs_project == "K2" and joint_table["sequence_number"][idx] in [9, 10, 11]:
                 for half, letter in zip([1, 2], ["a", "b"]):
-                    if f"c{tmp_seqno}{half}" in result["productFilename"][idx]:
+                    if f"c{tmp_seqno}{half}" in joint_table["productFilename"][idx]:
                         obs_seqno = f"{int(tmp_seqno):02d}{letter}"
-            result["mission"][idx] = "{} {} {}".format(
+            joint_table.iloc[idx]["mission"] = "{} {} {}".format(
                 obs_project, obs_prefix.get(obs_project, ""), obs_seqno
             )
 
         masked_result = _filter_products(
-            result,
+            joint_table,
             filetype=filetype,
             campaign=campaign,
             quarter=quarter,
@@ -983,7 +982,12 @@ def _search_products(
         masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
 
     # Full Frame Images - build this from the querry table
-    if "ffi" in filetype.lower() :
+    if any(['ffi' in ftype.lower() for ftype in filetype]):
+    # Make sure `search_tesscut` always performs a cone search (i.e. always
+    # passed a radius value), because strict target name search does not apply.
+        if radius is None:
+            radius = 0.0001 * u.arcsec
+
         cutouts = []
         for idx in np.where(["TESS FFI" in t for t in observations["target_name"]])[0]:
             # if target passed in is a SkyCoord object, convert to RA, dec pair
@@ -1014,7 +1018,7 @@ def _search_products(
             log.debug("Found {} matching cutouts.".format(len(cutouts)))
             ffi_result = Table(cutouts)
             ffi_result = ffi_result.to_pandas()
-    
+
     query_result = pd.concat([masked_result,
                               ffi_result]).sort_values(["distance", 
                                                         "obsid", 
@@ -1024,10 +1028,10 @@ def _search_products(
 def _query_mast(
     target: Union[str, SkyCoord],
     radius: Union[float, u.Quantity, None] = None,
-    project: Union[str, List[str]] = ["Kepler", "K2", "TESS"],
-    provenance_name: Union[str, List[str], None] = None,
+    project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
+    provenance_name: Union[str, list[str], None] = None,
     exptime: Union[int, float, tuple] = (0, 9999),
-    sequence_number: Union[int, List[int], None] = None,
+    sequence_number: Union[int, list[int], None] = None,
     **extra_query_criteria,
 
 ) -> Table:
@@ -1151,11 +1155,11 @@ def _query_mast(
 
 def _filter_products(
     products,
-    campaign: Union[int, List(int)] = None,
-    quarter: Union[int, List(int)] = None,
+    campaign: Union[int, list[int]] = None,
+    quarter: Union[int, list[int]] = None,
     #month=None,
-    sector: Union[int, List(int)] = None,
-    exptime: Union[str, int, tuple(int)] = None,
+    sector: Union[int, list[int]] = None,
+    exptime: Union[str, int, tuple[int]] = None,
     limit: int =None,
     project=("Kepler", "K2", "TESS"),
     provenance_name=None,
