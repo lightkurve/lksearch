@@ -23,7 +23,7 @@ from requests import HTTPError
 import pandas as pd
 
 
-from . import PACKAGEDIR, conf, config
+from lightkurve import PACKAGEDIR, conf, config
 from lightkurve.collections import LightCurveCollection, TargetPixelFileCollection
 from lightkurve.io import read
 from lightkurve.targetpixelfile import TargetPixelFile
