@@ -21,6 +21,7 @@ from astropy.utils import deprecated
 from memoization import cached
 from requests import HTTPError
 import pandas as pd
+from IPython.display import HTML
 
 
 from lightkurve import PACKAGEDIR, conf, config
@@ -208,7 +209,7 @@ class SearchResult(object):
 
     
 
-    def __repr__(self, html=True):
+    def __repr__(self, html=False):
         print(f"SearchResult containing {len(self.table)} data products.")
         if len(self.table) == 0:
             return out
@@ -223,10 +224,10 @@ class SearchResult(object):
         out = self.table[columns]
         # Make sure author names show up as clickable links
         if html:
-            out = out.assign(author=out['author'].apply(lambda x: f'<a href="{AUTHOR_LINKS[x]}">{x}</a>'))
-            out = HTML(out.to_html(escape=False, max_rows=10))
+            out = out.assign(author=out['author'].apply(lambda x: f'<a href="{AUTHOR_LINKS[x]}">{x}</a>' if x in AUTHOR_LINKS.keys() else x))
+            #out = HTML(out.to_html(escape=False, max_rows=10))
 
-        return out
+        return out.to_string(max_rows=10)
 
 
     def _repr_html_(self):
