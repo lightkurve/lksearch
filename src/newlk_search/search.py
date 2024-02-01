@@ -951,15 +951,17 @@ def _search_products(
         from astroquery.mast import Observations
 
         products = Observations.get_product_list(observations)
+                
         joint_table = join(
             observations,
             products,
-            keys="obs_id",
+            keys="obs_id",#in Kepler, K2 this was parent_id at one point not obs_id
+            #keys_left="obsid", 
+            #keys_right="parent_obsid",
             join_type="right",
             uniq_col_name="{col_name}{table_name}",
             table_names=["", "_products"],
         )
-    
 
         joint_table = joint_table.to_pandas()
 
@@ -981,20 +983,20 @@ def _search_products(
                 joint_table["sequence_number"].isna())
         re_expr = r".*Q(\d+)"
         seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in joint_table.loc[mask,["description"]].values]
-
         # K2 campaigns 9, 10, and 11 were split into two sections, which are
         # listed separately in the table with suffixes "a" and "b"        
         mask = ((joint_table["project"] == "K2") & 
                 (joint_table["sequence_number"].values in [9, 10, 11]))
-        for item in joint_table.loc[mask,:]:
+        
+        for index, row in joint_table[mask].iterrows():
             for half, letter in zip([1,2],["a","b"]):
-                if f"c{item['sequence_number']}{half}" in joint_table["productFilename"][idx]:
-                    seq_num[item.index.values] = f"{int(item['sequence_number']):02d}{letter}"
+                if f"c{row['sequence_number']}{half}" in row["productFilename"]:
+                    seq_num[index] = f"{int(row['sequence_number']):02d}{letter}"
 
-        joint_table["mission"] = [f" {proj} {pref} {seq}" 
+        joint_table["mission"] = [f" {proj} {obs_prefix.get(pref, '')} {seq}" 
                                   for proj, pref, seq in zip(
                                       joint_table['project'], 
-                                      obs_prefix.get(joint_table['project'], ''),
+                                      joint_table['project'].values.astype(str),
                                       seq_num)]
         
         masked_result = _filter_products(
@@ -1205,7 +1207,7 @@ def _filter_products(
     products,
     campaign: Union[int, list[int]] = None,
     quarter: Union[int, list[int]] = None,
-    #month=None,
+    month=None,
     sector: Union[int, list[int]] = None,
     exptime: Union[str, int, tuple[int]] = None,
     limit: int =None,
