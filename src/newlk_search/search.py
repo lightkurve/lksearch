@@ -959,7 +959,7 @@ def _search_products(
             uniq_col_name="{col_name}{table_name}",
             table_names=["", "_products"],
         )
-        return joint_table
+    
 
         joint_table = joint_table.to_pandas()
 
