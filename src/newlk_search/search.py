@@ -69,7 +69,7 @@ AUTHOR_LINKS = {
 
 REPR_COLUMNS_BASE = [
     "mission",
-    "year",
+    "start_time",
     "author",
     "exptime",
     "target_name",
@@ -153,8 +153,10 @@ class SearchResult(object):
                          "SPOC": 1, 
                          "TESS-SPOC": 2, 
                          "QLP": 3}
-        self.table["sort_order"] = self.table['author'].map(sort_priority).fillna(9)
-        self.table.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"])
+        df = self.table
+        df["sort_order"] = self.table['author'].map(sort_priority).fillna(9)
+        df.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"], ignore_index=True, inplace=True)
+        self.table = df
 
     def _fix_start_and_end_times(self):
          """The start and stop times for some products are not correct, this function fixes them."""
