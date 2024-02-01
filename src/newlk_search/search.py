@@ -67,7 +67,6 @@ AUTHOR_LINKS = {
 }
 
 REPR_COLUMNS_BASE = [
-    "#",
     "mission",
     "year",
     "author",
@@ -175,8 +174,8 @@ class SearchResult(object):
              else start_time[idx] + timedelta(days=90)
              for idx, filename in enumerate(filenames)
          ]
-         self.table["start_time"][kepler_mask] = start_time
-         self.table["end_time"][kepler_mask] = end_time
+         self.table.loc[kepler_mask, "start_time"] = start_time
+         self.table.loc[kepler_mask, "end_time"] = end_time
 
          # We mask KBONUS times because they are invalid for the quarter data
          '''if "sequence" in self.table.columns:
@@ -203,7 +202,7 @@ class SearchResult(object):
         # Add the year column from `t_min` or `productFilename`
         self.table['year'] = self.table['start_time'].dt.year #Assumes 'start_time' is a pandas datetime object
         # Specify whether each product is a mission product or HLSP
-        product_type = tess_pd['obs_collection'].copy()
+        product_type = self.table['obs_collection'].copy()
         product_type[product_type.isin(['TESS', "SPOC", "Kepler","K2"])] = 'Mission Product'
         self.table['product_type']=product_type
 
@@ -221,7 +220,7 @@ class SearchResult(object):
         # search_tesscut() has fewer columns, ensure we don't try to display columns that do not exist
         # columns = [c for c in columns if c in self.table.colnames]
 
-        out = df[columns]
+        out = self.table[columns]
         # Make sure author names show up as clickable links
         if html:
             out = out.assign(author=out['author'].apply(lambda x: f'<a href="{AUTHOR_LINKS[x]}">{x}</a>'))
@@ -1012,7 +1011,7 @@ def _search_products(
             limit=limit,
         )
         log.debug(f"MAST found {len(masked_result)} matching data products.")
-        masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
+        #masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
 
     # Full Frame Images - build this from the querry table
     if any(['ffi' in ftype.lower() for ftype in filetype]):
@@ -1059,14 +1058,8 @@ def _search_products(
     
     # Add in the start and end times for each observation
     if query_result is not None:
-         query_result["start_time"] = Column(
-             Time(masked_result["t_min"] + 2400000.5, format="jd"),
-             format=lambda x: f"{x.isot.split('T')[0]}",
-         )
-         query_result["end_time"] = Column(
-             Time(masked_result["t_max"] + 2400000.5, format="jd"),
-             format=lambda x: f"{x.isot.split('T')[0]}",
-         )
+         query_result["start_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']])
+         query_result["end_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_max']])
     return(SearchResult(query_result))
 
 def _query_mast(
@@ -1289,7 +1282,7 @@ def _filter_products(
 
     products = products[mask]
 
-    products.sort(["distance", "productFilename"])
+    products.sort_values(by=["distance", "productFilename"])
     if limit is not None:
         return products[0:limit]
     return products
@@ -1352,7 +1345,7 @@ def _mask_by_exptime(products, exptime):
             mask &= (products["exptime"] > 60) & (products["exptime"] <= 120)
         elif exptime in ["long", "ffi"]:
             mask &= products["exptime"] > 120
-    return mask.values
+    return mask
 
 
 def _resolve_object(target):
