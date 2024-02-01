@@ -231,7 +231,7 @@ class SearchResult(object):
             out = out.assign(author=out['author'].apply(lambda x: f'<a href="{AUTHOR_LINKS[x]}">{x}</a>' if x in AUTHOR_LINKS.keys() else x))
             #out = HTML(out.to_html(escape=False, max_rows=10))
 
-        return out.to_string(max_rows=10)
+        return out.to_string(max_rows=20)
 
 
     def _repr_html_(self):
@@ -1247,11 +1247,7 @@ def _filter_products(
     products : pandas dataframe object
         Masked astropy table containing desired data products
     """
-    print(f"filetype: {filetype}")
-    print(f"campaign: {campaign}")
-    print(f"quarter: {quarter}")
-    print(f"exptime: {exptime}")
-    print(f"provenance: {provenance_name}")
+
     if provenance_name is None:  # apply all filters
         provenance_lower = ("kepler", "k2", "spoc")
     else:
