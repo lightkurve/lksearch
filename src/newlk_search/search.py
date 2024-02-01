@@ -23,7 +23,7 @@ from requests import HTTPError
 import pandas as pd
 
 
-from . import PACKAGEDIR, conf, config
+from lightkurve import PACKAGEDIR, conf, config
 from lightkurve.collections import LightCurveCollection, TargetPixelFileCollection
 from lightkurve.io import read
 from lightkurve.targetpixelfile import TargetPixelFile
@@ -132,6 +132,7 @@ class SearchResult(object):
                 table = table.to_pandas()
             self.table = table
             if len(table) > 0:
+                self._fix_start_and_end_times()
                 self._add_columns()
                 self._sort_table()
         self.display_extra_columns = conf.search_result_display_extra_columns
@@ -155,6 +156,38 @@ class SearchResult(object):
         self.table["sort_order"] = self.table['author'].map(sort_priority).fillna(9)
         self.table.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"])
 
+    def _fix_start_and_end_times(self):
+         """The start and stop times for some products are not correct, this function fixes them."""
+
+         # Kepler files have the wrong start and stop times in t_min and t_max
+         # So we get the start/stop times from the filename instead
+         kepler_mask = self.table["provenance_name"] == "Kepler"
+         filenames = np.asarray(
+             self.table["productFilename"][kepler_mask]
+         )
+         start_time = [
+             Time(datetime.strptime(filename.split("-")[1].split("_")[0], "%Y%j%H%M%S"))
+             for filename in filenames
+         ]
+         end_time = [
+             start_time[idx] + timedelta(days=30)
+             if filename.endswith("slc.fits")
+             else start_time[idx] + timedelta(days=90)
+             for idx, filename in enumerate(filenames)
+         ]
+         self.table["start_time"][kepler_mask] = start_time
+         self.table["end_time"][kepler_mask] = end_time
+
+         # We mask KBONUS times because they are invalid for the quarter data
+         '''if "sequence" in self.table.columns:
+             kbonus_mask = self.table["author"] == "KBONUS-BKG"
+             kbonus_mask[kbonus_mask] = np.asarray(
+                 [len(seq) > 0 for seq in self.table["sequence"][kbonus_mask]]
+             )
+             self.table["start_time"].mask = kbonus_mask
+             self.table["end_time"].mask = kbonus_mask'''
+
+
     def _add_columns(self):
         """Adds a user-friendly index (``#``) column and adds column unit
         and display format information.
@@ -169,12 +202,12 @@ class SearchResult(object):
 
         # Add the year column from `t_min` or `productFilename`
         self.table['year'] = self.table['start_time'].dt.year #Assumes 'start_time' is a pandas datetime object
-  
-        # `t_min` is incorrect for Kepler products, so we extract year from the filename for those =(
-        for idx in np.where(self.table["author"] == "Kepler")[0]:
-            self.table["year"][idx] = re.findall(
-                r"\d+.(\d{4})\d+", self.table["productFilename"][idx]
-            )[0]
+        # Specify whether each product is a mission product or HLSP
+        product_type = tess_pd['obs_collection'].copy()
+        product_type[product_type.isin(['TESS', "SPOC", "Kepler","K2"])] = 'Mission Product'
+        self.table['product_type']=product_type
+
+    
 
     def __repr__(self, html=True):
         print(f"SearchResult containing {len(self.table)} data products.")
@@ -256,6 +289,16 @@ class SearchResult(object):
         """Exposure time for each data product found."""
         # TODO: return with quantities
         return self.table["exptime"].values 
+    
+    @property
+    def start_time(self):
+        """Start time of the observation."""
+        return Time(self.table["start_time"].values)
+    
+    @property
+    def end_time(self):
+        """End time of the observation."""
+        return Time(self.table["end_time"].values)
 
     @property
     def distance(self):
@@ -356,6 +399,8 @@ class SearchResult(object):
                     )
                 path = download_response["Local Path"]
                 log.debug("Finished downloading.")
+
+
             return read(path, quality_bitmask=quality_bitmask, **kwargs)
 
     @suppress_stdout
@@ -867,6 +912,11 @@ def _search_products(
         provenance_name = None
     else:
         provenance_name = np.atleast_1d(provenance_name).tolist()
+    if provenance_name is not None:
+         # If author "TESS" is used, we assume it is SPOC
+         provenance_name = np.unique(
+             [p if p.lower() != "tess" else "SPOC" for p in provenance_name]
+         ).tolist()
 
     # Speed up by restricting the MAST query if we don't want FFI image data
     extra_query_criteria = {}
@@ -918,7 +968,7 @@ def _search_products(
         # Add the user-friendly 'author' column (synonym for 'provenance_name')
         joint_table["author"] = joint_table["provenance_name"]
         # Add the user-friendly 'mission' column
-        joint_table["smission"] = None
+        joint_table["mission"] = None
         obs_prefix = {"Kepler": "Quarter", "K2": "Campaign", "TESS": "Sector"}
 
         #Carry over all sequence numbers where they exist
@@ -1006,6 +1056,17 @@ def _search_products(
                               ffi_result]).sort_values(["distance", 
                                                         "obsid", 
                                                         "sequence_number"])
+    
+    # Add in the start and end times for each observation
+    if query_result is not None:
+         query_result["start_time"] = Column(
+             Time(masked_result["t_min"] + 2400000.5, format="jd"),
+             format=lambda x: f"{x.isot.split('T')[0]}",
+         )
+         query_result["end_time"] = Column(
+             Time(masked_result["t_max"] + 2400000.5, format="jd"),
+             format=lambda x: f"{x.isot.split('T')[0]}",
+         )
     return(SearchResult(query_result))
 
 def _query_mast(
