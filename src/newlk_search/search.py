@@ -1207,7 +1207,7 @@ def _filter_products(
     products,
     campaign: Union[int, list[int]] = None,
     quarter: Union[int, list[int]] = None,
-    month=None,
+    month: Union[int, list[int]]=None,
     sector: Union[int, list[int]] = None,
     exptime: Union[str, int, tuple[int]] = None,
     limit: int =None,
