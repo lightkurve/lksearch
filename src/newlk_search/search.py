@@ -22,6 +22,7 @@ from memoization import cached
 from requests import HTTPError
 import pandas as pd
 from IPython.display import HTML
+from datetime import datetime, timedelta
 
 
 from lightkurve import PACKAGEDIR, conf, config
@@ -177,8 +178,9 @@ class SearchResult(object):
              else start_time[idx] + timedelta(days=90)
              for idx, filename in enumerate(filenames)
          ]
-         self.table.loc[kepler_mask, "start_time"] = start_time
-         self.table.loc[kepler_mask, "end_time"] = end_time
+         
+         self.table.loc[kepler_mask, "start_time"] = pd.to_datetime([st.iso for st in start_time])
+         self.table.loc[kepler_mask, "end_time"] = pd.to_datetime([et.iso for et in end_time])
 
          # We mask KBONUS times because they are invalid for the quarter data
          '''if "sequence" in self.table.columns:
@@ -953,6 +955,7 @@ def _search_products(
         from astroquery.mast import Observations
 
         products = Observations.get_product_list(observations)
+
                 
         joint_table = join(
             observations,
@@ -964,6 +967,7 @@ def _search_products(
             uniq_col_name="{col_name}{table_name}",
             table_names=["", "_products"],
         )
+
 
         joint_table = joint_table.to_pandas()
 
@@ -1000,17 +1004,17 @@ def _search_products(
                                       joint_table['project'], 
                                       joint_table['project'].values.astype(str),
                                       seq_num)]
-        
+
         masked_result = _filter_products(
             joint_table,
             filetype=filetype,
             campaign=campaign,
             quarter=quarter,
+            sector=sector,
             exptime=exptime,
             project=mission,
             provenance_name=provenance_name,
             month=month,
-            sector=sector,
             limit=limit,
         )
         log.debug(f"MAST found {len(masked_result)} matching data products.")
@@ -1243,6 +1247,11 @@ def _filter_products(
     products : pandas dataframe object
         Masked astropy table containing desired data products
     """
+    print(f"filetype: {filetype}")
+    print(f"campaign: {campaign}")
+    print(f"quarter: {quarter}")
+    print(f"exptime: {exptime}")
+    print(f"provenance: {provenance_name}")
     if provenance_name is None:  # apply all filters
         provenance_lower = ("kepler", "k2", "spoc")
     else:
@@ -1294,18 +1303,19 @@ def _filter_products(
 def _mask_kepler_products(products, quarter=None, month=None):
     """Returns a mask flagging the Kepler products that match the criteria."""
     #mask = np.array([proj.lower() == "kepler" for proj in products["provenance_name"]])
-    mask = products['provenance_name'] == 'kepler' 
+    mask = products['provenance_name'].str.lower() == 'kepler' 
     if sum(mask) == 0:
         return mask
 
     # Identify quarter by the description.
     # This is necessary because the `sequence_number` field was not populated
     # for Kepler prime data at the time of writing this function.
-    quarter_mask = np.zeros(len(products), dtype=bool)
+    
     if quarter is not None:
+        quarter_mask = np.zeros(len(products), dtype=bool)
         for q in np.atleast_1d(quarter):
             quarter_mask += products['description'].str.endswith(f"Q{q}")
-    mask &= quarter_mask
+        mask &= quarter_mask
 
     # For Kepler short cadence data the month can be specified
     if month is not None:
