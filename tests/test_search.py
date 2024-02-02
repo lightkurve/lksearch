@@ -167,7 +167,7 @@ def test_search_timeseries(caplog):
 
 
 #@pytest.mark.remote_data
-'''def test_search_tesscut():
+def test_search_tesscut():
     # Cutout by target name
     assert len(search_tesscut("pi Mensae", sector=1).table) == 1
     assert len(search_tesscut("pi Mensae").table) > 1
@@ -182,7 +182,7 @@ def test_search_timeseries(caplog):
     assert len(search_string.table) == len(search_coords.table)
     # The coordinates below are beyond the edge of the sector 4 (camera 1-4) FFI
     search_edge = search_tesscut("30.578761, 6.210593", sector=4)
-    assert len(search_edge.table) == 0'''
+    assert len(search_edge.table) == 0
 
 
 #@pytest.mark.remote_data

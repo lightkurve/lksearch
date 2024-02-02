@@ -1067,6 +1067,7 @@ def _search_products(
     
     # Add in the start and end times for each observation
     if query_result is not None:
+         print(pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']]))
          query_result["start_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']])
          query_result["end_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_max']])
 
