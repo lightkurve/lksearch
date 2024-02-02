@@ -216,7 +216,7 @@ class SearchResult(object):
     def __repr__(self, html=False):
         print(f"SearchResult containing {len(self.table)} data products.")
         if len(self.table) == 0:
-            return out
+            return pd.DataFrame(columns = REPR_COLUMNS_BASE)
         columns = REPR_COLUMNS_BASE
         if self.display_extra_columns is not None:
             columns = REPR_COLUMNS_BASE + self.display_extra_columns
@@ -1179,7 +1179,7 @@ def _query_mast(
             # astroquery does not report distance when querying by `target_name`;
             # we add it here so that the table returned always has this column.
             obs["distance"] = 0.0
-             return obs
+            return obs
         else:
             log.debug(f"No observations found. Now performing a cone search instead.")
 
