@@ -923,13 +923,16 @@ def _search_products(
          ).tolist()
 
     # Speed up by restricting the MAST query if we don't want FFI image data
-    extra_query_criteria = {}
-    if not any(['ffi' in ftype.lower() for ftype in filetype]):
-        # At MAST, non-FFI Kepler pipeline products are known as "cube" products,
-        # and non-FFI TESS pipeline products are listed as "timeseries".
-        extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
+    # At MAST, non-FFI Kepler pipeline products are known as "cube" products,
+    # and non-FFI TESS pipeline products are listed as "timeseries".
+    # NEW CHANGE - we're speeding this up by not including TESS FFI images in the search.  
+    # We will handle them separately using something else (tesswcs?  tesspoint?)
+    # Also the above is written like FFI kepler products exist, but I don't think they do?
 
+    extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
+    
     # Query Mast to get a list of observations
+    
     observations = _query_mast(
         target,
         radius=radius,
@@ -990,10 +993,12 @@ def _search_products(
                 joint_table["sequence_number"].isna())
         re_expr = r".*Q(\d+)"
         seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in joint_table.loc[mask,["description"]].values]
+        
         # K2 campaigns 9, 10, and 11 were split into two sections, which are
         # listed separately in the table with suffixes "a" and "b"        
         mask = ((joint_table["project"] == "K2") & 
                 (joint_table["sequence_number"].isin([9, 10, 11])))
+
         
         for index, row in joint_table[mask].iterrows():
             for half, letter in zip([1,2],["a","b"]):
@@ -1018,6 +1023,7 @@ def _search_products(
             month=month,
             limit=limit,
         )
+        print(masked_result)
         log.debug(f"MAST found {len(masked_result)} matching data products.")
         #masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
 
@@ -1059,8 +1065,9 @@ def _search_products(
             ffi_result = Table(cutouts)
             ffi_result = ffi_result.to_pandas()
 
-    query_result = pd.concat([masked_result,
-                              ffi_result]).sort_values(["distance", 
+
+    query_result = pd.concat((masked_result,
+                              ffi_result)).sort_values(["distance", 
                                                         "obsid", 
                                                         "sequence_number"])
     
@@ -1175,7 +1182,7 @@ def _query_mast(
             # astroquery does not report distance when querying by `target_name`;
             # we add it here so that the table returned always has this column.
             obs["distance"] = 0.0
-            return obs
+            return(obs)
         else:
             log.debug(f"No observations found. Now performing a cone search instead.")
 
@@ -1261,6 +1268,7 @@ def _filter_products(
     mask &= ~np.array(
         [prov.lower() == "kepler" for prov in products["provenance_name"]]
     )
+
     if "kepler" in provenance_lower and campaign is None and sector is None:
         mask |= _mask_kepler_products(products, quarter=quarter, month=month)
 
