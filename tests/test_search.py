@@ -17,6 +17,7 @@ import astropy.units as u
 from astropy.table import Table
 
 import lightkurve as lk
+from pathlib import Path
 
 from lightkurve.utils import LightkurveWarning, LightkurveError
 from src.newlk_search.search import (
