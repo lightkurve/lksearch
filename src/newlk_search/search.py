@@ -971,6 +971,7 @@ def _search_products(
 
         joint_table = joint_table.to_pandas()
 
+
         # Add the user-friendly 'author' column (synonym for 'provenance_name')
         joint_table["author"] = joint_table["provenance_name"]
         # Add the user-friendly 'mission' column
@@ -992,7 +993,7 @@ def _search_products(
         # K2 campaigns 9, 10, and 11 were split into two sections, which are
         # listed separately in the table with suffixes "a" and "b"        
         mask = ((joint_table["project"] == "K2") & 
-                (joint_table["sequence_number"].values in [9, 10, 11]))
+                (joint_table["sequence_number"].isin([9, 10, 11])))
         
         for index, row in joint_table[mask].iterrows():
             for half, letter in zip([1,2],["a","b"]):
@@ -1067,6 +1068,7 @@ def _search_products(
     if query_result is not None:
          query_result["start_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']])
          query_result["end_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_max']])
+
     return(SearchResult(query_result))
 
 def _query_mast(
