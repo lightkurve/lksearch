@@ -14,15 +14,18 @@ import numpy.typing as npt
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-from astropy.io import ascii
+#from astropy.io import ascii
 from astropy.table import Row, Table, join
 from astropy.time import Time
 from astropy.utils import deprecated
 from memoization import cached
 from requests import HTTPError
+import pandas as pd
+from IPython.display import HTML
+from datetime import datetime, timedelta
 
 
-from . import PACKAGEDIR, conf, config
+from lightkurve import PACKAGEDIR, conf, config
 from lightkurve.collections import LightCurveCollection, TargetPixelFileCollection
 from lightkurve.io import read
 from lightkurve.targetpixelfile import TargetPixelFile
@@ -66,9 +69,8 @@ AUTHOR_LINKS = {
 }
 
 REPR_COLUMNS_BASE = [
-    "#",
     "mission",
-    "year",
+    "start_time",
     "author",
     "exptime",
     "target_name",
@@ -123,10 +125,15 @@ class SearchResult(object):
 
     def __init__(self, table=None):
         if table is None:
-            self.table = Table()
+            self.table = pd.DataFrame()
+
         else:
+            if isinstance(table, Table):
+                log.warning("Search Result Now Expects a pandas dataframe but an astropy Table was given; converting astropy.table to pandas")
+                table = table.to_pandas()
             self.table = table
             if len(table) > 0:
+                self._fix_start_and_end_times()
                 self._add_columns()
                 self._sort_table()
         self.display_extra_columns = conf.search_result_display_extra_columns
@@ -142,84 +149,98 @@ class SearchResult(object):
         This ordering is not a judgement on the quality of one product vs another,
         because we love all pipelines!
         """
-        sort_priority = {"Kepler": 1, "K2": 1, "SPOC": 1, "KBONUS-BKG":2, "TESS-SPOC": 2, "QLP": 3}
-        self.table["sort_order"] = [
-            sort_priority.get(author, 9) for author in self.table["author"]
-        ]
-        self.table.sort(["distance", "project", "sort_order", "year", "exptime"])
+        sort_priority = {"Kepler": 1, 
+                         "K2": 1, 
+                         "SPOC": 1, 
+                         "TESS-SPOC": 2, 
+                         "QLP": 3}
+        df = self.table
+        df["sort_order"] = self.table['author'].map(sort_priority).fillna(9)
+        df.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"], ignore_index=True, inplace=True)
+        self.table = df
+
+    def _fix_start_and_end_times(self):
+         """The start and stop times for some products are not correct, this function fixes them."""
+
+         # Kepler files have the wrong start and stop times in t_min and t_max
+         # So we get the start/stop times from the filename instead
+         kepler_mask = self.table["provenance_name"] == "Kepler"
+         filenames = np.asarray(
+             self.table["productFilename"][kepler_mask]
+         )
+         start_time = [
+             Time(datetime.strptime(filename.split("-")[1].split("_")[0], "%Y%j%H%M%S"))
+             for filename in filenames
+         ]
+         end_time = [
+             start_time[idx] + timedelta(days=30)
+             if filename.endswith("slc.fits")
+             else start_time[idx] + timedelta(days=90)
+             for idx, filename in enumerate(filenames)
+         ]
+         
+         self.table.loc[kepler_mask, "start_time"] = pd.to_datetime([st.iso for st in start_time])
+         self.table.loc[kepler_mask, "end_time"] = pd.to_datetime([et.iso for et in end_time])
+
+         # We mask KBONUS times because they are invalid for the quarter data
+         '''if "sequence" in self.table.columns:
+             kbonus_mask = self.table["author"] == "KBONUS-BKG"
+             kbonus_mask[kbonus_mask] = np.asarray(
+                 [len(seq) > 0 for seq in self.table["sequence"][kbonus_mask]]
+             )
+             self.table["start_time"].mask = kbonus_mask
+             self.table["end_time"].mask = kbonus_mask'''
+
 
     def _add_columns(self):
         """Adds a user-friendly index (``#``) column and adds column unit
         and display format information.
         """
+        '''
+        Will eliminate this, depending on how we do units
         if "#" not in self.table.columns:
             self.table["#"] = None
         self.table["exptime"].unit = "s"
         self.table["exptime"].format = ".0f"
-        self.table["distance"].unit = "arcsec"
+        self.table["distance"].unit = "arcsec"'''
 
         # Add the year column from `t_min` or `productFilename`
-        year = np.floor(Time(self.table["t_min"], format="mjd").decimalyear)
-        self.table["year"] = year.astype(int)
-        # `t_min` is incorrect for Kepler products, so we extract year from the filename for those =(
-        for idx in np.where(self.table["author"] == "Kepler")[0]:
-            self.table["year"][idx] = re.findall(
-                r"\d+.(\d{4})\d+", self.table["productFilename"][idx]
-            )[0]
+        self.table['year'] = self.table['start_time'].dt.year #Assumes 'start_time' is a pandas datetime object
+        # Specify whether each product is a mission product or HLSP
+        product_type = self.table['obs_collection'].copy()
+        product_type[product_type.isin(['TESS', "SPOC", "Kepler","K2"])] = 'Mission Product'
+        self.table['product_type']=product_type
+
+    
 
     def __repr__(self, html=False):
-        def to_tess_gi_url(proposal_id):
-            if re.match("^G0[12].+", proposal_id) is not None:
-                return f"https://heasarc.gsfc.nasa.gov/docs/tess/approved-programs-primary.html#:~:text={proposal_id}"
-            elif re.match("^G0[34].+", proposal_id) is not None:
-                return f"https://heasarc.gsfc.nasa.gov/docs/tess/approved-programs-em1.html#:~:text={proposal_id}"
-            else:
-                return f"https://heasarc.gsfc.nasa.gov/docs/tess/approved-programs.html#:~:text={proposal_id}"
-
-        out = "SearchResult containing {} data products.".format(len(self.table))
+        print(f"SearchResult containing {len(self.table)} data products.")
         if len(self.table) == 0:
             return out
         columns = REPR_COLUMNS_BASE
         if self.display_extra_columns is not None:
             columns = REPR_COLUMNS_BASE + self.display_extra_columns
+        
+        # NO LONGER A TESSCUT SO THIS WILL LIKELY NOT BE NEEDED
         # search_tesscut() has fewer columns, ensure we don't try to display columns that do not exist
-        columns = [c for c in columns if c in self.table.colnames]
+        # columns = [c for c in columns if c in self.table.colnames]
 
-        self.table["#"] = [idx for idx in range(len(self.table))]
-        out += "\n\n" + "\n".join(self.table[columns].pformat(max_width=300, html=html))
+        out = self.table[columns]
         # Make sure author names show up as clickable links
         if html:
-            for author, url in AUTHOR_LINKS.items():
-                out = out.replace(f">{author}<", f"><a href='{url}'>{author}</a><")
-            # special HTML formating for TESS proposal_id
-            tess_table = self.table[self.table["project"] == "TESS"]
-            if "proposal_id" in tess_table.colnames:
-                proposal_id_col = np.unique(tess_table["proposal_id"])
-            else:
-                proposal_id_col = []
-            for p_ids in proposal_id_col:
-                # for CDIPS products, proposal_id is a np MaskedConstant, not a string
-                if p_ids == "N/A" or (not isinstance(p_ids, str)):
-                    continue
-                # e.g., handle cases with multiple proposals, e.g.,  G12345_G67890
-                p_id_links = [
-                    f"""\
-<a href='{to_tess_gi_url(p_id)}'>{p_id}</a>\
-"""
-                    for p_id in p_ids.split("_")
-                ]
-                out = out.replace(f">{p_ids}<", f">{' , '.join(p_id_links)}<")
-        return out
+            out = out.assign(author=out['author'].apply(lambda x: f'<a href="{AUTHOR_LINKS[x]}">{x}</a>' if x in AUTHOR_LINKS.keys() else x))
+            #out = HTML(out.to_html(escape=False, max_rows=10))
+
+        return out.to_string(max_rows=20)
+
 
     def _repr_html_(self):
         return self.__repr__(html=True)
 
     def __getitem__(self, key):
-        """Implements indexing and slicing, e.g. SearchResult[2:5]."""
-        selection = self.table[key]
-        # Indexing a Table with an integer will return a Row
-        if isinstance(selection, Row):
-            selection = Table(selection)
+        """Implements indexing and slicing."""
+        selection = self.table.loc[key]
+
         return SearchResult(table=selection)
 
     def __len__(self):
@@ -230,13 +251,8 @@ class SearchResult(object):
     def unique_targets(self):
         """Returns a table of targets and their RA & dec values produced by search"""
         mask = ["target_name", "s_ra", "s_dec"]
-        return Table.from_pandas(
-            self.table[mask]
-            .to_pandas()
-            .drop_duplicates("target_name")
-            .reset_index(drop=True)
-        )
-
+        return self.table[mask].drop_duplicates("target_name").reset_index(drop=True)
+        
     @property
     def obsid(self):
         """MAST observation ID for each data product found."""
@@ -245,45 +261,63 @@ class SearchResult(object):
     @property
     def ra(self):
         """Right Ascension coordinate for each data product found."""
-        return self.table["s_ra"].data.data
+        return self.table["s_ra"].values
 
     @property
     def dec(self):
         """Declination coordinate for each data product found."""
-        return self.table["s_dec"].data.data
+        return self.table["s_dec"].values
 
     @property
     def mission(self):
         """Kepler quarter or TESS sector names for each data product found."""
-        return self.table["mission"].data
+        return self.table["mission"].values
 
     @property
     def year(self):
         """Year the observation was made."""
-        return self.table["year"].data
+        return self.table["year"].values
 
     @property
     def author(self):
         """Pipeline name for each data product found."""
-        return self.table["author"].data
+        return self.table["author"].values
 
     @property
     def target_name(self):
         """Target name for each data product found."""
-        return self.table["target_name"].data
+        return self.table["target_name"].values
 
     @property
     def exptime(self):
         """Exposure time for each data product found."""
-        return self.table["exptime"].quantity
+        # TODO: return with quantities
+        return self.table["exptime"].values 
+    
+    @property
+    def start_time(self):
+        """Start time of the observation."""
+        return Time(self.table["start_time"].values)
+    
+    @property
+    def end_time(self):
+        """End time of the observation."""
+        return Time(self.table["end_time"].values)
 
     @property
     def distance(self):
         """Distance from the search position for each data product found."""
-        return self.table["distance"].quantity
+        # TODO: return with quantities
+        return self.table["distance"].values
 
+    # @magiccachedecorator
     def _download_one(
-        self, table, quality_bitmask, download_dir, cutout_size, **kwargs
+        self, 
+        table,
+        quality_bitmask, 
+        download_dir, 
+        cutout_size, 
+        **kwargs
     ):
         """Private method used by `download()` and `download_all()` to download
         exactly one file from the MAST archive.
@@ -304,8 +338,8 @@ class SearchResult(object):
                     "".format(table[0]["target_name"], table[0]["sequence_number"])
                 )
                 path = self._fetch_tesscut_path(
-                    table[0]["target_name"],
-                    table[0]["sequence_number"],
+                    table.loc[0]["target_name"],
+                    table.loc[0]["sequence_number"],
                     download_dir,
                     cutout_size,
                 )
@@ -327,7 +361,7 @@ class SearchResult(object):
                     )
 
             return read(
-                path, quality_bitmask=quality_bitmask, targetid=table[0]["targetid"]
+                path, quality_bitmask=quality_bitmask, targetid=table.loc[0]["targetid"]
             )
 
         else:
@@ -369,11 +403,17 @@ class SearchResult(object):
                     )
                 path = download_response["Local Path"]
                 log.debug("Finished downloading.")
+
+
             return read(path, quality_bitmask=quality_bitmask, **kwargs)
 
     @suppress_stdout
     def download(
-        self, quality_bitmask="default", download_dir=None, cutout_size=None, **kwargs
+        self, 
+        quality_bitmask: Union[str, int]="default", 
+        download_dir: str =  None, 
+        cutout_size: Union[int, tuple[int]]=None, 
+        **kwargs
     ):
         """Download and open the first data product in the search result.
 
@@ -598,114 +638,43 @@ class SearchResult(object):
         return path
 
 
+@deprecated(
+    "2.0", alternative="search_cubedata()", warning_type=LightkurveDeprecationWarning
+)
+def search_targetpixelfile(*args, **kwargs):
+    product="Target Pixel"
+    return search_cubedata(*args,product=product, **kwargs)
+
+@deprecated(
+    "2.0", alternative="search_cubedata()", warning_type=LightkurveDeprecationWarning
+)
+def search_tesscut(*args, **kwargs):
+    product="ffi"
+    mission="TESS"
+    return search_cubedata(*args,product=product,mission=mission, **kwargs)
+
+
 @cached
-def search_targetpixelfile(
-    target,
-    radius=None,
-    exptime=None,
-    cadence=None,
-    mission=("Kepler", "K2", "TESS"),
-    author=None,
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+def search_cubedata(
+    target:  Union[str, int, SkyCoord],
+    radius:  Union[float, u.Quantity] = None,
+    exptime:  Union[str, int, tuple] = None,
+    cadence: Union[str, int, tuple] = None,
+    mission: Union[str, tuple] = ("Kepler", "K2", "TESS"),
+    product: Union[str, tuple[str]] = ("Target Pixel","ffi"),
+    author:  Union[str, tuple] = None,
+    quarter:  Union[int, list[int]] = None,
+    month:    Union[int, list[int]] = None,
+    campaign: Union[int, list[int]] = None,
+    sector:   Union[int, list[int]] = None,
+    limit:    int = None,
 ):
-    """Search the `MAST data archive <https://archive.stsci.edu>`_ for target pixel files.
-
-    This function fetches a data table that lists the Target Pixel Files (TPFs)
-    that fall within a region of sky centered around the position of `target`
-    and within a cone of a given `radius`. If no value is provided for `radius`,
-    only a single target will be returned.
-
-    Parameters
-    ----------
-    target : str, int, or `astropy.coordinates.SkyCoord` object
-        Target around which to search. Valid inputs include:
-
-            * The name of the object as a string, e.g. "Kepler-10".
-            * The KIC or EPIC identifier as an integer, e.g. 11904151.
-            * A coordinate string in decimal format, e.g. "285.67942179 +50.24130576".
-            * A coordinate string in sexagesimal format, e.g. "19:02:43.1 +50:14:28.7".
-            * An `astropy.coordinates.SkyCoord` object.
-    radius : float or `astropy.units.Quantity` object
-        Conesearch radius.  If a float is given it will be assumed to be in
-        units of arcseconds.  If `None` then we default to 0.0001 arcsec.
-    exptime : 'long', 'short', 'fast', or float
-        'long' selects 10-min and 30-min cadence products;
-        'short' selects 1-min and 2-min products;
-        'fast' selects 20-sec products.
-        Alternatively, you can pass the exact exposure time in seconds as
-        an int or a float, e.g., ``exptime=600`` selects 10-minute cadence.
-        By default, all cadence modes are returned.
-    cadence : 'long', 'short', 'fast', or float
-        Synonym for `exptime`. Will likely be deprecated in the future.
-    mission : str, tuple of str
-        'Kepler', 'K2', or 'TESS'. By default, all will be returned.
-    author : str, tuple of str, or "any"
-        Author of the data product (`provenance_name` in the MAST API).
-        Official Kepler, K2, and TESS pipeline products have author names
-        'Kepler', 'K2', and 'SPOC'.
-        By default, all light curves are returned regardless of the author.
-    quarter, campaign, sector : int, list of ints
-        Kepler Quarter, K2 Campaign, or TESS Sector number.
-        By default all quarters/campaigns/sectors will be returned.
-    month : 1, 2, 3, 4 or list of int
-        For Kepler's prime mission, there are three short-cadence
-        TargetPixelFiles for each quarter, each covering one month.
-        Hence, if ``exptime='short'`` you can specify month=1, 2, 3, or 4.
-        By default all months will be returned.
-    limit : int
-        Maximum number of products to return.
-
-    Returns
-    -------
-    result : :class:`SearchResult` object
-        Object detailing the data products found.
-
-    Examples
-    --------
-    This example demonstrates how to use the `search_targetpixelfile()` function
-    to query and download data. Before instantiating a
-    `~lightkurve.targetpixelfile.KeplerTargetPixelFile` object or
-    downloading any science products, we can identify potential desired targets
-    with `search_targetpixelfile()`::
-
-        >>> search_result = search_targetpixelfile('Kepler-10')  # doctest: +SKIP
-        >>> print(search_result)  # doctest: +SKIP
-
-    The above code will query mast for Target Pixel Files (TPFs) available for
-    the known planet system Kepler-10, and display a table containing the
-    available science products. Because Kepler-10 was observed during 15 Quarters,
-    the table will have 15 entries. To obtain a
-    `~lightkurve.collections.TargetPixelFileCollection` object containing all
-    15 observations, use::
-
-        >>> search_result.download_all()  # doctest: +SKIP
-
-    or we can download a single product by limiting our search::
-
-        >>> tpf = search_targetpixelfile('Kepler-10', quarter=2).download()  # doctest: +SKIP
-
-    The above line of code will only download Quarter 2 and create a single
-    `~lightkurve.targetpixelfile.KeplerTargetPixelFile` object called `tpf`.
-
-    We can also pass a radius into `search_targetpixelfile` to perform a cone search::
-
-        >>> search_targetpixelfile('Kepler-10', radius=100).targets  # doctest: +SKIP
-
-    This will display a table containing all targets within 100 arcseconds of Kepler-10.
-    We can download a `~lightkurve.collections.TargetPixelFileCollection` object
-    containing all available products for these targets in Quarter 4 with::
-
-        >>> search_targetpixelfile('Kepler-10', radius=100, quarter=4).download_all()  # doctest: +SKIP
-    """
+    
     try:
         return _search_products(
             target,
             radius=radius,
-            filetype="Target Pixel",
+            filetype=product,
             exptime=exptime or cadence,
             mission=mission,
             provenance_name=author,
@@ -719,27 +688,31 @@ def search_targetpixelfile(
         log.error(exc)
         return SearchResult(None)
 
-
 @deprecated(
-    "2.0", alternative="search_lightcurve()", warning_type=LightkurveDeprecationWarning
+    "2.0", alternative="search_timeseries()", warning_type=LightkurveDeprecationWarning
 )
 def search_lightcurvefile(*args, **kwargs):
     return search_lightcurve(*args, **kwargs)
 
+@deprecated(
+    "2.0", alternative="search_timeseries()", warning_type=LightkurveDeprecationWarning
+)
+def search_lightcurve(*args, **kwargs):
+    return search_timeseries(*args, **kwargs)
 
 @cached
-def search_lightcurve(
-    target,
-    radius=None,
-    exptime=None,
-    cadence=None,
-    mission=("Kepler", "K2", "TESS"),
-    author=None,
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+def search_timeseries(
+    target:  Union[str, int, SkyCoord],
+    radius:  Union[float, u.Quantity] = None,
+    exptime:  Union[str, int, tuple] = None,
+    cadence: Union[str, int, tuple] = None,
+    mission: Union[str, tuple] = ("Kepler", "K2", "TESS"),
+    author:  Union[str, tuple] = None,
+    quarter:  Union[int, list[int]] = None,
+    month:    Union[int, list[int]] = None,
+    campaign: Union[int, list[int]] = None,
+    sector:   Union[int, list[int]] = None,
+    limit:    int = None,
 ):
     """Search the `MAST data archive <https://archive.stsci.edu>`_ for light curves.
 
@@ -859,54 +832,18 @@ def search_lightcurve(
         return SearchResult(None)
 
 
-@cached
-def search_tesscut(target, sector=None):
-    """Search the `MAST TESSCut service <https://mast.stsci.edu/tesscut/>`_ for a region
-    of sky that is available as a TESS Full Frame Image cutout.
-
-    This feature uses the `TESScut service <https://mast.stsci.edu/tesscut/>`_
-    provided by the TESS data archive at MAST.  If you use this service in
-    your work, please `cite TESScut <https://ascl.net/code/v/2239>`_ in your
-    publications.
-
-    Parameters
-    ----------
-    target : str, int, or `astropy.coordinates.SkyCoord` object
-        Target around which to search. Valid inputs include:
-
-            * The name of the object as a string, e.g. "Kepler-10".
-            * The KIC or EPIC identifier as an integer, e.g. 11904151.
-            * A coordinate string in decimal format, e.g. "285.67942179 +50.24130576".
-            * A coordinate string in sexagesimal format, e.g. "19:02:43.1 +50:14:28.7".
-            * An `astropy.coordinates.SkyCoord` object.
-    sector : int or list
-        TESS Sector number. Default (None) will return all available sectors. A
-        list of desired sectors can also be provided.
-
-    Returns
-    -------
-    result : :class:`SearchResult` object
-        Object detailing the data products found.
-    """
-    try:
-        return _search_products(target, filetype="ffi", mission="TESS", sector=sector)
-    except SearchError as exc:
-        log.error(exc)
-        return SearchResult(None)
-
-
 def _search_products(
-    target,
-    radius=None,
-    filetype="Lightcurve",
-    mission=("Kepler", "K2", "TESS"),
-    provenance_name=None,
-    exptime=(0, 9999),
-    quarter=None,
-    month=None,
-    campaign=None,
-    sector=None,
-    limit=None,
+    target : Union[str, SkyCoord],
+    radius : Union[float, u.Quantity] = None,
+    filetype : Union[str, list[str]] = "Lightcurve",
+    mission : Union[str, list[str]] = ("Kepler", "K2", "TESS"),
+    provenance_name : Union[str, list[str]] = None,
+    exptime : Union[float, tuple[float]]=(0, 9999),
+    quarter : Union[int, list[int]] = None,
+    month : Union[int, list[int]] = None,
+    campaign : Union[int, list[int]] = None,
+    sector : Union[int, list[int]] = None,
+    limit : int = None,
     **extra_query_criteria,
 ):
     """Helper function which returns a SearchResult object containing MAST
@@ -914,7 +851,7 @@ def _search_products(
 
     Parameters
     ----------
-    target : str, int, or `astropy.coordinates.SkyCoord` object
+    target : string or `astropy.coordinates.SkyCoord` object
         See docstrings above.
     radius : float or `astropy.units.Quantity` object
         Conesearch radius.  If a float is given it will be assumed to be in
@@ -937,6 +874,7 @@ def _search_products(
     quarter, campaign, sector : int, list of ints
         Kepler Quarter, K2 Campaign, or TESS Sector number.
         By default all quarters/campaigns/sectors will be returned.
+        Only quarter OR campain OR sector can be provided for a given search
     month : 1, 2, 3, 4 or list of int
         For Kepler's prime mission, there are three short-cadence
         TargetPixelFiles for each quarter, each covering one month.
@@ -950,26 +888,26 @@ def _search_products(
     SearchResult : :class:`SearchResult` object.
     """
     if isinstance(target, int):
-        if (0 < target) and (target < 13161030):
-            log.warning(
-                "Warning: {} may refer to a different Kepler or TESS target. "
-                "Please add the prefix 'KIC' or 'TIC' to disambiguate."
-                "".format(target)
-            )
-        elif (0 < 200000000) and (target < 251813739):
-            log.warning(
-                "Warning: {} may refer to a different K2 or TESS target. "
-                "Please add the prefix 'EPIC' or 'TIC' to disambiguate."
-                "".format(target)
-            )
-
+        raise TypeError("Target must be a target name string or astropy coordinate object")
     # Specifying quarter, campaign, or quarter should constrain the mission
+    # Can we specify multiple?   No, throw an error if so
+
+    if [bool(quarter), 
+        bool(campaign),
+        bool(sector)].count(True) > 1:
+       raise LightkurveError("Ambiguity Error; multiple quarter/campaign/sector specified accross different missions."
+                    "If searching for specific data across different missions, perform separate searches")
+
+    # if a quarter/campaign/sector is specified, search only that mission
     if quarter is not None:
         mission = "Kepler"
     if campaign is not None:
         mission = "K2"
     if sector is not None:
         mission = "TESS"
+
+    sequence = quarter or campaign or sector
+
     # Ensure mission is a list
     mission = np.atleast_1d(mission).tolist()
 
@@ -978,94 +916,122 @@ def _search_products(
         provenance_name = None
     else:
         provenance_name = np.atleast_1d(provenance_name).tolist()
+    if provenance_name is not None:
+         # If author "TESS" is used, we assume it is SPOC
+         provenance_name = np.unique(
+             [p if p.lower() != "tess" else "SPOC" for p in provenance_name]
+         ).tolist()
 
     # Speed up by restricting the MAST query if we don't want FFI image data
-    extra_query_criteria = {}
-    if filetype in ["Lightcurve", "Target Pixel"]:
-        # At MAST, non-FFI Kepler pipeline products are known as "cube" products,
-        # and non-FFI TESS pipeline products are listed as "timeseries".
-        extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
-    # Make sure `search_tesscut` always performs a cone search (i.e. always
-    # passed a radius value), because strict target name search does not apply.
-    if filetype.lower() == "ffi" and radius is None:
-        radius = 0.0001 * u.arcsec
+    # At MAST, non-FFI Kepler pipeline products are known as "cube" products,
+    # and non-FFI TESS pipeline products are listed as "timeseries".
+    # NEW CHANGE - we're speeding this up by not including TESS FFI images in the search.  
+    # We will handle them separately using something else (tesswcs?  tesspoint?)
+    # Also the above is written like FFI kepler products exist, but I don't think they do?
+
+    extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
+    
+    # Query Mast to get a list of observations
+    
     observations = _query_mast(
         target,
         radius=radius,
         project=mission,
         provenance_name=provenance_name,
         exptime=exptime,
-        sequence_number=campaign or sector,
+        sequence_number=sequence,
         **extra_query_criteria,
     )
     log.debug(
-        "MAST found {} observations. "
+        f"MAST found {len(observations)} observations. "
         "Now querying MAST for the corresponding data products."
-        "".format(len(observations))
     )
     if len(observations) == 0:
-        raise SearchError('No data found for target "{}".'.format(target))
+        raise SearchError(f"No data found for target {target}.")
 
-    # Light curves and target pixel files
-    if filetype.lower() != "ffi":
+    #First, define empty dataframes to simplify our join between ffi & TPF later
+    masked_result = pd.DataFrame()
+    ffi_result = pd.DataFrame()
+
+    # Light curves and target pixel files have similar query structure
+    if  set(["Lightcurve", "Target Pixel"]) & set(np.atleast_1d(filetype)):
         from astroquery.mast import Observations
 
         products = Observations.get_product_list(observations)
-        result = join(
+
+                
+        joint_table = join(
             observations,
             products,
-            keys="obs_id",
+            keys="obs_id",#in Kepler, K2 this was parent_id at one point not obs_id
+            #keys_left="obsid", 
+            #keys_right="parent_obsid",
             join_type="right",
             uniq_col_name="{col_name}{table_name}",
             table_names=["", "_products"],
         )
-        result.sort(["distance", "obs_id"])
+
+
+        joint_table = joint_table.to_pandas()
 
         # Add the user-friendly 'author' column (synonym for 'provenance_name')
-        result["author"] = result["provenance_name"]
+        joint_table["author"] = joint_table["provenance_name"]
         # Add the user-friendly 'mission' column
-        result["mission"] = None
+        joint_table["mission"] = None
         obs_prefix = {"Kepler": "Quarter", "K2": "Campaign", "TESS": "Sector"}
-        for idx in range(len(result)):
-            obs_project = result["project"][idx]
-            tmp_seqno = result["sequence_number"][idx]
-            obs_seqno = f"{tmp_seqno:02d}" if tmp_seqno else ""
-            # Kepler sequence_number values were not populated at the time of
-            # writing this code, so we parse them from the description field.
-            if obs_project == "Kepler" and result["sequence_number"].mask[idx]:
-                try:
-                    tmp_seqno = re.findall(r".*Q(\d+)", result["description"][idx])[0]
-                    obs_seqno = f"{int(tmp_seqno):02d}"
-                except IndexError:
-                    obs_seqno = ""
-            # K2 campaigns 9, 10, and 11 were split into two sections, which are
-            # listed separately in the table with suffixes "a" and "b"
-            if obs_project == "K2" and result["sequence_number"][idx] in [9, 10, 11]:
-                for half, letter in zip([1, 2], ["a", "b"]):
-                    if f"c{tmp_seqno}{half}" in result["productFilename"][idx]:
-                        obs_seqno = f"{int(tmp_seqno):02d}{letter}"
-            result["mission"][idx] = "{} {} {}".format(
-                obs_project, obs_prefix.get(obs_project, ""), obs_seqno
-            )
+
+        #Carry over all sequence numbers where they exist
+        seq_num = joint_table["sequence_number"].values.astype(str)
+
+        mask = joint_table["sequence_number"].notna()
+        seq_num[mask] = [f"{item[0]:02d}" if item else "" for item in joint_table.loc[mask,["sequence_number"]].values]
+
+        # Kepler sequence_number values were not populated at the time of
+        # writing this code, so we parse them from the description field.
+        mask = ((joint_table["project"] == "Kepler") &
+                joint_table["sequence_number"].isna())
+        re_expr = r".*Q(\d+)"
+        seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in joint_table.loc[mask,["description"]].values]
+        
+        # K2 campaigns 9, 10, and 11 were split into two sections, which are
+        # listed separately in the table with suffixes "a" and "b"        
+        mask = ((joint_table["project"] == "K2") & 
+                (joint_table["sequence_number"].values.isin([9, 10, 11])))
+        
+        for index, row in joint_table[mask].iterrows():
+            for half, letter in zip([1,2],["a","b"]):
+                if f"c{row['sequence_number']}{half}" in row["productFilename"]:
+                    seq_num[index] = f"{int(row['sequence_number']):02d}{letter}"
+
+        joint_table["mission"] = [f" {proj} {obs_prefix.get(pref, '')} {seq}" 
+                                  for proj, pref, seq in zip(
+                                      joint_table['project'], 
+                                      joint_table['project'].values.astype(str),
+                                      seq_num)]
 
         masked_result = _filter_products(
-            result,
+            joint_table,
             filetype=filetype,
             campaign=campaign,
             quarter=quarter,
+            sector=sector,
             exptime=exptime,
             project=mission,
             provenance_name=provenance_name,
             month=month,
-            sector=sector,
             limit=limit,
         )
-        log.debug("MAST found {} matching data products.".format(len(masked_result)))
-        masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
-        return SearchResult(masked_result)
+        print(masked_result)
+        log.debug(f"MAST found {len(masked_result)} matching data products.")
+        #masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
 
-    # Full Frame Images
-    else:
+    # Full Frame Images - build this from the querry table
+    if any(['ffi' in ftype.lower() for ftype in filetype]):
+    # Make sure `search_tesscut` always performs a cone search (i.e. always
+    # passed a radius value), because strict target name search does not apply.
+        if radius is None:
+            radius = 0.0001 * u.arcsec
+
         cutouts = []
         for idx in np.where(["TESS FFI" in t for t in observations["target_name"]])[0]:
             # if target passed in is a SkyCoord object, convert to RA, dec pair
@@ -1094,19 +1060,28 @@ def _search_products(
                 )
         if len(cutouts) > 0:
             log.debug("Found {} matching cutouts.".format(len(cutouts)))
-            masked_result = Table(cutouts)
-            masked_result.sort(["distance", "sequence_number"])
-        else:
-            masked_result = None
-        return SearchResult(masked_result)
+            ffi_result = Table(cutouts)
+            ffi_result = ffi_result.to_pandas()
+
+
+    query_result = pd.concat((masked_result,
+                              ffi_result)).sort_values(["distance", 
+                                                        "obsid", 
+                                                        "sequence_number"])
+    
+    # Add in the start and end times for each observation
+    if query_result is not None:
+         query_result["start_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']])
+         query_result["end_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_max']])
+    return(SearchResult(query_result))
 
 def _query_mast(
     target: Union[str, SkyCoord],
     radius: Union[float, u.Quantity, None] = None,
-    project: Union[str, List[str]] = ["Kepler", "K2", "TESS"],
-    provenance_name: Union[str, List[str], None] = None,
+    project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
+    provenance_name: Union[str, list[str], None] = None,
     exptime: Union[int, float, tuple] = (0, 9999),
-    sequence_number: Union[int, List[int], None] = None,
+    sequence_number: Union[int, list[int], None] = None,
     **extra_query_criteria,
 
 ) -> Table:
@@ -1124,7 +1099,7 @@ def _query_mast(
         Conesearch radius.  If a float is given it will be assumed to be in
         units of arcseconds.  If `None` then we default to 0.0001 arcsec.
     project : str, list of str
-        Mission name.  Typically 'Kepler', 'K2', or 'TESS'.
+        Mission name.  Typically 'Kepler', 'K2', and/or 'TESS'.
         This parameter is case-insensitive.
     provenance_name : str, list of str
         Provenance of the observation.  Common options include 'Kepler', 'K2',
@@ -1151,7 +1126,11 @@ def _query_mast(
 
     # If passed a SkyCoord, convert it to an "ra, dec" string for MAST
     if isinstance(target, SkyCoord):
-        target = "{}, {}".format(target.ra.deg, target.dec.deg)
+        target = f"{target.ra.deg}, {target.dec.deg}"
+    
+    # exptime must be a range, so if int change a tuple 
+    if isinstance(exptime, int):
+        exptime = (exptime, exptime)
 
     # We pass the following `query_criteria` to MAST regardless of whether
     # we search by position or target name:
@@ -1163,8 +1142,10 @@ def _query_mast(
     if exptime is not None:
         query_criteria["t_exptime"] = exptime
 
-    # If an exact KIC ID is passed, we will search by the exact `target_name`
-    # under which MAST will know the object to prevent source confusion.
+
+    # If an exact Mission ID (KIC, TIC, EPIC) is passed, we can search 
+    #by the exact `target_name' under which MAST will know the object 
+    # to prevent source confusion.
     # For discussion, see e.g. GitHub issues #148, #718.
     exact_target_name = None
     target_lower = str(target).lower()
@@ -1193,7 +1174,7 @@ def _query_mast(
                 target_name=exact_target_name, **query_criteria
             )
         if len(obs) > 0:
-            # We use `exptime` as an alias for `t_exptime`
+            # We use `exptime` as a convenient alias for `t_exptime`
             obs["exptime"] = obs["t_exptime"]
             # astroquery does not report distance when querying by `target_name`;
             # we add it here so that the table returned always has this column.
@@ -1202,7 +1183,7 @@ def _query_mast(
         else:
             log.debug(f"No observations found. Now performing a cone search instead.")
 
-    # If the above did not return a result, then do a cone search using the MAST name resolver
+    # Only if the above did not return a result, do a cone search using the MAST name resolver
     # `radius` defaults to 0.0001 and unit arcsecond
     if radius is None:
         radius = 0.0001 * u.arcsec
@@ -1220,7 +1201,7 @@ def _query_mast(
             warnings.filterwarnings("ignore", message="t_exptime is continuous")
             obs = Observations.query_criteria(objectname=target, **query_criteria)
         obs.sort("distance")
-        # We use `exptime` as an alias for `t_exptime`
+        # We use `exptime` as a convenient alias for `t_exptime`
         obs["exptime"] = obs["t_exptime"]
         return obs
     except ResolverError as exc:
@@ -1230,23 +1211,23 @@ def _query_mast(
 
 def _filter_products(
     products,
-    campaign=None,
-    quarter=None,
-    month=None,
-    sector=None,
-    exptime=None,
-    limit=None,
+    campaign: Union[int, list[int]] = None,
+    quarter: Union[int, list[int]] = None,
+    month: Union[int, list[int]]=None,
+    sector: Union[int, list[int]] = None,
+    exptime: Union[str, int, tuple[int]] = None,
+    limit: int =None,
     project=("Kepler", "K2", "TESS"),
     provenance_name=None,
     filetype="Target Pixel",
-):
+) -> pd.DataFrame:
     """Helper function which filters a SearchResult's products table by one or
     more criteria.
 
     Parameters
     ----------
-    products : `astropy.table.Table` object
-        Astropy table containing data products returned by MAST
+    products : `pandas.DataFrame` object
+        Pandas dataframe containing data products returned by MAST
     campaign : int or list
         Desired campaign of observation for data products
     quarter : int or list
@@ -1257,17 +1238,22 @@ def _filter_products(
         'long' selects 10-min and 30-min cadence products;
         'short' selects 1-min and 2-min products;
         'fast' selects 20-sec products.
-        Alternatively, you can pass the exact exposure time in seconds as
-        an int or a float, e.g., ``exptime=600`` selects 10-minute cadence.
+        Alternatively, you can pass the exact exposure time or range of exposure times
+        in seconds 
+            e.g., ``exptime=600`` selects 10-minute cadence.
+            exptime= (120,600) selects anything between 2 and 10 minutes
         By default, all cadence modes are returned.
     filetype : str
         Type of files queried at MAST (`Target Pixel` or `Lightcurve`).
+    limit: int
+        Max number of data products to return 
 
     Returns
     -------
-    products : `astropy.table.Table` object
+    products : pandas dataframe object
         Masked astropy table containing desired data products
     """
+
     if provenance_name is None:  # apply all filters
         provenance_lower = ("kepler", "k2", "spoc")
     else:
@@ -1279,6 +1265,7 @@ def _filter_products(
     mask &= ~np.array(
         [prov.lower() == "kepler" for prov in products["provenance_name"]]
     )
+
     if "kepler" in provenance_lower and campaign is None and sector is None:
         mask |= _mask_kepler_products(products, quarter=quarter, month=month)
 
@@ -1310,7 +1297,7 @@ def _filter_products(
 
     products = products[mask]
 
-    products.sort(["distance", "productFilename"])
+    products.sort_values(by=["distance", "productFilename"])
     if limit is not None:
         return products[0:limit]
     return products
@@ -1318,29 +1305,26 @@ def _filter_products(
 
 def _mask_kepler_products(products, quarter=None, month=None):
     """Returns a mask flagging the Kepler products that match the criteria."""
-    mask = np.array([proj.lower() == "kepler" for proj in products["provenance_name"]])
-    if mask.sum() == 0:
+    #mask = np.array([proj.lower() == "kepler" for proj in products["provenance_name"]])
+    mask = products['provenance_name'].str.lower() == 'kepler' 
+    if sum(mask) == 0:
         return mask
 
     # Identify quarter by the description.
     # This is necessary because the `sequence_number` field was not populated
     # for Kepler prime data at the time of writing this function.
+    
     if quarter is not None:
         quarter_mask = np.zeros(len(products), dtype=bool)
         for q in np.atleast_1d(quarter):
-            quarter_mask |= np.array(
-                [
-                    desc.lower().replace("-", "").endswith("q{}".format(q))
-                    for desc in products["description"]
-                ]
-            )
+            quarter_mask += products['description'].str.endswith(f"Q{q}")
         mask &= quarter_mask
 
     # For Kepler short cadence data the month can be specified
     if month is not None:
         month = np.atleast_1d(month)
         # Get the short cadence date lookup table.
-        table = ascii.read(
+        table = pd.read_csv(
             os.path.join(PACKAGEDIR, "data", "short_cadence_month_lookup.csv")
         )
         # The following line is needed for systems where the default integer type
@@ -1349,45 +1333,34 @@ def _mask_kepler_products(products, quarter=None, month=None):
         table["StartTime"] = table["StartTime"].astype(str)
         # Grab the dates of each of the short cadence files.
         # Make sure every entry has the correct month
-        is_shortcadence = mask & np.asarray(
-            ["Short" in desc for desc in products["description"]]
-        )
+        is_shortcadence = mask & products['description'].str.contains("Short")
+
         for idx in np.where(is_shortcadence)[0]:
-            quarter = int(
-                products["description"][idx].split(" - ")[-1][1:].replace("-", "")
-            )
-            date = products["dataURI"][idx].split("/")[-1].split("-")[1].split("_")[0]
-            permitted_dates = []
-            for m in month:
-                try:
-                    permitted_dates.append(
-                        table["StartTime"][
-                            np.where(
-                                (table["Month"] == m) & (table["Quarter"] == quarter)
-                            )[0][0]
-                        ]
-                    )
-                except IndexError:
-                    pass
-            if not (date in permitted_dates):
+            quarter = np.atleast_1d(int(products["description"][idx].split(" - ")[-1].replace("-", "")[1:]))
+            date = products['dataURI'][idx].split("/")[-1].split("-")[1].split("_")[0]
+            # Check if the observation date matches the specified Quarter/month from the lookup table
+            if date not in table["StartTime"][table['Month'].isin(month) & table['Quarter'].isin(quarter)].values:
                 mask[idx] = False
 
     return mask
 
 
 def _mask_by_exptime(products, exptime):
-    """Helper function to filter by exposure time."""
+    """Helper function to filter by exposure time.
+       Returns a boolean array """
     mask = np.ones(len(products), dtype=bool)
     if isinstance(exptime, (int, float)):
         mask &= products["exptime"] == exptime
+    elif isinstance(exptime, tuple):
+        mask &= (products["exptime"] >= min(exptime) & (products["exptime"] <= max(exptime)))
     elif isinstance(exptime, str):
         exptime = exptime.lower()
         if exptime in ["fast"]:
-            mask &= products["exptime"] < 60
+            mask &= products["exptime"] <= 60
         elif exptime in ["short"]:
-            mask &= (products["exptime"] >= 60) & (products["exptime"] < 300)
+            mask &= (products["exptime"] > 60) & (products["exptime"] <= 120)
         elif exptime in ["long", "ffi"]:
-            mask &= products["exptime"] >= 300
+            mask &= products["exptime"] > 120
     return mask
 
 
