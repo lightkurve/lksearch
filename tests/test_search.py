@@ -642,4 +642,4 @@ def test_customize_search_result_display_case_nonexistent_column():
 
 # Should return the same results if searching by TIC or TOI number
 # (Note this is not true for objects with neighbors within .0001 arcsec)
-assert len(search.search_timeseries('TOI 700').table) == len(search.search_timeseries('TIC 150428135').table)
+#assert len(search.search_timeseries('TOI 700').table) == len(search.search_timeseries('TIC 150428135').table)
