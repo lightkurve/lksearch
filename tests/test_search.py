@@ -21,6 +21,8 @@ import lightkurve as lk
 from pathlib import Path
 from astropy.utils.data import get_pkg_data_filename
 
+import shutil
+
 from lightkurve.utils import LightkurveWarning, LightkurveError
 from src.newlk_search.search import (
     search_lightcurve,
