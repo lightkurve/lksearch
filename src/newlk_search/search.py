@@ -331,15 +331,15 @@ class SearchResult(object):
             download_dir = self._default_download_dir()
 
         # if the SearchResult row is a TESScut entry, then download cutout
-        if "FFI Cutout" in table[0]["description"]:
+        if "FFI Cutout" in table["description"]:
             try:
                 log.debug(
                     "Started downloading TESSCut for '{}' sector {}."
-                    "".format(table[0]["target_name"], table[0]["sequence_number"])
+                    "".format(table["target_name"], table["sequence_number"])
                 )
                 path = self._fetch_tesscut_path(
-                    table.loc[0]["target_name"],
-                    table.loc[0]["sequence_number"],
+                    table["target_name"],
+                    table["sequence_number"],
                     download_dir,
                     cutout_size,
                 )
@@ -361,7 +361,7 @@ class SearchResult(object):
                     )
 
             return read(
-                path, quality_bitmask=quality_bitmask, targetid=table.loc[0]["targetid"]
+                path, quality_bitmask=quality_bitmask, targetid=table["targetid"]
             )
 
         else:
@@ -382,20 +382,20 @@ class SearchResult(object):
             path = os.path.join(
                 download_dir.rstrip("/"),
                 "mastDownload",
-                table["obs_collection"][0],
-                table["obs_id"][0],
-                table["productFilename"][0],
+                table["obs_collection"],
+                table["obs_id"],
+                table["productFilename"],
             )
             if os.path.exists(path):
                 log.debug("File found in local cache.")
             else:
                 from astroquery.mast import Observations
 
-                download_url = table[:1]["dataURI"][0]
+                download_url = table["dataURI"]
                 log.debug("Started downloading {}.".format(download_url))
                 download_response = Observations.download_products(
-                    table[:1], mrp_only=False, download_dir=download_dir
-                )[0]
+                    table, mrp_only=False, download_dir=download_dir
+                )
                 if download_response["Status"] != "COMPLETE":
                     raise LightkurveError(
                         f"Download of {download_url} failed. "
@@ -479,7 +479,7 @@ class SearchResult(object):
             )
 
         return self._download_one(
-            table=self.table[:1],
+            table=self.table.iloc[0],
             quality_bitmask=quality_bitmask,
             download_dir=download_dir,
             cutout_size=cutout_size,
@@ -545,12 +545,11 @@ class SearchResult(object):
             )
             return None
         log.debug("{} files will be downloaded.".format(len(self.table)))
-
         products = []
-        for idx in range(len(self.table)):
+        for _ , row in self.table.iterrows():
             products.append(
                 self._download_one(
-                    table=self.table[idx : idx + 1],
+                    table=row,
                     quality_bitmask=quality_bitmask,
                     download_dir=download_dir,
                     cutout_size=cutout_size,
@@ -614,8 +613,8 @@ class SearchResult(object):
 
         # search cache for file with matching ra, dec, and cutout size
         # ra and dec are searched within 0.001 degrees of input target
-        ra_string = str(coords.ra.value)
-        dec_string = str(coords.dec.value)
+        ra_string = str(coords.ra.values)
+        dec_string = str(coords.dec.values)
         matchstring = r"{}_{}*_{}*_{}_astrocut.fits".format(
             sector_name,
             ra_string[: ra_string.find(".") + 4],

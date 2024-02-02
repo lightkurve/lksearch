@@ -404,7 +404,7 @@ def test_mast_http_error_handling(monkeypatch):
     from astroquery.mast import Observations
 
     result = search_timeseries("TIC 273985862", mission="TESS")
-    remote_url = result.table[0]["dataURI"]
+    remote_url = result.table.loc[0,"dataURI"]
 
     def mock_http_error_response(*args, **kwargs):
         """Mock the `download_product()` response to simulate MAST returns HTTP error"""
