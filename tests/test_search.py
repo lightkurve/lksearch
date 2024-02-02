@@ -25,9 +25,9 @@ import shutil
 
 from lightkurve.utils import LightkurveWarning, LightkurveError
 from src.newlk_search.search import (
-    search_lightcurve,
-    search_targetpixelfile,
-    search_tesscut,
+    search_timeseries,
+    search_cubedata,
+    #search_tesscut,
     SearchError,
     SearchResult,
     log,
@@ -58,7 +58,7 @@ def remove_custom_config():
 #@pytest.mark.remote_data
 def test_search_targetpixelfile():
     # EPIC 210634047 was observed twice in long cadence
-    assert len(search_targetpixelfile("EPIC 210634047", mission="K2").table) == 2
+    assert len(search_cubedata("EPIC 210634047", mission="K2").table) == 2
     # ...including Campaign 4
     assert (
         len(search_targetpixelfile("EPIC 210634047", mission="K2", campaign=4).table)
@@ -551,7 +551,7 @@ def test_qlp_ffi_lightcurve():
     search = search_lightcurve("TrES-2b", sector=26, author="qlp")
     assert len(search) == 1
     assert search.author[0] == "QLP"
-    assert search.exptime[0] == 30 * u.minute  # Sector 26 had 30-minute FFIs
+    assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
     lc = search.download()
     all(lc.flux == lc.kspsap_flux)
 
@@ -562,7 +562,7 @@ def test_spoc_ffi_lightcurve():
     search = search_lightcurve("TrES-2b", sector=26, author="tess-spoc")
     assert len(search) == 1
     assert search.author[0] == "TESS-SPOC"
-    assert search.exptime[0] == 30 * u.minute  # Sector 26 had 30-minute FFIs
+    assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
     lc = search.download()
     all(lc.flux == lc.pdcsap_flux)
 
@@ -630,7 +630,7 @@ def test_customize_search_result_display_case_nonexistent_column():
     # One typical case is that some columns are in the result of
     # search_lightcurve() / search_targetpixelfile(), but not in those of search_tesscut()
 
-    search = search_lightcurve("TIC390021728")
+    search = search_timeseries("TIC390021728")
     search.display_extra_columns = ['foo_col']
     assert 'foo_col' not in search.__repr__()
 

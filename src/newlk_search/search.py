@@ -661,7 +661,7 @@ def search_cubedata(
     exptime:  Union[str, int, tuple] = None,
     cadence: Union[str, int, tuple] = None,
     mission: Union[str, tuple] = ("Kepler", "K2", "TESS"),
-    product: Union[str, tuple[str]] = ("Target Pixel","ffi"),
+    filetype: Union[str, list[str]] = ("Target Pixel","ffi"),
     author:  Union[str, tuple] = None,
     quarter:  Union[int, list[int]] = None,
     month:    Union[int, list[int]] = None,
@@ -674,7 +674,7 @@ def search_cubedata(
         return _search_products(
             target,
             radius=radius,
-            filetype=product,
+            filetype=filetype,
             exptime=exptime or cadence,
             mission=mission,
             provenance_name=author,
@@ -929,7 +929,7 @@ def _search_products(
     # We will handle them separately using something else (tesswcs?  tesspoint?)
     # Also the above is written like FFI kepler products exist, but I don't think they do?
 
-    extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
+   #extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
     
     # Query Mast to get a list of observations
     
@@ -1005,7 +1005,7 @@ def _search_products(
                 if f"c{row['sequence_number']}{half}" in row["productFilename"]:
                     seq_num[index] = f"{int(row['sequence_number']):02d}{letter}"
 
-        joint_table["mission"] = [f" {proj} {obs_prefix.get(pref, '')} {seq}" 
+        joint_table["mission"] = [f"{proj} {obs_prefix.get(pref, '')} {seq}" 
                                   for proj, pref, seq in zip(
                                       joint_table['project'], 
                                       joint_table['project'].values.astype(str),
@@ -1023,7 +1023,6 @@ def _search_products(
             month=month,
             limit=limit,
         )
-        print(masked_result)
         log.debug(f"MAST found {len(masked_result)} matching data products.")
         #masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
 
@@ -1273,18 +1272,19 @@ def _filter_products(
         mask |= _mask_kepler_products(products, quarter=quarter, month=month)
 
     # HLSP products need to be filtered by extension
-    if filetype.lower() == "lightcurve":
+    if "lightcurve" in [x.lower() for x in np.atleast_1d(filetype)]:
         mask &= np.array(
             [uri.lower().endswith("lc.fits") for uri in products["productFilename"]]
         )
-    elif filetype.lower() == "target pixel":
+    # TODO:The elifs only allow for 1 type (target pixel or ffi), is that the behavior we want?
+    elif "target pixel" in [x.lower() for x in np.atleast_1d(filetype)]:
         mask &= np.array(
             [
                 uri.lower().endswith(("tp.fits", "targ.fits.gz"))
                 for uri in products["productFilename"]
             ]
         )
-    elif filetype.lower() == "ffi":
+    elif "ffi" in [x.lower() for x in np.atleast_1d(filetype)]::
         mask &= np.array(["TESScut" in desc for desc in products["description"]])
 
     # Allow only fits files
