@@ -643,7 +643,7 @@ class SearchResult(object):
 )
 def search_targetpixelfile(*args, **kwargs):
     product="Target Pixel"
-    return search_cubedata(*args,product=product, **kwargs)
+    return search_cubedata(*args,filetype=product, **kwargs)
 
 @deprecated(
     "2.0", alternative="search_cubedata()", warning_type=LightkurveDeprecationWarning
@@ -651,7 +651,7 @@ def search_targetpixelfile(*args, **kwargs):
 def search_tesscut(*args, **kwargs):
     product="ffi"
     mission="TESS"
-    return search_cubedata(*args,product=product,mission=mission, **kwargs)
+    return search_cubedata(*args,filetype=product,mission=mission, **kwargs)
 
 
 @cached
@@ -969,7 +969,6 @@ def _search_products(
             table_names=["", "_products"],
         )
 
-
         joint_table = joint_table.to_pandas()
 
 
@@ -1062,7 +1061,6 @@ def _search_products(
             ffi_result = Table(cutouts)
             ffi_result = ffi_result.to_pandas()
 
-
     query_result = pd.concat((masked_result,
                               ffi_result)).sort_values(["distance", 
                                                         "obsid", 
@@ -1132,7 +1130,6 @@ def _query_mast(
     if isinstance(exptime, int):
         exptime = (exptime, exptime)
     
-
     # We pass the following `query_criteria` to MAST regardless of whether
     # we search by position or target name:
     query_criteria = {"project": project, **extra_query_criteria}
@@ -1202,8 +1199,6 @@ def _query_mast(
             warnings.filterwarnings("ignore", message="t_exptime is continuous")
             obs = Observations.query_criteria(objectname=target, **query_criteria)
         obs.sort("distance")
-        print(obs)
-        print(query_criteria)
         # We use `exptime` as a convenient alias for `t_exptime`
         obs["exptime"] = obs["t_exptime"]
         return obs
@@ -1266,7 +1261,7 @@ def _filter_products(
 
     # Kepler data needs a special filter for quarter and month
     mask &= ~np.array(
-        [prov.lower() == "kepler" for prov in products["provenance_name"].values]
+        [str(prov).lower() == "kepler" for prov in products["provenance_name"]]
     )
 
     if "kepler" in provenance_lower and campaign is None and sector is None:
@@ -1317,7 +1312,6 @@ def _mask_kepler_products(products, quarter=None, month=None):
     # Identify quarter by the description.
     # This is necessary because the `sequence_number` field was not populated
     # for Kepler prime data at the time of writing this function.
-    print(f"Quarter:{quarter}")
     if quarter is not None:
         quarter_mask = np.zeros(len(products), dtype=bool)
         for q in np.atleast_1d(quarter).tolist():
