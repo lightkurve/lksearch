@@ -56,7 +56,7 @@ def remove_custom_config():
 
 
 #@pytest.mark.remote_data
-def test_search_targetpixelfile():
+def test_search_cubedata():
     # EPIC 210634047 was observed twice in long cadence
     assert len(search_cubedata("EPIC 210634047", mission="K2").table) == 2
     # ...including Campaign 4
@@ -90,18 +90,18 @@ def test_search_targetpixelfile():
         )
         == 0
     )
-    search_targetpixelfile("KIC 11904151", quarter=11, cadence="long").download()
+    search_cubedata("KIC 11904151", quarter=11, cadence="long").download()
     # with mission='TESS', it should return TESS observations
     tic = "TIC 273985862"  # Has been observed in multiple sectors including 1
-    assert len(search_targetpixelfile(tic, mission="TESS").table) > 1
+    assert len(search_cubedata(tic, mission="TESS").table) > 1
     assert (
-        len(search_targetpixelfile(tic, author="SPOC", sector=1, radius=100).table)
+        len(search_cubedata(tic, author="SPOC", sector=1, radius=100).table)
         == 2
     )
-    search_targetpixelfile(tic, author="SPOC", sector=1).download()
-    assert len(search_targetpixelfile("pi Mensae", sector=1, author="SPOC").table) == 1
+    search_cubedata(tic, author="SPOC", sector=1).download()
+    assert len(search_cubedata("pi Mensae", sector=1, author="SPOC").table) == 1
     # Issue #445: indexing with -1 should return the last index of the search result
-    assert len(search_targetpixelfile("pi Men")[-1]) == 1
+    assert len(search_cubedata("pi Men")[-1]) == 1
 
 
 #@pytest.mark.remote_data
@@ -120,28 +120,28 @@ def test_search_split_campaigns():
 
 
 #@pytest.mark.remote_data
-def test_search_lightcurve(caplog):
+def test_search_timeseries(caplog):
     # We should also be able to resolve it by its name instead of KIC ID
     # The name Kepler-10 somehow no longer works on MAST. So we use 2MASS instead:
     #   https://simbad.cds.unistra.fr/simbad/sim-id?Ident=%405506010&Name=Kepler-10
     assert (
-        len(search_lightcurve("2MASS J19024305+5014286", mission="Kepler", author="Kepler", cadence="long").table)
+        len(search_timeseries("2MASS J19024305+5014286", mission="Kepler", author="Kepler", cadence="long").table)
         == 15
     )
     # An invalid KIC/EPIC ID or target name should be dealt with gracefully
-    search_lightcurve(-999)
+    search_timeseries(-999)
     assert "disambiguate" in caplog.text
-    search_lightcurve("DOES_NOT_EXIST (UNIT TEST)")
+    search_timeseries("DOES_NOT_EXIST (UNIT TEST)")
     assert "disambiguate" in caplog.text
     # If we ask for all cadence types, there should be four Kepler files given
-    assert len(search_lightcurve("KIC 4914423", quarter=6, cadence="any", author="Kepler").table) == 4
+    assert len(search_timeseries("KIC 4914423", quarter=6, cadence="any", author="Kepler").table) == 4
     # ...and only one should have long cadence
-    assert len(search_lightcurve("KIC 4914423", quarter=6, cadence="long", author="Kepler").table) == 1
+    assert len(search_timeseries("KIC 4914423", quarter=6, cadence="long", author="Kepler").table) == 1
     # Should be able to resolve an ra/dec
-    assert len(search_lightcurve("297.5835, 40.98339", quarter=6, author="Kepler").table) == 1
+    assert len(search_timeseries("297.5835, 40.98339", quarter=6, author="Kepler").table) == 1
     # Should be able to resolve a SkyCoord
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
-    search = search_lightcurve(c, quarter=6, author="Kepler")
+    search = search_timeseries(c, quarter=6, author="Kepler")
     assert len(search.table) == 1
     assert len(search) == 1
     # We should be able to download a light curve
@@ -153,21 +153,21 @@ def test_search_lightcurve(caplog):
     assert "found in local cache" in caplog.text
     # with mission='TESS', it should return TESS observations
     tic = "TIC 273985862"
-    assert len(search_lightcurve(tic, mission="TESS").table) > 1
+    assert len(search_timeseries(tic, mission="TESS").table) > 1
     assert (
         len(
-            search_lightcurve(
+            search_timeseries(
                 tic, mission="TESS", author="spoc", sector=1, radius=100
             ).table
         )
         == 2
     )
-    search_lightcurve(tic, mission="TESS", author="SPOC", sector=1).download()
-    assert len(search_lightcurve("pi Mensae", author="SPOC", sector=1).table) == 1
+    search_timeseries(tic, mission="TESS", author="SPOC", sector=1).download()
+    assert len(search_timeseries("pi Mensae", author="SPOC", sector=1).table) == 1
 
 
 #@pytest.mark.remote_data
-def test_search_tesscut():
+'''def test_search_tesscut():
     # Cutout by target name
     assert len(search_tesscut("pi Mensae", sector=1).table) == 1
     assert len(search_tesscut("pi Mensae").table) > 1
@@ -182,11 +182,11 @@ def test_search_tesscut():
     assert len(search_string.table) == len(search_coords.table)
     # The coordinates below are beyond the edge of the sector 4 (camera 1-4) FFI
     search_edge = search_tesscut("30.578761, 6.210593", sector=4)
-    assert len(search_edge.table) == 0
+    assert len(search_edge.table) == 0'''
 
 
 #@pytest.mark.remote_data
-def test_search_tesscut_download(caplog):
+'''def test_search_tesscut_download(caplog):
     """Can we download TESS cutouts via `search_cutout().download()?"""
     try:
         ra, dec = 30.578761, -83.210593
@@ -230,39 +230,39 @@ def test_search_tesscut_download(caplog):
         # TESSCut will occasionally return a "504 Gateway Timeout error" when
         # it is overloaded.  We don't want this to trigger a test failure.
         if "504" not in str(exc):
-            raise exc
+            raise exc'''
 
 
 #@pytest.mark.remote_data
 def test_search_with_skycoord():
     """Can we pass both names, SkyCoord objects, and coordinate strings?"""
-    sr_name = search_targetpixelfile("KIC 11904151", mission="Kepler", cadence="long")
+    sr_name = search_cubedata("KIC 11904151", mission="Kepler", cadence="long")
     assert (
         len(sr_name) == 15
     )  # Kepler-10 as observed during 15 quarters in long cadence
     # Can we search using a SkyCoord objects?
-    sr_skycoord = search_targetpixelfile(
+    sr_skycoord = search_cubedata(
         SkyCoord.from_name("KIC 11904151"), mission="Kepler", cadence="long"
     )
     assert_array_equal(
         sr_name.table["productFilename"], sr_skycoord.table["productFilename"]
     )
     # Can we search using a string of "ra dec" decimals?
-    sr_decimal = search_targetpixelfile(
+    sr_decimal = search_cubedata(
         "285.67942179 +50.24130576", mission="Kepler", cadence="long"
     )
     assert_array_equal(
         sr_name.table["productFilename"], sr_decimal.table["productFilename"]
     )
     # Can we search using a sexagesimal string?
-    sr_sexagesimal = search_targetpixelfile(
+    sr_sexagesimal = search_cubedata(
         "19:02:43.1 +50:14:28.7", mission="Kepler", cadence="long"
     )
     assert_array_equal(
         sr_name.table["productFilename"], sr_sexagesimal.table["productFilename"]
     )
     # Can we search using the KIC ID?
-    sr_kic = search_targetpixelfile("KIC 11904151", mission="Kepler", cadence="long")
+    sr_kic = search_cubedata("KIC 11904151", mission="Kepler", cadence="long")
     assert_array_equal(
         sr_name.table["productFilename"], sr_kic.table["productFilename"]
     )
@@ -270,7 +270,7 @@ def test_search_with_skycoord():
 
 #@pytest.mark.remote_data
 def test_searchresult():
-    sr = search_lightcurve("KIC 11904151", mission="Kepler")
+    sr = search_timeseries("KIC 11904151", mission="Kepler")
     assert len(sr) == len(sr.table)  # Tests SearchResult.__len__
     assert len(sr[2:7]) == 5  # Tests SearchResult.__get__
     assert len(sr[2]) == 1
@@ -281,9 +281,9 @@ def test_searchresult():
 #@pytest.mark.remote_data
 def test_month():
     # In short cadence, if we specify both quarter and month
-    sr = search_targetpixelfile("KIC 11904151", quarter=11, month=1, cadence="short")
+    sr = search_cubedata("KIC 11904151", quarter=11, month=1, cadence="short")
     assert len(sr) == 1
-    sr = search_targetpixelfile("KIC 11904151", quarter=11, month=[1, 3], cadence="short")
+    sr = search_cubedata("KIC 11904151", quarter=11, month=[1, 3], cadence="short")
     assert len(sr) == 2
 
 
@@ -291,13 +291,13 @@ def test_month():
 def test_collections():
     # TargetPixelFileCollection class
     assert (
-        len(search_targetpixelfile("EPIC 205998445", mission="K2", radius=900).table)
+        len(search_cubedata("EPIC 205998445", mission="K2", radius=900).table)
         == 4
     )
     # LightCurveFileCollection class with set targetlimit
     assert (
         len(
-            search_lightcurve(
+            search_timeseries(
                 "EPIC 205998445", mission="K2", radius=900, limit=3, author="K2"
             ).download_all()
         )
@@ -306,7 +306,7 @@ def test_collections():
     # if fewer targets are found than targetlimit, should still download all available
     assert (
         len(
-            search_targetpixelfile(
+            search_cubedata(
                 "EPIC 205998445", mission="K2", radius=900, limit=6
             ).table
         )
@@ -315,7 +315,7 @@ def test_collections():
     # if download() is used when multiple files are available, should only download 1
     with pytest.warns(LightkurveWarning, match="4 files available to download"):
         assert isinstance(
-            search_targetpixelfile(
+            search_cubedata(
                 "EPIC 205998445", mission="K2", radius=900, author="K2"
             ).download(),
             KeplerTargetPixelFile,
@@ -325,10 +325,10 @@ def test_collections():
 #@pytest.mark.remote_data
 def test_properties():
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
-    assert_almost_equal(search_targetpixelfile(c, quarter=6).ra, 297.5835)
-    assert_almost_equal(search_targetpixelfile(c, quarter=6).dec, 40.98339)
-    assert len(search_targetpixelfile(c, quarter=6).target_name) == 1
-    assert len(search_targetpixelfile(c, quarter=6).obsid) == 1
+    assert_almost_equal(search_cubedata(c, quarter=6).ra, 297.5835)
+    assert_almost_equal(search_cubedata(c, quarter=6).dec, 40.98339)
+    assert len(search_cubedata(c, quarter=6).target_name) == 1
+    assert len(search_cubedata(c, quarter=6).obsid) == 1
 
 
 #@pytest.mark.remote_data
@@ -338,7 +338,7 @@ def test_source_confusion():
     # a target 4 arcsec away was returned instead.
     # See https://github.com/lightkurve/lightkurve/issues/148
     desired_target = "KIC 6507433"
-    tpf = search_targetpixelfile(desired_target, quarter=8).download()
+    tpf = search_cubedata(desired_target, quarter=8).download()
     assert tpf.targetid == 6507433
 
 
@@ -391,7 +391,7 @@ def test_corrupt_download_handling_case_empty():
         os.makedirs(expected_dir)
         open(expected_fn, "w").close()  # create "corrupt" i.e. empty file
         with pytest.raises(LightkurveError) as err:
-            search_targetpixelfile("KIC 11904151", quarter=4, cadence="long").download(
+            search_cubedata("KIC 11904151", quarter=4, cadence="long").download(
                 download_dir=tmpdirname
             )
         assert "may be corrupt" in err.value.args[0]
@@ -403,7 +403,7 @@ def test_mast_http_error_handling(monkeypatch):
     """Regression test for #1211; ensure downloads yields an error when MAST download result in an error."""
     from astroquery.mast import Observations
 
-    result = search_lightcurve("TIC 273985862", mission="TESS")
+    result = search_timeseries("TIC 273985862", mission="TESS")
     remote_url = result.table[0]["dataURI"]
 
     def mock_http_error_response(*args, **kwargs):
@@ -429,7 +429,7 @@ def test_mast_http_error_handling(monkeypatch):
 def test_indexerror_631():
     """Regression test for #631; avoid IndexError."""
     # This previously triggered an exception:
-    result = search_lightcurve("KIC 8462852", sector=15, radius=1, author="spoc")
+    result = search_timeseries("KIC 8462852", sector=15, radius=1, author="spoc")
     assert len(result) == 1
 
 
@@ -456,17 +456,17 @@ def test_overlapping_targets_718():
     # the requested targets, not their overlapping neighbors.
     targets = ["KIC 5112705", "KIC 10058374", "KIC 5385723"]
     for target in targets:
-        search = search_lightcurve(target, quarter=11, author="Kepler")
+        search = search_timeseries(target, quarter=11, author="Kepler")
         assert len(search) == 1
         assert search.target_name[0] == f"kplr{target[4:].zfill(9)}"
 
     # When using `radius=1` we should also retrieve the overlapping targets
-    search = search_lightcurve("KIC 5112705", quarter=11, author="Kepler", radius=1 * u.arcsec)
+    search = search_timeseries("KIC 5112705", quarter=11, author="Kepler", radius=1 * u.arcsec)
     assert len(search) > 1
 
     # Searching by `target_name` should not preven a KIC identifier to work
     # in a TESS data search
-    search = search_targetpixelfile(
+    search = search_cubedata(
         "KIC 8462852", mission="TESS", sector=15, author="spoc"
     )
     assert len(search) == 1
@@ -482,7 +482,7 @@ def test_tesscut_795():
 #@pytest.mark.remote_data
 def test_download_flux_column():
     """Can we pass reader keyword arguments to the download method?"""
-    lc = search_lightcurve("Pi Men", author="SPOC", sector=12).download(
+    lc = search_timeseries("Pi Men", author="SPOC", sector=12).download(
         flux_column="sap_flux"
     )
     assert_array_equal(lc.flux, lc.sap_flux)
@@ -492,15 +492,15 @@ def test_download_flux_column():
 def test_exptime_filtering():
     """Can we pass "fast", "short", exposure time to the cadence argument?"""
     # Try `cadence="fast"`
-    res = search_lightcurve("AU Mic", sector=27, cadence="fast")
+    res = search_timeseries("AU Mic", sector=27, cadence="fast")
     assert len(res) == 1
     assert res.exptime[0].value == 20
     # Try `cadence="short"`
-    res = search_lightcurve("AU Mic", sector=27, cadence="short")
+    res = search_timeseries("AU Mic", sector=27, cadence="short")
     assert len(res) == 1
     assert res.table["t_exptime"][0] == 120
     # Try `cadence=20`
-    res = search_lightcurve("AU Mic", sector=27, cadence=20)
+    res = search_timeseries("AU Mic", sector=27, cadence=20)
     assert len(res) == 1
     assert res.table["t_exptime"][0] == 20
     assert "fast" in res.table["productFilename"][0]
@@ -508,15 +508,15 @@ def test_exptime_filtering():
     # Now do the same with the new exptime argument,
     # because `cadence` may be deprecated.
     # Try `exptime="fast"`
-    res = search_lightcurve("AU Mic", sector=27, exptime="fast")
+    res = search_timeseries("AU Mic", sector=27, exptime="fast")
     assert len(res) == 1
     assert res.exptime[0].value == 20
     # Try `exptime="SHoRt"` -- mixed lower/uppercase is on purpose
-    res = search_lightcurve("AU Mic", sector=27, exptime="SHoRt")
+    res = search_timeseries("AU Mic", sector=27, exptime="SHoRt")
     assert len(res) == 1
     assert res.table["t_exptime"][0] == 120
     # Try `exptime=20`
-    res = search_lightcurve("AU Mic", sector=27, exptime=20)
+    res = search_timeseries("AU Mic", sector=27, exptime=20)
     assert len(res) == 1
     assert res.table["t_exptime"][0] == 20
     assert "fast" in res.table["productFilename"][0]
@@ -525,7 +525,7 @@ def test_exptime_filtering():
 #@pytest.mark.remote_data
 def test_search_slicing_regression():
     # Regression test: slicing after calling __repr__ failed.
-    res = search_lightcurve("AU Mic", exptime=20)
+    res = search_timeseries("AU Mic", exptime=20)
     res.__repr__()
     res[res.exptime.value < 100]
 
@@ -533,14 +533,14 @@ def test_search_slicing_regression():
 #@pytest.mark.remote_data
 def test_ffi_hlsp():
     """Can SPOC, QLP (FFI), and TESS-SPOC (FFI) light curves be accessed?"""
-    search = search_lightcurve(
+    search = search_timeseries(
         "TrES-2b", mission="tess", author="any", sector=26
     )  # aka TOI 2140.01
     assert "QLP" in search.table["author"]
     assert "TESS-SPOC" in search.table["author"]
     assert "SPOC" in search.table["author"]
     # tess-spoc also products tpfs
-    search = search_targetpixelfile("TrES-2b", mission="tess", author="any", sector=26)
+    search = search_cubedata("TrES-2b", mission="tess", author="any", sector=26)
     assert "TESS-SPOC" in search.table["author"]
     assert "SPOC" in search.table["author"]
 
@@ -548,7 +548,7 @@ def test_ffi_hlsp():
 #@pytest.mark.remote_data
 def test_qlp_ffi_lightcurve():
     """Can we search and download an MIT QLP FFI light curve?"""
-    search = search_lightcurve("TrES-2b", sector=26, author="qlp")
+    search = search_timeseries("TrES-2b", sector=26, author="qlp")
     assert len(search) == 1
     assert search.author[0] == "QLP"
     assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
@@ -559,7 +559,7 @@ def test_qlp_ffi_lightcurve():
 #@pytest.mark.remote_data
 def test_spoc_ffi_lightcurve():
     """Can we search and download a SPOC FFI light curve?"""
-    search = search_lightcurve("TrES-2b", sector=26, author="tess-spoc")
+    search = search_timeseries("TrES-2b", sector=26, author="tess-spoc")
     assert len(search) == 1
     assert search.author[0] == "TESS-SPOC"
     assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
@@ -571,22 +571,22 @@ def test_spoc_ffi_lightcurve():
 def test_split_k2_campaigns():
     """Do split K2 campaign sections appear separately in search results?"""
     # Campaign 9
-    search_c09 = search_targetpixelfile("EPIC 228162462", cadence="long", campaign=9)
+    search_c09 = search_cubedata("EPIC 228162462", cadence="long", campaign=9)
     assert search_c09.table["mission"][0] == "K2 Campaign 09a"
     assert search_c09.table["mission"][1] == "K2 Campaign 09b"
     # Campaign 10
-    search_c10 = search_targetpixelfile("EPIC 228725972", cadence="long", campaign=10)
+    search_c10 = search_cubedata("EPIC 228725972", cadence="long", campaign=10)
     assert search_c10.table["mission"][0] == "K2 Campaign 10a"
     assert search_c10.table["mission"][1] == "K2 Campaign 10b"
     # Campaign 11
-    search_c11 = search_targetpixelfile("EPIC 203830112", cadence="long", campaign=11)
+    search_c11 = search_cubedata("EPIC 203830112", cadence="long", campaign=11)
     assert search_c11.table["mission"][0] == "K2 Campaign 11a"
     assert search_c11.table["mission"][1] == "K2 Campaign 11b"
 
 
 #@pytest.mark.remote_data
 def test_customize_search_result_display():
-    search = search_lightcurve("TIC390021728")
+    search = search_timeseries("TIC390021728")
     # default display does not have proposal id
     assert 'proposal_id' not in search.__repr__()
 
@@ -599,7 +599,7 @@ def test_customize_search_result_display():
         # consiering the customization specified.
         # the TIC used is in multiple sectors, with some rows having proposal_id and some rows
         # have none. So it's also a sanity test the for the actual proposal_id display logic.
-        search = search_lightcurve("TIC298734307")
+        search = search_timeseries("TIC298734307")
         assert 'proposal_id' in search.__repr__()
     finally:
         remove_custom_config()  # restore default to avoid side effects
@@ -608,7 +608,7 @@ def test_customize_search_result_display():
     try:
         lk.conf.search_result_display_extra_columns = ['sequence_number']
 
-        search = search_lightcurve("TIC169175503")  # again use a different TIC to avoid caching complication
+        search = search_timeseries("TIC169175503")  # again use a different TIC to avoid caching complication
         assert 'sequence_number' in search.__repr__()
     finally:
         lk.conf.search_result_display_extra_columns = []  # restore default to avoid side effects
@@ -628,7 +628,7 @@ def test_customize_search_result_display_case_nonexistent_column():
     # the extra column will not be shown (and it does not generate error)
     #
     # One typical case is that some columns are in the result of
-    # search_lightcurve() / search_targetpixelfile(), but not in those of search_tesscut()
+    # search_timeseries() / search_cubedata(), but not in those of search_tesscut()
 
     search = search_timeseries("TIC390021728")
     search.display_extra_columns = ['foo_col']

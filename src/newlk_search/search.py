@@ -1266,7 +1266,7 @@ def _filter_products(
 
     # Kepler data needs a special filter for quarter and month
     mask &= ~np.array(
-        [prov.lower() == "kepler" for prov in products["provenance_name"]]
+        [prov.lower() == "kepler" for prov in products["provenance_name"].values]
     )
 
     if "kepler" in provenance_lower and campaign is None and sector is None:
@@ -1360,9 +1360,9 @@ def _mask_by_exptime(products, exptime):
     elif isinstance(exptime, str):
         exptime = exptime.lower()
         if exptime in ["fast"]:
-            mask &= products["exptime"] <= 60
+            mask &= products["exptime"] < 60
         elif exptime in ["short"]:
-            mask &= (products["exptime"] > 60) & (products["exptime"] <= 120)
+            mask &= (products["exptime"] >= 60) & (products["exptime"] <= 120)
         elif exptime in ["long", "ffi"]:
             mask &= products["exptime"] > 120
     return mask
