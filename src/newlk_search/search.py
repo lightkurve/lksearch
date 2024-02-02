@@ -216,7 +216,7 @@ class SearchResult(object):
     def __repr__(self, html=False):
         print(f"SearchResult containing {len(self.table)} data products.")
         if len(self.table) == 0:
-            return pd.DataFrame(columns = REPR_COLUMNS_BASE)
+            return pd.DataFrame(columns = REPR_COLUMNS_BASE).to_string()
         columns = REPR_COLUMNS_BASE
         if self.display_extra_columns is not None:
             columns = REPR_COLUMNS_BASE + self.display_extra_columns
@@ -661,7 +661,7 @@ def search_cubedata(
     exptime:  Union[str, int, tuple] = None,
     cadence: Union[str, int, tuple] = None,
     mission: Union[str, tuple] = ("Kepler", "K2", "TESS"),
-    filetype: Union[str, list[str]] = ("Target Pixel","ffi"),
+    filetype: Union[str, list[str]] = ["Target Pixel","ffi"],
     author:  Union[str, tuple] = None,
     quarter:  Union[int, list[int]] = None,
     month:    Union[int, list[int]] = None,
@@ -836,7 +836,7 @@ def _search_products(
     target : Union[str, SkyCoord],
     radius : Union[float, u.Quantity] = None,
     filetype : Union[str, list[str]] = "Lightcurve",
-    mission : Union[str, list[str]] = ("Kepler", "K2", "TESS"),
+    mission : Union[str, list[str]] = ["Kepler", "K2", "TESS"],
     provenance_name : Union[str, list[str]] = None,
     exptime : Union[float, tuple[float]]=(0, 9999),
     quarter : Union[int, list[int]] = None,
@@ -900,13 +900,12 @@ def _search_products(
 
     # if a quarter/campaign/sector is specified, search only that mission
     if quarter is not None:
-        mission = "Kepler"
+        mission = ["Kepler"]
     if campaign is not None:
-        mission = "K2"
+        mission = ["K2"]
     if sector is not None:
-        mission = "TESS"
+        mission = ["TESS"]
 
-    sequence = quarter or campaign or sector
 
     # Ensure mission is a list
     mission = np.atleast_1d(mission).tolist()
@@ -920,7 +919,7 @@ def _search_products(
          # If author "TESS" is used, we assume it is SPOC
          provenance_name = np.unique(
              [p if p.lower() != "tess" else "SPOC" for p in provenance_name]
-         ).tolist()
+         )
 
     # Speed up by restricting the MAST query if we don't want FFI image data
     # At MAST, non-FFI Kepler pipeline products are known as "cube" products,
@@ -932,14 +931,13 @@ def _search_products(
    #extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
     
     # Query Mast to get a list of observations
-    
     observations = _query_mast(
         target,
         radius=radius,
         project=mission,
         provenance_name=provenance_name,
         exptime=exptime,
-        sequence_number=sequence,
+        sequence_number=campaign or sector,
         **extra_query_criteria,
     )
     log.debug(
@@ -1125,7 +1123,7 @@ def _query_mast(
     # Local astroquery import because the package is not used elsewhere
     from astroquery.exceptions import NoResultsWarning, ResolverError
     from astroquery.mast import Observations
-
+    
     # If passed a SkyCoord, convert it to an "ra, dec" string for MAST
     if isinstance(target, SkyCoord):
         target = f"{target.ra.deg}, {target.dec.deg}"
@@ -1133,6 +1131,7 @@ def _query_mast(
     # exptime must be a range, so if int change a tuple 
     if isinstance(exptime, int):
         exptime = (exptime, exptime)
+    
 
     # We pass the following `query_criteria` to MAST regardless of whether
     # we search by position or target name:
@@ -1141,9 +1140,9 @@ def _query_mast(
         query_criteria["provenance_name"] = provenance_name
     if sequence_number is not None:
         query_criteria["sequence_number"] = sequence_number
-    if exptime is not None:
+    if exptime is not None and not isinstance(exptime, str):
         query_criteria["t_exptime"] = exptime
-
+        
 
     # If an exact Mission ID (KIC, TIC, EPIC) is passed, we can search 
     #by the exact `target_name' under which MAST will know the object 
@@ -1162,8 +1161,7 @@ def _query_mast(
     # Was a TESS target ID passed?
     tess_match = re.match(r"^(tess|tic) ?(\d+)$", target_lower)
     if tess_match:
-        exact_target_name = f"{tess_match.group(2).zfill(9)}"
-
+        exact_target_name = f"{tess_match.group(2).zfill(9)}"  
     if exact_target_name and radius is None:
         log.debug(
             "Started querying MAST for observations with the exact "
@@ -1175,6 +1173,7 @@ def _query_mast(
             obs = Observations.query_criteria(
                 target_name=exact_target_name, **query_criteria
             )
+            
         if len(obs) > 0:
             # We use `exptime` as a convenient alias for `t_exptime`
             obs["exptime"] = obs["t_exptime"]
@@ -1203,6 +1202,8 @@ def _query_mast(
             warnings.filterwarnings("ignore", message="t_exptime is continuous")
             obs = Observations.query_criteria(objectname=target, **query_criteria)
         obs.sort("distance")
+        print(obs)
+        print(query_criteria)
         # We use `exptime` as a convenient alias for `t_exptime`
         obs["exptime"] = obs["t_exptime"]
         return obs
@@ -1259,7 +1260,7 @@ def _filter_products(
     if provenance_name is None:  # apply all filters
         provenance_lower = ("kepler", "k2", "spoc")
     else:
-        provenance_lower = [p.lower() for p in np.atleast_1d(provenance_name)]
+        provenance_lower = [p.lower() for p in np.atleast_1d(provenance_name).tolist()]
 
     mask = np.ones(len(products), dtype=bool)
 
@@ -1272,19 +1273,19 @@ def _filter_products(
         mask |= _mask_kepler_products(products, quarter=quarter, month=month)
 
     # HLSP products need to be filtered by extension
-    if "lightcurve" in [x.lower() for x in np.atleast_1d(filetype)]:
+    if "lightcurve" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
         mask &= np.array(
             [uri.lower().endswith("lc.fits") for uri in products["productFilename"]]
         )
     # TODO:The elifs only allow for 1 type (target pixel or ffi), is that the behavior we want?
-    elif "target pixel" in [x.lower() for x in np.atleast_1d(filetype)]:
+    elif "target pixel" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
         mask &= np.array(
             [
                 uri.lower().endswith(("tp.fits", "targ.fits.gz"))
                 for uri in products["productFilename"]
             ]
         )
-    elif "ffi" in [x.lower() for x in np.atleast_1d(filetype)]::
+    elif "ffi" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
         mask &= np.array(["TESScut" in desc for desc in products["description"]])
 
     # Allow only fits files
@@ -1316,16 +1317,16 @@ def _mask_kepler_products(products, quarter=None, month=None):
     # Identify quarter by the description.
     # This is necessary because the `sequence_number` field was not populated
     # for Kepler prime data at the time of writing this function.
-    
+    print(f"Quarter:{quarter}")
     if quarter is not None:
         quarter_mask = np.zeros(len(products), dtype=bool)
-        for q in np.atleast_1d(quarter):
+        for q in np.atleast_1d(quarter).tolist():
             quarter_mask += products['description'].str.endswith(f"Q{q}")
         mask &= quarter_mask
 
     # For Kepler short cadence data the month can be specified
     if month is not None:
-        month = np.atleast_1d(month)
+        month = np.atleast_1d(month).tolist()
         # Get the short cadence date lookup table.
         table = pd.read_csv(
             os.path.join(PACKAGEDIR, "data", "short_cadence_month_lookup.csv")
@@ -1339,7 +1340,7 @@ def _mask_kepler_products(products, quarter=None, month=None):
         is_shortcadence = mask & products['description'].str.contains("Short")
 
         for idx in np.where(is_shortcadence)[0]:
-            quarter = np.atleast_1d(int(products["description"][idx].split(" - ")[-1].replace("-", "")[1:]))
+            quarter = np.atleast_1d(int(products["description"][idx].split(" - ")[-1].replace("-", "")[1:])).tolist()
             date = products['dataURI'][idx].split("/")[-1].split("-")[1].split("_")[0]
             # Check if the observation date matches the specified Quarter/month from the lookup table
             if date not in table["StartTime"][table['Month'].isin(month) & table['Quarter'].isin(quarter)].values:

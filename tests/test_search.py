@@ -61,13 +61,13 @@ def test_search_targetpixelfile():
     assert len(search_cubedata("EPIC 210634047", mission="K2").table) == 2
     # ...including Campaign 4
     assert (
-        len(search_targetpixelfile("EPIC 210634047", mission="K2", campaign=4).table)
+        len(search_cubedata("EPIC 210634047", mission="K2", campaign=4).table)
         == 1
     )
     # KIC 11904151 (Kepler-10) was observed in LC in 15 Quarters
     assert (
         len(
-            search_targetpixelfile(
+            search_cubedata(
                 "KIC 11904151", mission="Kepler", cadence="long"
             ).table
         )
@@ -76,7 +76,7 @@ def test_search_targetpixelfile():
     # ...including quarter 11 but not 12:
     assert (
         len(
-            search_targetpixelfile(
+            search_cubedata(
                 "KIC 11904151", mission="Kepler", cadence="long", quarter=11
             ).unique_targets
         )
@@ -84,7 +84,7 @@ def test_search_targetpixelfile():
     )
     assert (
         len(
-            search_targetpixelfile(
+            search_cubedata(
                 "KIC 11904151", mission="Kepler", cadence="long", quarter=12
             ).table
         )
@@ -115,8 +115,8 @@ def test_search_split_campaigns():
     campaigns = [9, 10, 11]
     ids = ["EPIC 228162462", "EPIC 228726301", "EPIC 202975993"]
     for c, idx in zip(campaigns, ids):
-        search = search_targetpixelfile(idx, campaign=c, cadence="long").table
-        assert len(search) == 2
+        sr = search_cubedata(idx, campaign=c, cadence="long").table
+        assert len(sr) == 2
 
 
 #@pytest.mark.remote_data
