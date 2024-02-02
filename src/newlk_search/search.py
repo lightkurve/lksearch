@@ -1179,7 +1179,7 @@ def _query_mast(
             # astroquery does not report distance when querying by `target_name`;
             # we add it here so that the table returned always has this column.
             obs["distance"] = 0.0
-            return obs
+            return(obs)
         else:
             log.debug(f"No observations found. Now performing a cone search instead.")
 
