@@ -1031,6 +1031,7 @@ def _search_products(
         tesscut_desc=[]
         tesscut_mission=[]
         tesscut_tmin=[]
+        tesscut_tmax=[]
         tesscut_exptime=[]
         tesscut_seqnum=[]
 
@@ -1048,9 +1049,10 @@ def _search_products(
                         log.debug(f"Target Observable in Sector {sector}, Camera {camera}, CCD {ccd}")
                         tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
                         tesscut_mission.append(f"TESS Sector {sector:02d}")
-                        tesscut_tmin.append([row[5]])
+                        tesscut_tmin.append(row[5]- 2400000.5) # Time(row[5], format="jd").iso)
+                        tesscut_tmax.append(row[6]- 2400000.5) # Time(row[6], format="jd").iso)
                         tesscut_exptime.append(_tess_sector2exptime(sector))
-                        tesscut_seqnum.append([sector])
+                        tesscut_seqnum.append(sector)
         
         # Build the ffi dataframe from the observability
         n_results = len(tesscut_seqnum)
@@ -1059,6 +1061,7 @@ def _search_products(
                                           "target_name" : [str(target)] * n_results,
                                           "targetid" : [str(target)] * n_results,
                                           "t_min" : tesscut_tmin,
+                                          "t_max" : tesscut_tmax,
                                           "exptime" : tesscut_exptime,
                                           "productFilename" : ["TESScut"] * n_results,
                                           "provenance_name" : ["TESScut"] * n_results,
@@ -1077,7 +1080,6 @@ def _search_products(
                               ffi_result))#.sort_values(["distance", 
                                           #              "obsid", 
                                           #              "sequence_number"])
-    return query_result
     # Add in the start and end times for each observation
     if query_result is not None:
          print(pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']]))
