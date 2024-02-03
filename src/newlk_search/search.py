@@ -1034,21 +1034,23 @@ def _search_products(
         tesscut_exptime=[]
         tesscut_seqnum=[]
 
+        coords = _resolve_object(target)
         # Check each sector / camera / ccd for observability
-        for _, row in pointings.iterrows():
-            tess_ra, tess_dec, tess_roll = row['RA', 'Dec', 'Roll']
+        for row in pointings.iterrows():
+            tess_ra, tess_dec, tess_roll = row[2:5]
             for camera in np.arange(1, 5):
                 for ccd in np.arange(1, 5):
                     # predict the WCS
                     wcs = WCS.predict(tess_ra, tess_dec, tess_roll , camera=camera, ccd=ccd)
                     # check if the target falls inside the CCD
-                    if wcs.footprint_contains(c_targ):
+                    if wcs.footprint_contains(coords):
+                        sector = row[0]
                         log.debug(f"Target Observable in Sector {sector}, Camera {camera}, CCD {ccd}")
-                        tesscut_desc.append(f"TESS FFI Cutout (sector {s})")
-                        tesscut_mission.append(f"TESS Sector {row['Sector']:02d}")
-                        tesscut_tmin.append([row["Start"]])
-                        tesscut_exptime.append([observations["exptime"]])
-                        tesscut_seqnum.append([row['Sector']])
+                        tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
+                        tesscut_mission.append(f"TESS Sector {sector:02d}")
+                        tesscut_tmin.append([row[5]])
+                        tesscut_exptime.append(_tess_sector2exptime(sector))
+                        tesscut_seqnum.append([sector])
         
         # Build the ffi dataframe from the observability
         n_results = len(tesscut_seqnum)
@@ -1057,7 +1059,7 @@ def _search_products(
                                           "target_name" : [str(target)] * n_results,
                                           "targetid" : [str(target)] * n_results,
                                           "t_min" : tesscut_tmin,
-                                          "exptime" : _tess_sector2exptime(sector),
+                                          "exptime" : tesscut_exptime,
                                           "productFilename" : ["TESScut"] * n_results,
                                           "provenance_name" : ["TESScut"] * n_results,
                                           "author" : ["TESScut"] * n_results,
@@ -1067,15 +1069,15 @@ def _search_products(
                                           "obs_collection" : ["TESS"] * n_results})
         
         if len(ffi_result) > 0:
-            log.debug(f"Found {len(cutouts)} matching cutouts.")
+            log.debug(f"Found {n_results} matching cutouts.")
         else:
             log.debug("Found no matching cutouts.")
 
     query_result = pd.concat((masked_result,
-                              ffi_result)).sort_values(["distance", 
-                                                        "obsid", 
-                                                        "sequence_number"])
-    
+                              ffi_result))#.sort_values(["distance", 
+                                          #              "obsid", 
+                                          #              "sequence_number"])
+    return query_result
     # Add in the start and end times for each observation
     if query_result is not None:
          print(pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']]))
