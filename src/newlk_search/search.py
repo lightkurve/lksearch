@@ -1026,7 +1026,7 @@ def _search_products(
         #masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
 
     # Full Frame Images - build this from the querry table
-    if any(['ffi' in ftype.lower() for ftype in filetype]):
+    if any(['ffi' in ftype.lower() for ftype in filetype]) and ("TESS" in mission):
         from tesswcs import pointings
         from tesswcs import WCS
 
