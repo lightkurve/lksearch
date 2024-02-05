@@ -1069,24 +1069,6 @@ def _search_products(
     
     # Add in the start and end times for each observation
     if query_result is not None:
-         #print(query_result['t_min'], query_result['t_max'])
-         '''print(pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']]))
-         st = np.empty(len(query_result)) * np.nan
-         et = np.empty(len(query_result)) * np.nan
-         for idx, row in query_result.iterrows():
-             print(isinstance(idx, int))
-             if isinstance(row['t_min'], float):
-                 print(row['t_min'] + 2400000.5)
-                 st[idx] = (Time(row['t_min'] + 2400000.5, format="jd").iso)
-             if isinstance(row['t_max'], float):
-                 et[idx] = (Time(row['t_max'] + 2400000.5, format="jd").iso)
-
-         query_result["start_time"] = pd.to_datetime(st, errors='coerce')
-         query_result["end_time"] = pd.to_datetime(et, errors='coerce')'''
-         #print(query_result['t_max'])
-         #print([x for x in query_result['t_max']])
-         #print([True if isinstance(x, float) else False for x in query_result['t_max']])
-         #print([True if isnan(x) else False for x in query_result['t_max']])
          st = [Time(x + 2400000.5, format="jd").iso if not isnan(x) else np.nan for x in query_result['t_min'] ]
          et = [Time(x + 2400000.5, format="jd").iso if  not isnan(x) else np.nan for x in query_result['t_max'] ]
          query_result["start_time"] = pd.to_datetime(st, errors='coerce')
