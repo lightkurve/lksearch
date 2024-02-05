@@ -217,7 +217,7 @@ class SearchResult(object):
     def __repr__(self, html=False):
         len_str = f"SearchResult containing {len(self.table)} data products. \n\n"
         if len(self.table) == 0:
-            return (len_str + pd.DataFrame(columns = REPR_COLUMNS_BASE).to_string())
+            return len_str 
         columns = REPR_COLUMNS_BASE
         if self.display_extra_columns is not None:
             columns = REPR_COLUMNS_BASE + self.display_extra_columns
