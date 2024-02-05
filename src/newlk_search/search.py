@@ -925,11 +925,12 @@ def _search_products(
     # Speed up by restricting the MAST query if we don't want FFI image data
     # At MAST, non-FFI Kepler pipeline products are known as "cube" products,
     # and non-FFI TESS pipeline products are listed as "timeseries".
+    
     # NEW CHANGE - we're speeding this up by not including TESS FFI images in the search.  
     # We will handle them separately using something else (tesswcs?  tesspoint?)
     # Also the above is written like FFI kepler products exist, but I don't think they do?
 
-   #extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
+    extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
     
     # Query Mast to get a list of observations
     observations = _query_mast(
@@ -1026,41 +1027,56 @@ def _search_products(
 
     # Full Frame Images - build this from the querry table
     if any(['ffi' in ftype.lower() for ftype in filetype]):
-    # Make sure `search_tesscut` always performs a cone search (i.e. always
-    # passed a radius value), because strict target name search does not apply.
-        if radius is None:
-            radius = 0.0001 * u.arcsec
+        from tesswcs import pointings
+        from tesswcs import WCS
 
-        cutouts = []
-        for idx in np.where(["TESS FFI" in t for t in observations["target_name"]])[0]:
-            # if target passed in is a SkyCoord object, convert to RA, dec pair
-            if isinstance(target, SkyCoord):
-                target = "{}, {}".format(target.ra.deg, target.dec.deg)
-            # pull sector numbers
-            s = observations["sequence_number"][idx]
-            # if the desired sector is available, add a row
-            if s in np.atleast_1d(sector) or sector is None:
-                cutouts.append(
-                    {
-                        "description": f"TESS FFI Cutout (sector {s})",
-                        "mission": f"TESS Sector {s:02d}",
-                        "target_name": str(target),
-                        "targetid": str(target),
-                        "t_min": observations["t_min"][idx],
-                        "exptime": observations["exptime"][idx],
-                        "productFilename": "TESScut",
-                        "provenance_name": "TESScut",
-                        "author": "TESScut",
-                        "distance": 0.0,
-                        "sequence_number": s,
-                        "project": "TESS",
-                        "obs_collection": "TESS",
-                    }
-                )
-        if len(cutouts) > 0:
-            log.debug("Found {} matching cutouts.".format(len(cutouts)))
-            ffi_result = Table(cutouts)
-            ffi_result = ffi_result.to_pandas()
+        tesscut_desc=[]
+        tesscut_mission=[]
+        tesscut_tmin=[]
+        tesscut_tmax=[]
+        tesscut_exptime=[]
+        tesscut_seqnum=[]
+
+        coords = _resolve_object(target)
+        # Check each sector / camera / ccd for observability
+        for row in pointings.iterrows():
+            tess_ra, tess_dec, tess_roll = row[2:5]
+            for camera in np.arange(1, 5):
+                for ccd in np.arange(1, 5):
+                    # predict the WCS
+                    wcs = WCS.predict(tess_ra, tess_dec, tess_roll , camera=camera, ccd=ccd)
+                    # check if the target falls inside the CCD
+                    if wcs.footprint_contains(coords):
+                        sector = row[0]
+                        log.debug(f"Target Observable in Sector {sector}, Camera {camera}, CCD {ccd}")
+                        tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
+                        tesscut_mission.append(f"TESS Sector {sector:02d}")
+                        tesscut_tmin.append(row[5]- 2400000.5) # Time(row[5], format="jd").iso)
+                        tesscut_tmax.append(row[6]- 2400000.5) # Time(row[6], format="jd").iso)
+                        tesscut_exptime.append(_tess_sector2exptime(sector))
+                        tesscut_seqnum.append(sector)
+        
+        # Build the ffi dataframe from the observability
+        n_results = len(tesscut_seqnum)
+        ffi_result = pd.DataFrame({"description" : tesscut_desc,
+                                          "mission": tesscut_mission,
+                                          "target_name" : [str(target)] * n_results,
+                                          "targetid" : [str(target)] * n_results,
+                                          "t_min" : tesscut_tmin,
+                                          "t_max" : tesscut_tmax,
+                                          "exptime" : tesscut_exptime,
+                                          "productFilename" : ["TESScut"] * n_results,
+                                          "provenance_name" : ["TESScut"] * n_results,
+                                          "author" : ["TESScut"] * n_results,
+                                          "distance" : [0] * n_results,
+                                          "sequence_number" : tesscut_seqnum,
+                                          "project" : ["TESS"] * n_results,
+                                          "obs_collection" : ["TESS"] * n_results})
+        
+        if len(ffi_result) > 0:
+            log.debug(f"Found {n_results} matching cutouts.")
+        else:
+            log.debug("Found no matching cutouts.")
 
     query_result = pd.concat((masked_result,
                               ffi_result)).sort_values(["distance", 
@@ -1371,3 +1387,12 @@ def _resolve_object(target):
 
     # Note: `_resolve_object` was renamed `resolve_object` in astroquery 0.3.10 (2019)
     return MastClass().resolve_object(target)
+
+def _tess_sector2exptime(sector):
+    """Dictionary lookup table for tess sector exposure times"""
+    if sector < 27:
+        return 1800
+    if (sector >- 27) and (sector < 56):
+        return 600
+    if (sector >= 56):
+        return 200
