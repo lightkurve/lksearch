@@ -237,7 +237,7 @@ class SearchResult(object):
             #out = HTML(out.to_html(escape=False, max_rows=10))
   
 
-        return (len_str + out.to_string(max_rows=20))
+        return out.to_string(max_rows=20)
 
 
     def _repr_html_(self):
