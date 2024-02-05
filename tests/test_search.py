@@ -27,7 +27,7 @@ from lightkurve.utils import LightkurveWarning, LightkurveError
 from src.newlk_search.search import (
     search_timeseries,
     search_cubedata,
-    #search_tesscut,
+    search_tesscut,
     SearchError,
     SearchResult,
     log,
