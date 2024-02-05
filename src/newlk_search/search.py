@@ -161,36 +161,37 @@ class SearchResult(object):
         self.table = df
 
     def _fix_start_and_end_times(self):
-         """The start and stop times for some products are not correct, this function fixes them."""
+        """The start and stop times for some products are not correct, this function fixes them."""
+        # Kepler files have the wrong start and stop times in t_min and t_max
+        # So we get the start/stop times from the filename instead
+        kepler_mask = self.table["provenance_name"] == "Kepler"
+        if(np.any(kepler_mask)):
+            filenames = np.atleast_1d(np.asarray(
+                self.table["productFilename"][kepler_mask]
+                ).tolist())
+            print(filenames)
+            
+            start_time = [
+                Time(datetime.strptime(filename.split("-")[1].split("_")[0], "%Y%j%H%M%S"))
+                for filename in filenames
+            ]
+            end_time = [
+                start_time[idx] + timedelta(days=30)
+                if filename.endswith("slc.fits")
+                else start_time[idx] + timedelta(days=90)
+                for idx, filename in enumerate(filenames)
+            ]
 
-         # Kepler files have the wrong start and stop times in t_min and t_max
-         # So we get the start/stop times from the filename instead
-         kepler_mask = self.table["provenance_name"] == "Kepler"
-         filenames = np.asarray(
-             self.table["productFilename"][kepler_mask]
-         )
-         start_time = [
-             Time(datetime.strptime(filename.split("-")[1].split("_")[0], "%Y%j%H%M%S"))
-             for filename in filenames
-         ]
-         end_time = [
-             start_time[idx] + timedelta(days=30)
-             if filename.endswith("slc.fits")
-             else start_time[idx] + timedelta(days=90)
-             for idx, filename in enumerate(filenames)
-         ]
-         
-         self.table.loc[kepler_mask, "start_time"] = pd.to_datetime([st.iso for st in start_time])
-         self.table.loc[kepler_mask, "end_time"] = pd.to_datetime([et.iso for et in end_time])
-
-         # We mask KBONUS times because they are invalid for the quarter data
-         '''if "sequence" in self.table.columns:
-             kbonus_mask = self.table["author"] == "KBONUS-BKG"
-             kbonus_mask[kbonus_mask] = np.asarray(
-                 [len(seq) > 0 for seq in self.table["sequence"][kbonus_mask]]
-             )
-             self.table["start_time"].mask = kbonus_mask
-             self.table["end_time"].mask = kbonus_mask'''
+            self.table.loc[kepler_mask, "start_time"] = pd.to_datetime([st.iso for st in start_time])
+            self.table.loc[kepler_mask, "end_time"] = pd.to_datetime([et.iso for et in end_time])
+        # We mask KBONUS times because they are invalid for the quarter data
+        '''if "sequence" in self.table.columns:
+            kbonus_mask = self.table["author"] == "KBONUS-BKG"
+            kbonus_mask[kbonus_mask] = np.asarray(
+                [len(seq) > 0 for seq in self.table["sequence"][kbonus_mask]]
+            )
+            self.table["start_time"].mask = kbonus_mask
+            self.table["end_time"].mask = kbonus_mask'''
 
 
     def _add_columns(self):
@@ -206,7 +207,10 @@ class SearchResult(object):
         self.table["distance"].unit = "arcsec"'''
 
         # Add the year column from `t_min` or `productFilename`
-        self.table['year'] = self.table['start_time'].dt.year #Assumes 'start_time' is a pandas datetime object
+        time_mask = pd.notnull(self.table['start_time'])
+        years = np.empty(len(self.table))*np.nan
+        years[time_mask] = self.table.loc[time_mask,'start_time'].dt.year
+        self.table['year'] = years #[self.table['start_time'].dt.year if not pd.isnull(self.table['start_time']) else np.nan] #Assumes 'start_time' is a pandas datetime object
         # Specify whether each product is a mission product or HLSP
         product_type = self.table['obs_collection'].copy()
         product_type[product_type.isin(['TESS', "SPOC", "Kepler","K2"])] = 'Mission Product'
@@ -241,9 +245,12 @@ class SearchResult(object):
 
     def __getitem__(self, key):
         """Implements indexing and slicing."""
-        selection = self.table.loc[key]
+        if isinstance(key, int):
+            selection = pd.DataFrame(self.table.iloc[key]).T
+        else:
+            selection = self.table.iloc[key]
 
-        return SearchResult(table=selection)
+        return SearchResult(selection)
 
     def __len__(self):
         """Returns the number of products in the SearchResult table."""
@@ -1025,11 +1032,11 @@ def _search_products(
         log.debug(f"MAST found {len(masked_result)} matching data products.")
         #masked_result["distance"].info.format = ".1f"  # display <0.1 arcsec
 
-    # Full Frame Images - build this from the querry table
-    if any(['ffi' in ftype.lower() for ftype in filetype]) and ("TESS" in mission):
+    # NEW Full Frame Images - no longer build this from the querry table, use tesswcs
+    if any(['ffi' in ftype.casefold() for ftype in np.atleast_1d(filetype)]) and ("TESS" in mission) and (("TESScut" in np.atleast_1d(provenance_name)) or (provenance_name is None)): 
         from tesswcs import pointings
         from tesswcs import WCS
-
+        log.debug("Checking tesswcs for TESSCut cutouts")
         tesscut_desc=[]
         tesscut_mission=[]
         tesscut_tmin=[]
