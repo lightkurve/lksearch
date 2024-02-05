@@ -241,7 +241,7 @@ class SearchResult(object):
 
     def __getitem__(self, key):
         """Implements indexing and slicing."""
-        selection = self.table.loc[key]
+        selection = self.table.iloc[key]
 
         return SearchResult(table=selection)
 
@@ -1058,6 +1058,8 @@ def _search_products(
         
         # Build the ffi dataframe from the observability
         n_results = len(tesscut_seqnum)
+        print("TESTING!!")
+        print(tesscut_tmin)
         ffi_result = pd.DataFrame({"description" : tesscut_desc,
                                           "mission": tesscut_mission,
                                           "target_name" : [str(target)] * n_results,
@@ -1075,13 +1077,20 @@ def _search_products(
         
         if len(ffi_result) > 0:
             log.debug(f"Found {n_results} matching cutouts.")
+
         else:
             log.debug("Found no matching cutouts.")
-
-    query_result = pd.concat((masked_result,
-                              ffi_result)).sort_values(["distance", 
-                                                        "obsid", 
-                                                        "sequence_number"], ignore_index=True)
+            query_result = masked_result.copy().reset_index()
+    print(masked_result)
+    print(ffi_result)
+    if (len(ffi_result) > 0) | (len(masked_result > 0)):        
+        query_result = pd.concat((masked_result,
+            ffi_result)).sort_values(["distance", 
+                                     "obsid", 
+                                     "sequence_number"], ignore_index=True)   
+    
+    else:
+        query_result = None
     
     # Add in the start and end times for each observation
     if query_result is not None:
