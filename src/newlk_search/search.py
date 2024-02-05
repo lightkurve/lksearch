@@ -23,6 +23,7 @@ from requests import HTTPError
 import pandas as pd
 from IPython.display import HTML
 from datetime import datetime, timedelta
+from math import isnan
 
 
 from lightkurve import PACKAGEDIR, conf, config
@@ -214,9 +215,9 @@ class SearchResult(object):
     
 
     def __repr__(self, html=False):
-        print(f"SearchResult containing {len(self.table)} data products.")
+        len_str = f"SearchResult containing {len(self.table)} data products. \n\n"
         if len(self.table) == 0:
-            return pd.DataFrame(columns = REPR_COLUMNS_BASE).to_string()
+            return (len_str + pd.DataFrame(columns = REPR_COLUMNS_BASE).to_string())
         columns = REPR_COLUMNS_BASE
         if self.display_extra_columns is not None:
             columns = REPR_COLUMNS_BASE + self.display_extra_columns
@@ -230,8 +231,9 @@ class SearchResult(object):
         if html:
             out = out.assign(author=out['author'].apply(lambda x: f'<a href="{AUTHOR_LINKS[x]}">{x}</a>' if x in AUTHOR_LINKS.keys() else x))
             #out = HTML(out.to_html(escape=False, max_rows=10))
+  
 
-        return out.to_string(max_rows=20)
+        return (len_str + out.to_string(max_rows=20))
 
 
     def _repr_html_(self):
@@ -1077,14 +1079,16 @@ def _search_products(
             log.debug("Found no matching cutouts.")
 
     query_result = pd.concat((masked_result,
-                              ffi_result))#.sort_values(["distance", 
-                                          #              "obsid", 
-                                          #              "sequence_number"])
+                              ffi_result)).sort_values(["distance", 
+                                                        "obsid", 
+                                                        "sequence_number"], ignore_index=True)
+    
     # Add in the start and end times for each observation
     if query_result is not None:
-         print(pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']]))
-         query_result["start_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_min']])
-         query_result["end_time"] = pd.to_datetime([Time(x + 2400000.5, format="jd").iso for x in query_result['t_max']])
+         st = [Time(x + 2400000.5, format="jd").iso if not isnan(x) else np.nan for x in query_result['t_min'] ]
+         et = [Time(x + 2400000.5, format="jd").iso if  not isnan(x) else np.nan for x in query_result['t_max'] ]
+         query_result["start_time"] = pd.to_datetime(st, errors='coerce')
+         query_result["end_time"] = pd.to_datetime(et, errors='coerce')
 
     return(SearchResult(query_result))
 
