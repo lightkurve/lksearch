@@ -1,6 +1,7 @@
 
 def search_timeseries(mission:['kepler','k2','tess'], quarter=None, campain=None, sector=None, hlsp=True):
     # Append results from search_TESS, search_Kepler, and search_K2
+    # (Looking into time difference now)
 
 def search_cubedata(mission:['kepler','k2','tess'], quarter=None, campain=None, sector=None, hlsp=True):
 
@@ -14,6 +15,8 @@ class _search_mission():
             return 
 
     def __repr__():
+
+    #define properties here
 
     def _search_timeseries():
 
@@ -30,18 +33,22 @@ class _search_mission():
     def _download_one():
 
     def download():
+        # Cloud flag explicitly set so defaults to AWS
 
+    def _add_columns():
     
 
 
 
 class search_TESS(search, hlsp=False):
+     
+     #@properties like sector
 
      def search_cubedata():
-         _cubedata + _get_ffi
+         # _cubedata + _get_ffi
 
     def _get_ffi():
-        # Determines what sectors ffi data is in
+        # Determines what sectors ffi data is in using tesswcs
 
     def sort():
         # base sort + TESS HLSP handling?
@@ -53,6 +60,8 @@ class search_TESS(search, hlsp=False):
 
     
 class search_Kepler(search, hlsp=False):
+
+    #@properties like quarters
 
     def search_cubedata():
         # Regular _search_cubedata + processing
@@ -67,10 +76,12 @@ class search_Kepler(search, hlsp=False):
 
 class search_K2(search, hlsp=False):
 
+    #@properties like campaigns (seasons?)
+
     def search_cubedata():
         # Regular _search_cubedata + processing
 
     def parse_split_campaigns():
 
 
-
+# Potential HLSP reader class in a different .py file?
