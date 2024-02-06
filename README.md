@@ -24,3 +24,58 @@ This package is a stand-alone implementation of the lightkurve search functional
 
   ## Contact
   Please Don't
+
+Mermaid Test
+```mermaid
+graph TD
+subgraph sg1[class Search_Mission]
+Search_Mission --> Search_Timeseries
+Search_Mission --> Search_Cubedata
+
+Search_Timeseries --> Search_Timeseries_MissionProducts
+Search_Timeseries --> Search_Timeseries_HLSP
+
+Search_Cubedata --> Search_CubeData_MissionProducts
+Search_Cubedata --> Search_CubeData_HLSP
+end
+
+subgraph  sg2[class Search_Kepler]
+Search_Kepler --> SK_T[Search_Timeseries]
+SK_T --> SK_T_M[Search_Timeseries_MissionProducts]
+SK_T --> SK_T_H[Search_Timeseries_HLSP]
+
+Search_Kepler --> SK_C[Search_Cubedata]
+SK_C --> SK_TP[Search_TargetPixelFile]
+SK_C --> SK_TC[Search_TESSCut]
+end
+
+subgraph  sg3[class Search_K2]
+Search_K2 --> SK2_T[Search_Timeseries]
+SK2_T --> SK2_T_M[Search_Timeseries_MissionProducts]
+SK2_T --> SK2_T_H[Search_Timeseries_HLSP]
+
+Search_K2 --> SK2_C[Search_Cubedata]
+SK2_C --> SK2_TP[Search_TargetPixelFile]
+SK2_C --> SK2_TC[Search_TESSCut]
+end
+
+subgraph  sg4[class Search_TESS]
+Search_TESS --> ST_T[Search_Timeseries]
+ST_T --> ST_T_M[Search_Timeseries_MissionProducts]
+ST_T --> ST_T_H[Search_Timeseries_HLSP]
+
+Search_TESS --> ST_C[Search_Cubedata]
+ST_C --> ST_TP[Search_TargetPixelFile]
+ST_C --> ST_TC[Search_TESSCut]
+
+ST_TP --> ST_TP_M[Search_TPF_MissionProducts]
+ST_TP --> ST_TP_H[Search_TPF_HLSP]
+
+ST_TC --> ST_TC_M[Search_TESSCut_MissionProducts]
+ST_TC --> ST_TC_H[Search_TESSCut_HLSP]
+end
+
+sg1 --> sg2
+sg1 --> sg3
+sg1 --> sg4
+```
