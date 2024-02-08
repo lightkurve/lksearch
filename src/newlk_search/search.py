@@ -1,50 +1,80 @@
-
-def search_timeseries(mission:['kepler','k2','tess'], quarter=None, campain=None, sector=None, hlsp=True):
-    # Append results from search_TESS, search_Kepler, and search_K2
-    # (Looking into time difference now)
-
-def search_cubedata(mission:['kepler','k2','tess'], quarter=None, campain=None, sector=None, hlsp=True):
-
-
-class _search_mission():
-
+class MASTSearch(object):
     # Shared functions that are used for searches by any mission
 
-    def __init__():
-        if 'Kepler' in mission:
-            return 
+    def __init__(self):
+        
+        self.table = None
 
-    def __repr__():
+    def __repr__(self):
+        return f"I'm a class don't index me."
 
-    #define properties here
 
-    def _search_timeseries():
+    def _search_timeseries(self, search_name:Union[SkyCoord, str, tuple]): -> pd.DataFrame
+        """All mission search
+        Updates self.table, and returns it"""
+        
+        self._munge_table()
+        return self.table
+    
 
-    def _search_cubedata():
+    def _search_cubedata(self, search_name:Union[SkyCoord, str, tuple]): -> pd.DataFrame
+        """All mission search
+        Updates self.table, and returns it
+        
+        MASTSearch.search_timeseries()
+        """
+        return self.table
 
+    @staticmethod
+    def search_timeseries(*args, **kwargs):
+        """docstrings"""
+        return self._search_timeseries(*args, **kwargs)
+    
+    @staticmethod
+    def search_cubedata(*args, **kwargs):
+        """docstrings"""
+        return self._search_timeseries(*args, **kwargs)
+    
+    def search_reports():
+        raise NotImplementedError("Use Kepler or TESS or whatever")
+
+    def search_FFI():
+        raise NotImplementedError("Those don't exist for everything use TESSSearch")
+        
+        
+    def _parse_input():
+        # Is it a skycoord
+        # Is it a tuple
+        # Is it a string...
+    
+    def _munge_table(self):
+        self._add_columns("something")
+        self._add_urls_to_authors()
+        self._add_s3_url_column()      
+        self._sort_by_priority()
+    
+    def _add_s3_url_column():
+        # self.table would updated to have an extra column of s3 URLS if possible
+        raise NotImplementedError
+            
     def _query_mast():
         # Constructs the appropriate query
 
-    def _sort():
+    def _sort_by_priority():
         # Basic sort
-
-    def _parse_name():
-
-    def _download_one():
-
-    def download():
-        # Cloud flag explicitly set so defaults to AWS
-
+        
     def _add_columns():
+    
+    def _add_urls_to_authors():
     
 
 
 
-class search_TESS(search, hlsp=False):
+class TESSSearch(MASTSearch):
      
      #@properties like sector
 
-     def search_cubedata():
+     def search_cubedata(hlsp=False):
          # _cubedata + _get_ffi
 
     def _get_ffi():
@@ -59,11 +89,11 @@ class search_TESS(search, hlsp=False):
 
 
     
-class search_Kepler(search, hlsp=False):
+class KeplerSearch(Keplersearch):
 
     #@properties like quarters
 
-    def search_cubedata():
+    def search_cubedata(hlsp=False):
         # Regular _search_cubedata + processing
     def fix_times():
         # Fixes Kepler times
@@ -74,11 +104,11 @@ class search_Kepler(search, hlsp=False):
     def get_sequence_number():
 
 
-class search_K2(search, hlsp=False):
+class K2Search(MASTSearch):
 
     #@properties like campaigns (seasons?)
 
-    def search_cubedata():
+    def search_cubedata(hlsp=False):
         # Regular _search_cubedata + processing
 
     def parse_split_campaigns():
