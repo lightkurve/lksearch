@@ -25,12 +25,12 @@ class SearchError(Exception):
 class MASTSearch(object):
     # Shared functions that are used for searches by any mission
 
-    def __init__(self):
-        pass 
+    def __init__(self, target):
+         
 
-        #if isinstance(target, int):
-        #    raise TypeError("Target must be a target name string or astropy coordinate object")
-        #self.target = target
+        if isinstance(target, int):
+            raise TypeError("Target must be a target name string or astropy coordinate object")
+        self.target = target
         #if table is None:
         #    self.table = pd.DataFrame()
 
@@ -58,10 +58,10 @@ class MASTSearch(object):
         cadence=None,
         provenance_name=None,
         exptime=(0, 9999),
-        quarter=None,
-        month=None,
-        campaign=None,
-        sector=None,
+        #quarter=None,
+        #month=None,
+        #campaign=None,
+        #sector=None,
         limit=None,):
         """All mission search
         Updates self.table, and returns it"""
@@ -72,15 +72,14 @@ class MASTSearch(object):
                                             mission=mission,
                                             filetype=filetype,
                                             provenance_name=author,
-                                            quarter=quarter,
-                                            month=month,
-                                            campaign=campaign,
-                                            sector=sector,
+                                            #quarter=quarter,
+                                            #month=month,
+                                            #campaign=campaign,
+                                            #sector=sector,
                                             limit=limit,)
-        #joint_table = self._update_table()
-        joint_table = self._filter_products(joint_table)
-        self.table = joint_table          
-        return self
+        
+               
+        return joint_table
     
     def _search_cubedata(self,
         target :  Union[str, tuple, SkyCoord],
@@ -122,28 +121,38 @@ class MASTSearch(object):
         #sector:   Union[int, list[int]] = None,
         limit:    int = None,
         ):
-        if isinstance(target, int):
-            raise TypeError("Target must be a target name string or astropy coordinate object")
+        #if isinstance(target, int):
+        #    raise TypeError("Target must be a target name string or astropy coordinate object")
         print(f"Search_timeseries {mission}")
-        result = self._search_timeseries(target, 
+        joint_table = self._search_timeseries(self.target, 
                                          radius=radius, 
                                          exptime=exptime, 
                                          cadence=cadence,
                                          mission=mission,
                                          filetype=filetype,
                                          author=author,
-                                         quarter=quarter,
-                                         month=month,
-                                         campaign=campaign,
-                                         sector=sector,
+                                         #quarter=quarter,
+                                         #month=month,
+                                         #campaign=campaign,
+                                         #sector=sector,
                                          limit=limit,
                                          )
-        return result
+        joint_table = self._update_table(joint_table)
+        
+        joint_table = self._filter_products(joint_table)
+        self.table = joint_table   
+        
 
     #@staticmethod
     def search_cubedata(self,*args, **kwargs):
+        
         """docstrings"""
-        return self._search_timeseries(*args, **kwargs)
+        '''joint_table = self._update_table(joint_table)
+        
+        joint_table = self._filter_products(joint_table)
+        self.table = joint_table   
+        return self._search_timeseries(*args, **kwargs)'''
+        raise NotImplementedError("Starting with Timeseries")
     
     def search_reports():
         raise NotImplementedError("Use Kepler or TESS or whatever")
@@ -189,13 +198,16 @@ class MASTSearch(object):
            raise TypeError("Target must be a target name string or astropy coordinate object")
         
 
-    def _update_table(self):
+    def _update_table(self, products):
         #rename t_exptime to exptime
+        print("UPDATING TABLE")
+        products["exptime"] = products["t_exptime"]
         #rename porvenance_name to author
-        self._add_columns("something")
-        self._add_urls_to_authors()
-        self._add_s3_url_column()      
-        self._sort_by_priority()
+        #self._add_columns("something")
+        #self._add_urls_to_authors()
+        #self._add_s3_url_column()      
+        #self._sort_by_priority()
+        return products
     
     def _add_s3_url_column():
         # self.table would updated to have an extra column of s3 URLS if possible
@@ -289,20 +301,20 @@ class MASTSearch(object):
         )
 
         joint_table = joint_table.to_pandas()
-
-        masked_result = _filter_products(
+        joint_table = self._update_table(joint_table)
+        print("BEFORE FILTER")
+        
+        masked_result = self._filter_products(
             joint_table,
-            filetype=filetype,
-            campaign=campaign,
-            quarter=quarter,
-            sector=sector,
             exptime=exptime,
+            filetype=filetype,
             project=mission,
             provenance_name=provenance_name,
-            month=month,
             limit=limit,
         )
         log.debug(f"MAST found {len(masked_result)} matching data products.")
+
+        
 
         return joint_table
 
@@ -407,66 +419,85 @@ class MASTSearch(object):
 
 
 
-def _filter_products(
-        products,
-        # campaign: Union[int, list[int]] = None,
-        # quarter: Union[int, list[int]] = None,
-        # month: Union[int, list[int]]= None,
-        # sector: Union[int, list[int]] = None,
-        exptime: Union[str, int, tuple[int]] = None,
-        limit: int = None,
-        project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        provenance_name: Union[str, list[str]] = ["kepler", "k2", "spoc"],
-        filetype="Target Pixel", #lightcurve, target pixel, ffi, or dv
-    ) -> pd.DataFrame:
-    # Modify this so that it can choose what types of products to keep
+    def _filter_products(self,
+            products,
+            # campaign: Union[int, list[int]] = None,
+            # quarter: Union[int, list[int]] = None,
+            # month: Union[int, list[int]]= None,
+            # sector: Union[int, list[int]] = None,
+            exptime: Union[str, int, tuple[int]] = (0, 9999),
+            limit: int = None,
+            project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
+            provenance_name: Union[str, list[str]] = ["kepler", "k2", "spoc"],
+            filetype: Union[str, list[str]] = ["Target Pixel"], #lightcurve, target pixel, ffi, or dv
+        ) -> pd.DataFrame:
+        # Modify this so that it can choose what types of products to keep
+        print(f"EXPTIME: {exptime}")
+        print(filetype)
+        mask = np.ones(len(products), dtype=bool)
 
-    mask = np.ones(len(products), dtype=bool)
+        # I removed the kepler-specific stuff here
 
-    # I removed the kepler-specific stuff here
+        # HLSP products need to be filtered by extension
+        if "lightcurve" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
+            mask &= np.array(
+                [uri.lower().endswith("lc.fits") for uri in products["productFilename"]]
+            )
+        # TODO:The elifs only allow for 1 type (target pixel or ffi), is that the behavior we want?
+        if "target pixel" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
+            mask &= np.array(
+                [
+                    uri.lower().endswith(("tp.fits", "targ.fits.gz"))
+                    for uri in products["productFilename"]
+                ]
+            )
+        if "ffi" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
+            mask &= np.array(["TESScut" in desc for desc in products["description"]])
 
-    # HLSP products need to be filtered by extension
-    if "lightcurve" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-        mask &= np.array(
-            [uri.lower().endswith("lc.fits") for uri in products["productFilename"]]
-        )
-    # TODO:The elifs only allow for 1 type (target pixel or ffi), is that the behavior we want?
-    if "target pixel" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-        mask &= np.array(
-            [
-                uri.lower().endswith(("tp.fits", "targ.fits.gz"))
-                for uri in products["productFilename"]
-            ]
-        )
-    if "ffi" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-        mask &= np.array(["TESScut" in desc for desc in products["description"]])
+        
+        
+        if "dv" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
+            mask &= np.array(
+                [
+                    uri.lower().endswith(("dvr.pdf","dvm.pdf","dvs.pdf"))
+                    for uri in products["productFilename"]
+                ]
+            )
+        else: # Allow only fits files if you don't want dv products
+            mask &= np.array(
+                [
+                    uri.lower().endswith("fits") or uri.lower().endswith("fits.gz")
+                    for uri in products["productFilename"]
+                ]
+            )
 
-    
-    
-    if "dv" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-        mask &= np.array(
-            [
-                uri.lower().endswith(("dvr.pdf","dvm.pdf","dvs.pdf"))
-                for uri in products["productFilename"]
-            ]
-        )
-    else: # Allow only fits files if you don't want dv products
-        mask &= np.array(
-            [
-                uri.lower().endswith("fits") or uri.lower().endswith("fits.gz")
-                for uri in products["productFilename"]
-            ]
-        )
+        # Filter by cadence
+        mask &= self._mask_by_exptime(products, exptime)
 
-    # Filter by cadence
-    mask &= _mask_by_exptime(products, exptime)
+        products = products[mask]
 
-    products = products[mask]
+        products.sort_values(by=["distance", "productFilename"])
+        if limit is not None:
+            return products[0:limit]
+        return products
 
-    products.sort_values(by=["distance", "productFilename"])
-    if limit is not None:
-        return products[0:limit]
-    return products
+    def _mask_by_exptime(self, products, exptime):
+        """Helper function to filter by exposure time.
+        Returns a boolean array """
+        mask = np.ones(len(products), dtype=bool)
+        if isinstance(exptime, (int, float)):
+            mask &= products["exptime"] == exptime
+        elif isinstance(exptime, tuple):
+            mask &= (products["exptime"] >= min(exptime) & (products["exptime"] <= max(exptime)))
+        elif isinstance(exptime, str):
+            exptime = exptime.lower()
+            if exptime in ["fast"]:
+                mask &= products["exptime"] < 60
+            elif exptime in ["short"]:
+                mask &= (products["exptime"] >= 60) & (products["exptime"] <= 120)
+            elif exptime in ["long", "ffi"]:
+                mask &= products["exptime"] > 120
+        return mask
 
 
     
@@ -532,7 +563,7 @@ class TESSSearch(MASTSearch):
         else:
             log.debug("Found no matching cutouts.")
 
-    return ffi_result
+        return ffi_result
     
 
 
