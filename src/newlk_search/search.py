@@ -27,7 +27,6 @@ class MASTSearch(object):
 
     def __init__(self, target):
          
-
         if isinstance(target, int):
             raise TypeError("Target must be a target name string or astropy coordinate object")
         self.target = target
@@ -107,7 +106,7 @@ class MASTSearch(object):
 
     # @staticmethod
     def search_timeseries(self,
-        target:  Union[str, tuple, SkyCoord],
+        #target:  Union[str, tuple, SkyCoord],
         radius:  Union[float, u.Quantity] = None,
         exptime:  Union[str, int, tuple] = (0, 9999),
         cadence: Union[str, int, tuple] = None,
@@ -140,7 +139,8 @@ class MASTSearch(object):
         joint_table = self._update_table(joint_table)
         
         joint_table = self._filter_products(joint_table)
-        self.table = joint_table   
+        self.table = joint_table 
+        return joint_table
         
 
     #@staticmethod
