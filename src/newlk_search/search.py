@@ -137,8 +137,6 @@ class MASTSearch(object):
                                          limit=limit,
                                          )
         joint_table = self._update_table(joint_table)
-        
-        joint_table = self._filter_products(joint_table)
         self.table = joint_table 
         return joint_table
         
@@ -302,9 +300,8 @@ class MASTSearch(object):
 
         joint_table = joint_table.to_pandas()
         joint_table = self._update_table(joint_table)
-        print("BEFORE FILTER")
         
-        masked_result = self._filter_products(
+        joint_table = self._filter_products(
             joint_table,
             exptime=exptime,
             filetype=filetype,
@@ -312,7 +309,7 @@ class MASTSearch(object):
             provenance_name=provenance_name,
             limit=limit,
         )
-        log.debug(f"MAST found {len(masked_result)} matching data products.")
+        log.debug(f"MAST found {len(joint_table)} matching data products.")
 
         
 
@@ -432,15 +429,18 @@ class MASTSearch(object):
             filetype: Union[str, list[str]] = ["Target Pixel"], #lightcurve, target pixel, ffi, or dv
         ) -> pd.DataFrame:
         # Modify this so that it can choose what types of products to keep
-        print(f"EXPTIME: {exptime}")
-        print(filetype)
-        mask = np.ones(len(products), dtype=bool)
 
+        mask = np.zeros(len(products), dtype=bool)
+        allowed_ftype = ["lightcurve", "target pixel", "ffi", "dv"]
+        if not any(f in allowed_ftype for f in [x.lower() for x in np.atleast_1d(filetype).tolist()]):
+            filetype = allowed_type
+            log.debug("User specified invalid filetype. Return all data.")
         # I removed the kepler-specific stuff here
 
         # HLSP products need to be filtered by extension
         if "lightcurve" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-            mask &= np.array(
+            print("looking for lightcurves")
+            mask |= np.array(
                 [uri.lower().endswith("lc.fits") for uri in products["productFilename"]]
             )
         # TODO:The elifs only allow for 1 type (target pixel or ffi), is that the behavior we want?
@@ -452,51 +452,47 @@ class MASTSearch(object):
                 ]
             )
         if "ffi" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-            mask &= np.array(["TESScut" in desc for desc in products["description"]])
+            mask |= np.array(["TESScut" in desc for desc in products["description"]])
 
         
-        
         if "dv" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-            mask &= np.array(
+            mask |= np.array(
                 [
                     uri.lower().endswith(("dvr.pdf","dvm.pdf","dvs.pdf"))
                     for uri in products["productFilename"]
                 ]
             )
-        else: # Allow only fits files if you don't want dv products
-            mask &= np.array(
-                [
-                    uri.lower().endswith("fits") or uri.lower().endswith("fits.gz")
-                    for uri in products["productFilename"]
-                ]
-            )
+
 
         # Filter by cadence
         mask &= self._mask_by_exptime(products, exptime)
 
         products = products[mask]
 
-        products.sort_values(by=["distance", "productFilename"])
+        products.sort_values(by=["distance", "productFilename"], ignore_index=True)
         if limit is not None:
             return products[0:limit]
         return products
+    
 
     def _mask_by_exptime(self, products, exptime):
         """Helper function to filter by exposure time.
         Returns a boolean array """
-        mask = np.ones(len(products), dtype=bool)
         if isinstance(exptime, (int, float)):
-            mask &= products["exptime"] == exptime
+            mask = products["exptime"] == exptime
         elif isinstance(exptime, tuple):
-            mask &= (products["exptime"] >= min(exptime) & (products["exptime"] <= max(exptime)))
+            mask = (products["exptime"] >= min(exptime) & (products["exptime"] <= max(exptime)))
         elif isinstance(exptime, str):
             exptime = exptime.lower()
             if exptime in ["fast"]:
-                mask &= products["exptime"] < 60
+                mask = products["exptime"] < 60
             elif exptime in ["short"]:
-                mask &= (products["exptime"] >= 60) & (products["exptime"] <= 120)
+                mask = (products["exptime"] >= 60) & (products["exptime"] <= 120)
             elif exptime in ["long", "ffi"]:
-                mask &= products["exptime"] > 120
+                mask = products["exptime"] > 120
+            else:
+                mask = np.ones(len(products), dtype=bool)
+                log.debug('invalid string input. No exptime filter applied')
         return mask
 
 
