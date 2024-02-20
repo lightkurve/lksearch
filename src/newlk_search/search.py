@@ -30,23 +30,20 @@ class MASTSearch(object):
         if isinstance(target, int):
             raise TypeError("Target must be a target name string or astropy coordinate object")
         self.target = target
-        #if table is None:
-        #    self.table = pd.DataFrame()
+        # Discussed only saving a master table
+        self.table = self.search(**kwargs) #(self.table defined here?)
 
-        #else:
-        #    if isinstance(table, Table):
-        #        log.warning("Search Result Now Expects a pandas dataframe but an astropy Table was given; converting astropy.table to pandas")
-        #        table = table.to_pandas()
-        #    self.table = table
-            #if len(table) > 0:
-                #self._fix_start_and_end_times()
-                #self._add_columns()
-                #self._sort_table()
-        #self.display_extra_columns = conf.search_result_display_extra_columns
 
 
     def __repr__(self):
-        return f"I'm a MASTSearch class. You can use me to search for timeseries or cubedata."
+        return f"I'm a MASTSearch class for {self.target}"
+    
+        #say I have len(lcs),len(cubes), len(dvs)
+    
+    # If we do have the mega table by default, have properties to extract the appropriate data type
+    @property
+    def cube_table():
+        return self.filter(self.table, filetype='target pixel')  
 
     def _search_timeseries(self,  
         target,
@@ -57,10 +54,10 @@ class MASTSearch(object):
         cadence=None,
         provenance_name=None,
         exptime=(0, 9999),
-        #quarter=None,
-        #month=None,
-        #campaign=None,
-        #sector=None,
+        quarter=None,
+        month=None,
+        campaign=None,
+        sector=None,
         limit=None,):
         """All mission search
         Updates self.table, and returns it"""
@@ -71,10 +68,10 @@ class MASTSearch(object):
                                             mission=mission,
                                             filetype=filetype,
                                             provenance_name=author,
-                                            #quarter=quarter,
-                                            #month=month,
-                                            #campaign=campaign,
-                                            #sector=sector,
+                                            quarter=quarter,
+                                            month=month,
+                                            campaign=campaign,
+                                            sector=sector,
                                             limit=limit,)
         
                
@@ -86,7 +83,7 @@ class MASTSearch(object):
         exptime:  Union[str, int, tuple] = (0, 9999),
         cadence: Union[str, int, tuple] = None,
         mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        filetype: str = 'Target Pixel',
+        filetype: str = ['Target Pixel'],
         author:  Union[str, list[str]] = None,
         quarter:  Union[int, list[int]] = None,
         month:    Union[int, list[int]] = None,
@@ -100,18 +97,29 @@ class MASTSearch(object):
         MASTSearch.search_timeseries()
         """
         
-        joint_table = self._search_products(**kwargs)
+        joint_table = self._search_products(self.target, 
+                                         radius=radius, 
+                                         exptime=exptime, 
+                                         cadence=cadence,
+                                         mission=mission,
+                                         filetype=filetype,
+                                         author=author,
+                                         limit=limit,
+                                         )
         joint_table = self._update_table(joint_table)  
+        self.cubedata_table = joint_table
         return joint_table
 
-    # @staticmethod
-    def search_timeseries(self,
+
+    # The lc/tpf data all gets the same search, they just get filtered out.
+    # So I propose we always return both tables using search. 
+    def search(self,
         #target:  Union[str, tuple, SkyCoord],
         radius:  Union[float, u.Quantity] = None,
         exptime:  Union[str, int, tuple] = (0, 9999),
         cadence: Union[str, int, tuple] = None,
         mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        filetype: str = "Lightcurve",
+        #filetype: str = ["lightcurve", "target pixel"],
         author:  Union[str, list[str]] = None,
         # Get rid of this in the default call and implement in the mission-specific version?
         #quarter:  Union[int, list[int]] = None,
@@ -122,7 +130,64 @@ class MASTSearch(object):
         ):
         #if isinstance(target, int):
         #    raise TypeError("Target must be a target name string or astropy coordinate object")
-        print(f"Search_timeseries {mission}")
+        joint_table = self._search_products(self.target, 
+                                         radius=radius, 
+                                         exptime=exptime, 
+                                         cadence=cadence,
+                                         mission=mission,
+                                         filetype=["lightcurve", "target pixel", "dv"],
+                                         author=author,
+                                         limit=limit,
+                                         )
+        joint_table = self._update_table(joint_table)
+
+        '''self.timeseries_table = self._filter_products(
+            joint_table,
+            exptime=exptime,
+            filetype=['lightcurve'],
+            project=mission,
+            provenance_name=provenance_name,
+            limit=limit,
+        )
+        self.cubedata_table = self._filter_products(
+            joint_table,
+            exptime=exptime,
+            filetype=['target pixel'],
+            project=mission,
+            provenance_name=provenance_name,
+            limit=limit,
+        )
+        self.dv_table = self._filter_products(
+            joint_table,
+            exptime=exptime,
+            filetype=['dv'],
+            project=mission,
+            provenance_name=provenance_name,
+            limit=limit,
+        )'''
+        
+        #self.table = joint_table 
+        return joint_table
+
+    # @staticmethod
+    # Possible this could be removed in favor of the 'one search to rule them all' model
+    def search_timeseries(self,
+        #target:  Union[str, tuple, SkyCoord],
+        radius:  Union[float, u.Quantity] = None,
+        exptime:  Union[str, int, tuple] = (0, 9999),
+        cadence: Union[str, int, tuple] = None,
+        mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
+        filetype: str = "Lightcurve",
+        author:  Union[str, list[str]] = None,
+        # Get rid of these in the default call and implement in the mission-specific version
+        #quarter:  Union[int, list[int]] = None,
+        #month:    Union[int, list[int]] = None,
+        #campaign: Union[int, list[int]] = None,
+        #sector:   Union[int, list[int]] = None,
+        limit:    int = None,
+        ):
+        #if isinstance(target, int):
+        #    raise TypeError("Target must be a target name string or astropy coordinate object")
         joint_table = self._search_timeseries(self.target, 
                                          radius=radius, 
                                          exptime=exptime, 
@@ -137,11 +202,12 @@ class MASTSearch(object):
                                          limit=limit,
                                          )
         joint_table = self._update_table(joint_table)
-        self.table = joint_table 
+        self.timeseries_table = joint_table 
         return joint_table
         
 
     #@staticmethod
+    # Same stuff as search_timeseries above but with a differen filetype
     def search_cubedata(self,*args, **kwargs):
         
         """docstrings"""
@@ -152,11 +218,13 @@ class MASTSearch(object):
         return self._search_timeseries(*args, **kwargs)'''
         raise NotImplementedError("Starting with Timeseries")
     
+    # 'dv' in the search function, so may not need this
     def search_reports():
         raise NotImplementedError("Use Kepler or TESS or whatever")
 
+
     def search_FFI():
-        raise NotImplementedError("Those don't exist for everything use TESSSearch")
+        raise NotImplementedError("Please use TESSSearch.get_FFI to access TESS FFI data.")
         
         
     def _parse_input(self, search_name):
@@ -196,11 +264,10 @@ class MASTSearch(object):
            raise TypeError("Target must be a target name string or astropy coordinate object")
         
 
+    # probably overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls
     def _update_table(self, products):
-        #rename t_exptime to exptime
-        print("UPDATING TABLE")
-        products["exptime"] = products["t_exptime"]
-        #rename porvenance_name to author
+        products.rename(columns={"t_exptime":"exptime","provenance_name":"author"})
+        # Other additions may include the following
         #self._add_columns("something")
         #self._add_urls_to_authors()
         #self._add_s3_url_column()      
@@ -301,14 +368,7 @@ class MASTSearch(object):
         joint_table = joint_table.to_pandas()
         joint_table = self._update_table(joint_table)
         
-        joint_table = self._filter_products(
-            joint_table,
-            exptime=exptime,
-            filetype=filetype,
-            project=mission,
-            provenance_name=provenance_name,
-            limit=limit,
-        )
+        
         log.debug(f"MAST found {len(joint_table)} matching data products.")
 
         
@@ -415,7 +475,7 @@ class MASTSearch(object):
 
 
 
-
+    # a mask version. We discusses using pandas masks and having self.mask instead. 
     def _filter_products(self,
             products,
             # campaign: Union[int, list[int]] = None,
@@ -467,6 +527,10 @@ class MASTSearch(object):
         # Filter by cadence
         mask &= self._mask_by_exptime(products, exptime)
 
+        # If no products are left, return an empty dataframe with the same columns
+        if sum(mask) == 0:
+            return pd.DataFrame(columns = products.keys())
+
         products = products[mask]
 
         products.sort_values(by=["distance", "productFilename"], ignore_index=True)
@@ -475,6 +539,7 @@ class MASTSearch(object):
         return products
     
 
+    # Again, may want to add to self.mask if we go that route. 
     def _mask_by_exptime(self, products, exptime):
         """Helper function to filter by exposure time.
         Returns a boolean array """
@@ -507,6 +572,9 @@ class TESSSearch(MASTSearch):
         # _cubedata + _get_ffi
         raise NotImplementedError
 
+    # FFIs only available when using TESSSearch. 
+    # Use TESS WCS to just return a table of sectors and dates? 
+    # Then download_ffi requires a sector and time range?
     def _get_ffi():
         from tesswcs import pointings
         from tesswcs import WCS
@@ -563,7 +631,7 @@ class TESSSearch(MASTSearch):
     
 
 
-    def sort():
+    def sort_TESS():
         # base sort + TESS HLSP handling?
         raise NotImplementedError
 
@@ -578,10 +646,52 @@ class TESSSearch(MASTSearch):
 
     
 class KeplerSearch(MASTSearch):
+        
+        #@properties like quarters
+    @property
+    def mission(self):
+        return "Kepler"
+        
+
+
+    def search_timeseries(self.target,
+
+        radius:  Union[float, u.Quantity] = None,
+        exptime:  Union[str, int, tuple] = (0, 9999),
+        cadence: Union[str, int, tuple] = None,
+        mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
+        filetype: str = "Lightcurve",
+        author:  Union[str, list[str]] = None,
+        # Get rid of this in the default call and implement in the mission-specific version?
+        #quarter:  Union[int, list[int]] = None,
+        #month:    Union[int, list[int]] = None,
+        #campaign: Union[int, list[int]] = None,
+        #sector:   Union[int, list[int]] = None,
+        limit:    int = None,
+        ):
+        #if isinstance(target, int):
+        #    raise TypeError("Target must be a target name string or astropy coordinate object")
+        print(f"Search_timeseries {mission}")
+        joint_table = self._search_timeseries(self.target, 
+                                         radius=radius, 
+                                         exptime=exptime, 
+                                         cadence=cadence,
+                                         mission=mission,
+                                         filetype=filetype,
+                                         author=author,
+                                         #quarter=quarter,
+                                         #month=month,
+                                         #campaign=campaign,
+                                         #sector=sector,
+                                         limit=limit,
+                                         )
+        joint_table = self._update_table(joint_table)
+        self.table = joint_table 
+        return joint_table
 
 
 
-    #@properties like quarters
+
 
     def search_cubedata(hlsp=False):
         # Regular _search_cubedata + processing
@@ -659,6 +769,9 @@ class KeplerSearch(MASTSearch):
         products.sort_values(by=["distance", "productFilename"])
 
         return products
+    
+    def sortKepler():
+        raise NotImplementedError
 
 class K2Search(MASTSearch):
 
@@ -669,6 +782,9 @@ class K2Search(MASTSearch):
         raise NotImplementedError
 
     def parse_split_campaigns():
+        raise NotImplementedError
+    
+    def sortK2():
         raise NotImplementedError
 
 
