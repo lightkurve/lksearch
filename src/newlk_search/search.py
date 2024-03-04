@@ -1,6 +1,6 @@
 from astroquery.mast import Observations
 import pandas as pd
-from typing import Union
+from typing import Union, Optional
 import re
 import logging
 import warnings
@@ -24,113 +24,79 @@ class SearchError(Exception):
 
 class MASTSearch(object):
     # Shared functions that are used for searches by any mission
+    _REPR_COLUMNS = ["target_name", "provenance_name", "t_min", "t_max"]
 
-    def __init__(self, target):
-         
+    def __init__(self, target: Optional[Union[str, tupe[float], SkyCoord]] = None, 
+                 obs_table:Optional[pd.DataFrame] = None, 
+                 prod_table:Optional[pd.DataFrame]=None):
+        #Legacy functionality - no longer query kic/tic by int only
         if isinstance(target, int):
             raise TypeError("Target must be a target name string or astropy coordinate object")
-        self.target = target
-        # Discussed only saving a master table
-        self.table = self.search(**kwargs) #(self.table defined here?)
+        # If target is not None, Parse the input
+        if not isinstance(target, None):
+            self.target = self._parse_input(target)
+        
+        if(isinstance(self.target, SkyCoord)):
+            self.table = self._search(self)
+        else:
+            # If we don't have a name, check to see if tables were passed
+            if(isinstance(obs_table, pd.DataFrame)):
+                # If we have an obs table and no name, use it
+                self.obs_table = obs_table
+                if(isinstance(prod_table, None)):
+                    #get the prod table if we don't have it
+                    prod_table = self._search_products(self)
+                self.prod_table = prod_table
+                self.table = self._join_tables(self)
+            else:
+                raise(ValueError("No Target or object table supplied"))
+
+    def __getattr__(self, attr):
+        try:
+            return getattr(self.table, attr)
+        except AttributeError:
+            raise AttributeError(f"'Result' object has no attribute '{attr}'")
 
 
+    def _repr_html_(self):
+        return self.table[
+            _REPR_COLUMNS
+        ]._repr_html_()
+
+    def __getitem__(self, key):
+        if isinstance(key, (slice, int)):
+            mask = np.in1d(np.arange(len(self)), np.arange(len(self))[key])
+            return self._mask(mask)
+        if isinstance(key, (str, list)):
+            return self.table[key]
+        if hasattr(key, "__iter__"):
+            if len(key) == len(self):
+                return self._mask(key)
 
     def __repr__(self):
-        return f"I'm a MASTSearch class for {self.target}"
-    
-        #say I have len(lcs),len(cubes), len(dvs)
-    
-    # If we do have the mega table by default, have properties to extract the appropriate data type
-    @property
-    def cube_table():
-        return self.filter(self.table, filetype='target pixel')  
-
-    def _search_timeseries(self,  
-        target,
-        radius=None,
-        filetype="Lightcurve",
-        mission=["Kepler", "K2", "TESS"],
-        author=None,
-        cadence=None,
-        provenance_name=None,
-        exptime=(0, 9999),
-        quarter=None,
-        month=None,
-        campaign=None,
-        sector=None,
-        limit=None,):
-        """All mission search
-        Updates self.table, and returns it"""
-        print(f"_search_timeseries {mission}")
-        joint_table = self._search_products(target, 
-                                            radius=radius,
-                                            exptime=exptime,
-                                            mission=mission,
-                                            filetype=filetype,
-                                            provenance_name=author,
-                                            quarter=quarter,
-                                            month=month,
-                                            campaign=campaign,
-                                            sector=sector,
-                                            limit=limit,)
+        return self.table[self._REPR_COLUMNS]
         
-               
-        return joint_table
-    
-    def _search_cubedata(self,
-        target :  Union[str, tuple, SkyCoord],
+    def _mask(self, mask):
+        """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
+        indices = self.table[mask].index
+        return SearchResult(
+            obs_table=self.obs_table.loc[indices.get_level_values(0)].drop_duplicates(),
+            prod_table=self.prod_table.loc[
+                indices.get_level_values(1)
+            ].drop_duplicates(),
+        )
+
+    def _search(self,
         radius:  Union[float, u.Quantity] = None,
         exptime:  Union[str, int, tuple] = (0, 9999),
         cadence: Union[str, int, tuple] = None,
         mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        filetype: str = ['Target Pixel'],
         author:  Union[str, list[str]] = None,
-        quarter:  Union[int, list[int]] = None,
-        month:    Union[int, list[int]] = None,
-        campaign: Union[int, list[int]] = None,
-        sector:   Union[int, list[int]] = None,
-        limit:    int = None,
-        ) -> pd.DataFrame:
-        """All mission search
-        Updates self.table, and returns it
-        
-        MASTSearch.search_timeseries()
-        """
-        
-        joint_table = self._search_products(self.target, 
-                                         radius=radius, 
-                                         exptime=exptime, 
-                                         cadence=cadence,
-                                         mission=mission,
-                                         filetype=filetype,
-                                         author=author,
-                                         limit=limit,
-                                         )
-        joint_table = self._update_table(joint_table)  
-        self.cubedata_table = joint_table
-        return joint_table
-
-
-    # The lc/tpf data all gets the same search, they just get filtered out.
-    # So I propose we always return both tables using search. 
-    def search(self,
-        #target:  Union[str, tuple, SkyCoord],
-        radius:  Union[float, u.Quantity] = None,
-        exptime:  Union[str, int, tuple] = (0, 9999),
-        cadence: Union[str, int, tuple] = None,
-        mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        #filetype: str = ["lightcurve", "target pixel"],
-        author:  Union[str, list[str]] = None,
-        # Get rid of this in the default call and implement in the mission-specific version?
-        #quarter:  Union[int, list[int]] = None,
-        #month:    Union[int, list[int]] = None,
-        #campaign: Union[int, list[int]] = None,
-        #sector:   Union[int, list[int]] = None,
         limit:    int = None,
         ):
         #if isinstance(target, int):
         #    raise TypeError("Target must be a target name string or astropy coordinate object")
-        joint_table = self._search_products(self.target, 
+        self.obs_table = self._search_obs(self.target, 
                                          radius=radius, 
                                          exptime=exptime, 
                                          cadence=cadence,
@@ -139,98 +105,19 @@ class MASTSearch(object):
                                          author=author,
                                          limit=limit,
                                          )
+        self.prod_table = self._search_prod()
+        joint_table = self._join_tables()
         joint_table = self._update_table(joint_table)
 
-        '''self.timeseries_table = self._filter_products(
-            joint_table,
-            exptime=exptime,
-            filetype=['lightcurve'],
-            project=mission,
-            provenance_name=provenance_name,
-            limit=limit,
-        )
-        self.cubedata_table = self._filter_products(
-            joint_table,
-            exptime=exptime,
-            filetype=['target pixel'],
-            project=mission,
-            provenance_name=provenance_name,
-            limit=limit,
-        )
-        self.dv_table = self._filter_products(
-            joint_table,
-            exptime=exptime,
-            filetype=['dv'],
-            project=mission,
-            provenance_name=provenance_name,
-            limit=limit,
-        )'''
-        
-        #self.table = joint_table 
         return joint_table
 
-    # @staticmethod
-    # Possible this could be removed in favor of the 'one search to rule them all' model
-    def search_timeseries(self,
-        #target:  Union[str, tuple, SkyCoord],
-        radius:  Union[float, u.Quantity] = None,
-        exptime:  Union[str, int, tuple] = (0, 9999),
-        cadence: Union[str, int, tuple] = None,
-        mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        filetype: str = "Lightcurve",
-        author:  Union[str, list[str]] = None,
-        # Get rid of these in the default call and implement in the mission-specific version
-        #quarter:  Union[int, list[int]] = None,
-        #month:    Union[int, list[int]] = None,
-        #campaign: Union[int, list[int]] = None,
-        #sector:   Union[int, list[int]] = None,
-        limit:    int = None,
-        ):
-        #if isinstance(target, int):
-        #    raise TypeError("Target must be a target name string or astropy coordinate object")
-        joint_table = self._search_timeseries(self.target, 
-                                         radius=radius, 
-                                         exptime=exptime, 
-                                         cadence=cadence,
-                                         mission=mission,
-                                         filetype=filetype,
-                                         author=author,
-                                         #quarter=quarter,
-                                         #month=month,
-                                         #campaign=campaign,
-                                         #sector=sector,
-                                         limit=limit,
-                                         )
-        joint_table = self._update_table(joint_table)
-        self.timeseries_table = joint_table 
-        return joint_table
-        
-
-    #@staticmethod
-    # Same stuff as search_timeseries above but with a differen filetype
-    def search_cubedata(self,*args, **kwargs):
-        
-        """docstrings"""
-        '''joint_table = self._update_table(joint_table)
-        
-        joint_table = self._filter_products(joint_table)
-        self.table = joint_table   
-        return self._search_timeseries(*args, **kwargs)'''
-        raise NotImplementedError("Starting with Timeseries")
-    
-    # 'dv' in the search function, so may not need this
-    def search_reports():
-        raise NotImplementedError("Use Kepler or TESS or whatever")
-
-
-    def search_FFI():
-        raise NotImplementedError("Please use TESSSearch.get_FFI to access TESS FFI data.")
-        
         
     def _parse_input(self, search_name):
         """ Prepares target search name based on input type(Is it a skycoord, tuple, or string..."""
         # We used to allow an int to be sent and do some educated-guess parsing
         # If passed a SkyCoord, convert it to an "ra, dec" string for MAST
+        self.exact_target = False
+
         if isinstance(search_name, SkyCoord):
             self.target_search_string = f"{search_name.ra.deg}, {search_name.dec.deg}"
             self.SkyCoord = search_name
@@ -246,19 +133,19 @@ class MASTSearch(object):
             kplr_match = re.match(r"^(kplr|kic) ?(\d+)$", target_lower)
             if kplr_match:
                 self.exact_target_name = f"kplr{kplr_match.group(2).zfill(9)}"
-                #self.exact_target = True
+                self.exact_target = True
 
             # Was a K2 target ID passed?
             ktwo_match = re.match(r"^(ktwo|epic) ?(\d+)$", target_lower)
             if ktwo_match:
                 self.exact_target_name = f"ktwo{ktwo_match.group(2).zfill(9)}"
-                #self.exact_target = True
+                self.exact_target = True
 
             # Was a TESS target ID passed?
             tess_match = re.match(r"^(tess|tic) ?(\d+)$", target_lower)
             if tess_match:
                 self.exact_target_name = f"{tess_match.group(2).zfill(9)}"  
-                #self.exact_target = True
+                self.exact_target = True
             
         else:
            raise TypeError("Target must be a target name string or astropy coordinate object")
@@ -278,7 +165,7 @@ class MASTSearch(object):
         # self.table would updated to have an extra column of s3 URLS if possible
         raise NotImplementedError
     
-    def _search_products(self, target, 
+    def _search_obs(self, target, 
         radius=None,
         filetype="Lightcurve",
         mission=["Kepler", "K2", "TESS"],
@@ -334,7 +221,6 @@ class MASTSearch(object):
 
         #from astroquery.mast import Observations
         observations = self._query_mast(
-            target,
             radius=radius,
             project=mission,
             provenance_name=provenance_name,
@@ -350,32 +236,7 @@ class MASTSearch(object):
         if len(observations) == 0:
             raise SearchError(f"No data found for target {target}.")
 
-            
-        # Use the search result to get a product list
-        products = Observations.get_product_list(observations)
-
-        joint_table = join(
-            observations,
-            products,
-            keys="obs_id",#in Kepler, K2 this was parent_id at one point not obs_id
-            #keys_left="obsid", 
-            #keys_right="parent_obsid",
-            join_type="right",
-            uniq_col_name="{col_name}{table_name}",
-            table_names=["", "_products"],
-        )
-
-        joint_table = joint_table.to_pandas()
-        joint_table = self._update_table(joint_table)
-        
-        
-        log.debug(f"MAST found {len(joint_table)} matching data products.")
-
-        
-
-        return joint_table
-
-
+        return observations
             
     def _query_mast(self, target: Union[str, SkyCoord],
         radius: Union[float, u.Quantity, None] = None,
@@ -403,7 +264,7 @@ class MASTSearch(object):
         if exptime is not None:
             query_criteria["t_exptime"] = exptime
 
-        if hasattr(self, 'exact_target_name') and (radius is None):
+        if self.exact_target and (radius is None):
             log.debug(f"Started querying MAST for observations with exact name {self.exact_target_name}")
             #do an exact name search with target_name= 
             with warnings.catch_warnings():
@@ -443,17 +304,29 @@ class MASTSearch(object):
                 # MAST failed to resolve the object name to sky coordinates
                 raise SearchError(exc) from exc
 
-        #See if we have 
-        if(len(obs) == 0): 
-            #check for a radius, add one if not?
-            obs = Observations.query_criteria
 
-        #else cone_search
-        prod = Observations.get_product_list(obs)
+        return obs
+
+    def _search_prod(self):
+        # Use the search result to get a product list
+        products = Observations.get_product_list(self.obs_table)
+
+        return products
+
+    def _join_tables(self):
+        joint_table = pd.merge(
+            self.obs_table.reset_index().rename({"index": "obs_index"}, axis="columns"),
+            self.prod_table.reset_index().rename(
+                {"index": "prod_index"}, axis="columns"
+            ),
+            on="obs_id",
+            how="left",
+            suffixes=("_obs", "_prod"),
+        ).set_index(["obs_index", "prod_index"])
         
-        joint_table = pd.concat((obs.to_pandas(), prod.to_pandas()))
+        log.debug(f"MAST found {len(joint_table)} matching data products.")
         return joint_table
-
+        
     def _sort_by_priority():
         # Basic sort
         raise NotImplementedError("To Do")
@@ -654,7 +527,7 @@ class KeplerSearch(MASTSearch):
         
 
 
-    def search_timeseries(self.target,
+    def search_timeseries(self,
 
         radius:  Union[float, u.Quantity] = None,
         exptime:  Union[str, int, tuple] = (0, 9999),
