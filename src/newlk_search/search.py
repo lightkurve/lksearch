@@ -25,29 +25,33 @@ class SearchError(Exception):
 class MASTSearch(object):
     # Shared functions that are used for searches by any mission
     _REPR_COLUMNS = ["target_name", "provenance_name", "t_min", "t_max"]
+    
+    obs_table = None
+    prof_table = None
+    table = None
 
-    def __init__(self, target: Optional[Union[str, tupe[float], SkyCoord]] = None, 
+    def __init__(self, target: Optional[Union[str, tuple[float], SkyCoord]] = None, 
                  obs_table:Optional[pd.DataFrame] = None, 
-                 prod_table:Optional[pd.DataFrame]=None):
+                 prod_table:Optional[pd.DataFrame] = None):
+
         #Legacy functionality - no longer query kic/tic by int only
         if isinstance(target, int):
             raise TypeError("Target must be a target name string or astropy coordinate object")
+
         # If target is not None, Parse the input
-        if not isinstance(target, None):
-            self.target = self._parse_input(target)
-        
-        if(isinstance(self.target, SkyCoord)):
-            self.table = self._search(self)
+        if not isinstance(target, type(None)):
+            self.target = self._parse_input(target)        
+            self.table = self._search()
         else:
             # If we don't have a name, check to see if tables were passed
             if(isinstance(obs_table, pd.DataFrame)):
                 # If we have an obs table and no name, use it
                 self.obs_table = obs_table
-                if(isinstance(prod_table, None)):
+                if(isinstance(prod_table, type(None))):
                     #get the prod table if we don't have it
                     prod_table = self._search_products(self)
                 self.prod_table = prod_table
-                self.table = self._join_tables(self)
+                self.table = self._join_tables()
             else:
                 raise(ValueError("No Target or object table supplied"))
 
@@ -57,12 +61,18 @@ class MASTSearch(object):
         except AttributeError:
             raise AttributeError(f"'Result' object has no attribute '{attr}'")
 
-
+    def __repr__(self):
+        if(isinstance(self.table, pd.DataFrame)):
+            return self.table[self._REPR_COLUMNS].__repr__()
+        else:
+            return("I am an uninitialized MASTSearchResult")
+      
     def _repr_html_(self):
-        return self.table[
-            _REPR_COLUMNS
-        ]._repr_html_()
-
+        if(isinstance(self.table, pd.DataFrame)):
+            return self.table[self._REPR_COLUMNS ]._repr_html_()
+        else:
+            return("I am an uninitialized MASTSearchResult")
+    
     def __getitem__(self, key):
         if isinstance(key, (slice, int)):
             mask = np.in1d(np.arange(len(self)), np.arange(len(self))[key])
@@ -72,14 +82,11 @@ class MASTSearch(object):
         if hasattr(key, "__iter__"):
             if len(key) == len(self):
                 return self._mask(key)
-
-    def __repr__(self):
-        return self.table[self._REPR_COLUMNS]
-        
+     
     def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
         indices = self.table[mask].index
-        return SearchResult(
+        return MASTSearch(
             obs_table=self.obs_table.loc[indices.get_level_values(0)].drop_duplicates(),
             prod_table=self.prod_table.loc[
                 indices.get_level_values(1)
@@ -94,17 +101,15 @@ class MASTSearch(object):
         author:  Union[str, list[str]] = None,
         limit:    int = None,
         ):
-        #if isinstance(target, int):
-        #    raise TypeError("Target must be a target name string or astropy coordinate object")
-        self.obs_table = self._search_obs(self.target, 
-                                         radius=radius, 
-                                         exptime=exptime, 
-                                         cadence=cadence,
-                                         mission=mission,
-                                         filetype=["lightcurve", "target pixel", "dv"],
-                                         author=author,
-                                         limit=limit,
-                                         )
+
+        self.obs_table = self._search_obs(radius=radius, 
+                                          exptime=exptime, 
+                                          cadence=cadence,
+                                          mission=mission,
+                                          filetype=["lightcurve", "target pixel", "dv"],
+                                          author=author,
+                                          limit=limit,
+                                          )
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
         joint_table = self._update_table(joint_table)
@@ -165,15 +170,17 @@ class MASTSearch(object):
         # self.table would updated to have an extra column of s3 URLS if possible
         raise NotImplementedError
     
-    def _search_obs(self, target, 
+    def _search_obs(self, 
         radius=None,
         filetype="Lightcurve",
         mission=["Kepler", "K2", "TESS"],
         provenance_name=None,
+        author= None,
         exptime=(0, 9999),
         quarter=None,
         month=None,
         campaign=None,
+        cadence = None,
         sector=None,
         limit=None,):
         # Helper function that returns a Search Result object containing MAST products
@@ -210,14 +217,11 @@ class MASTSearch(object):
         # At MAST, non-FFI Kepler pipeline products are known as "cube" products,
         # and non-FFI TESS pipeline products are listed as "timeseries"
         extra_query_criteria = {}
-        if filetype.lower() == 'lightcurve':
-            extra_query_criteria["dataproduct_type"] = ["timeseries"]
-        elif filetype.lower() == 'target pixel':
-            extra_query_criteria["dataproduct_type"] = ["cube"]
-        elif filetype.lower() == 'ffi':
-            raise SearchError("Please use TESSSearch.search_ffi to search for full frame images")
-        else:
-            extra_query_criteria["dataproduct_type"] = ["cube", "timeseries"]
+        filetype_query_criteria = {"lightcurve": "timeseries", "target pixel": "cube"}
+
+        extra_query_criteria["dataproduct_type"] = [filetype_query_criteria[file.lower()]
+                                                    for file in filetype
+                                                    if(file.lower() in filetype_query_criteria.keys())]
 
         #from astroquery.mast import Observations
         observations = self._query_mast(
@@ -238,7 +242,7 @@ class MASTSearch(object):
 
         return observations
             
-    def _query_mast(self, target: Union[str, SkyCoord],
+    def _query_mast(self, 
         radius: Union[float, u.Quantity, None] = None,
         project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
         provenance_name: Union[str, list[str], None] = None,
@@ -250,9 +254,7 @@ class MASTSearch(object):
 
         #**extra_query_criteria,):
         # Constructs the appropriate query for mast
-        print(target, exptime)
-        print(project)
-        self._parse_input(target)
+        log.debug(f"Searching for {self.target} with {exptime} on project {project}")
 
         # We pass the following `query_criteria` to MAST regardless of whether
         # we search by position or target name:
@@ -276,13 +278,13 @@ class MASTSearch(object):
                 # astroquery does not report distance when querying by `target_name`;
                 # we add it here so that the table returned always has this column.
                 obs["distance"] = 0.0
-                return obs
+                return obs.to_pandas()
         else:
             if radius is None:
                 radius = 0.0001 * u.arcsec
                 
             elif not isinstance(radius, u.quantity.Quantity):
-                log.debug('Radius units not specified, assuming arcsec')
+                log.warning(f'Radius {radius} units not specified, assuming arcsec')
                 radius = radius * u.arcsec
 
             query_criteria["radius"] = str(radius.to(u.deg))
@@ -290,28 +292,27 @@ class MASTSearch(object):
             try:
                 log.debug(
                     "Started querying MAST for observations within "
-                    f"{radius.to(u.arcsec)} arcsec of objectname='{target}'."
+                    f"{radius.to(u.arcsec)} arcsec of objectname='{self.target}'."
+                    f"Via {self.target_search_string} search string and query_criteria: "
+                    f"{query_criteria}"
                 )
-                print(radius, self.target_search_string, query_criteria)
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=NoResultsWarning)
                     warnings.filterwarnings("ignore", message="t_exptime is continuous")
                 
                     obs = Observations.query_criteria(objectname = self.target_search_string, **query_criteria)
                 obs.sort("distance")
-                return obs
+                return obs.to_pandas()
             except ResolverError as exc:
                 # MAST failed to resolve the object name to sky coordinates
                 raise SearchError(exc) from exc
 
-
-        return obs
+        return obs.to_pandas()
 
     def _search_prod(self):
         # Use the search result to get a product list
-        products = Observations.get_product_list(self.obs_table)
-
-        return products
+        products = Observations.get_product_list(Table.from_pandas(self.obs_table))
+        return products.to_pandas()
 
     def _join_tables(self):
         joint_table = pd.merge(
@@ -326,6 +327,16 @@ class MASTSearch(object):
         
         log.debug(f"MAST found {len(joint_table)} matching data products.")
         return joint_table
+    
+    def timeseries(self):
+        """return the products in self.table that are a time-series measurement"""
+        mask = self.table['description'] == "Light curves"
+        return(self._mask(mask))
+
+    def cubedata(self):
+        """return the products in self.table that are image cubes"""
+        mask = self.table['description'] == "Target pixel files"
+        return(self._mask(mask))
         
     def _sort_by_priority():
         # Basic sort
@@ -345,8 +356,6 @@ class MASTSearch(object):
                 self.table["sequence_number"].isna())
         re_expr = r".*Q(\d+)"
         seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in self.table.loc[mask,["description"]].str.values]
-
-
 
     # a mask version. We discusses using pandas masks and having self.mask instead. 
     def _filter_products(self,
