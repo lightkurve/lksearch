@@ -34,27 +34,37 @@ class MASTSearch(object):
                  obs_table:Optional[pd.DataFrame] = None, 
                  prod_table:Optional[pd.DataFrame] = None,
                  search_radius:Optional[Union[float,u.Quantity]] = None,
-                 exptime:Optional[Union[str, int, tuple]] = (0,9999),
-                 # cadence: Optional[Union[str, int, tuple]] = None, #Kepler specific option?
+                 exptime:Optional[Union[str, int, tuple]] = (0,9999),#None,
                  mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
                  author:  Optional[Union[str, list[str]]] = None,
                  limit: Optional[int] = 1000,
                  ):
-        self.search_radius = search_radius
-        self.exptime = exptime
-        self.mission = mission
-        self.author = author
-        self.limit = limit
-
+        
+        self.table = None
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
             raise TypeError("Target must be a target name string, (ra, dec) tuple" 
                             "or astropy coordinate object")
 
         # If target is not None, Parse the input
+
         if not isinstance(target, type(None)):
-            self.target = self._parse_input(target)        
-            self.table = self._search()
+            self.target = self._parse_input(target)  
+
+            self.table = self._search(
+                search_radius,
+                exptime,
+                mission,
+                author,
+                limit,
+                )
+            
+            self.search_radius = search_radius
+            self.exptime = exptime
+            self.mission = mission
+            self.author = author
+            self.limit = limit
+
         else:
             # If we don't have a name, check to see if tables were passed
             if(isinstance(obs_table, pd.DataFrame)):
@@ -79,12 +89,13 @@ class MASTSearch(object):
             return self.table[self._REPR_COLUMNS].__repr__()
         else:
             return("I am an uninitialized MASTSearch result")
-                   
-    def _repr_html_(self):
-        if(isinstance(self.table, pd.DataFrame)):
-            return self.table[self._REPR_COLUMNS ]._repr_html_()
-        else:
-            return("I am an uninitialized MASTSearch result")
+
+     # This is a possible addition to add a hyperlink to the dataproduct homepages.               
+    #def _repr_html_(self):
+    #    if(isinstance(self.table, pd.DataFrame)):
+    #        return self.table[self._REPR_COLUMNS ]._repr_html_()
+    #    else:
+    #        return("I am an uninitialized MASTSearch result")
     
     def __getitem__(self, key):
         if isinstance(key, (slice, int)):
@@ -107,15 +118,22 @@ class MASTSearch(object):
         )
     
     @cached
-    def _search(self):
+    def _search(self,
+                search_radius:Optional[Union[float,u.Quantity]] = None,
+                exptime:Optional[Union[str, int, tuple]] = (0,9999),
+                cadence: Optional[Union[str, int, tuple]] = None, #Kepler specific option?
+                mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
+                author:  Optional[Union[str, list[str]]] = None,
+                limit: Optional[int] = 1000,
+                ):
 
-        self.obs_table = self._search_obs(search_radius=self.search_radius, 
-                                          exptime=self.exptime, 
-                                          cadence=self.cadence,
-                                          mission=self.mission,
+        self.obs_table = self._search_obs(search_radius=search_radius, 
+                                          exptime=exptime, 
+                                          cadence=cadence,
+                                          mission=mission,
                                           filetype=["lightcurve", "target pixel", "dv"],
-                                          author=self.author,
-                                          limit=self.limit,
+                                          author=author,
+                                          limit=limit,
                                           )
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
@@ -133,12 +151,13 @@ class MASTSearch(object):
         if isinstance(search_name, SkyCoord):
             self.target_search_string = f"{search_name.ra.deg}, {search_name.dec.deg}"
             self.SkyCoord = search_name
-            
+          
         elif isinstance(search_name, tuple):
             self.target_search_string = f"{search_name[0]}, {search_name[1]}"
 
         elif isinstance(search_name, str):
             self.target_search_string = search_name
+    
 
             target_lower = str(search_name).lower()
             # Was a Kepler target ID passed?
@@ -158,7 +177,7 @@ class MASTSearch(object):
             if tess_match:
                 self.exact_target_name = f"{tess_match.group(2).zfill(9)}"  
                 self.exact_target = True
-            
+        
         else:
            raise TypeError("Target must be a target name string or astropy coordinate object")
         
@@ -177,9 +196,10 @@ class MASTSearch(object):
         # self.table would updated to have an extra column of s3 URLS if possible
         raise NotImplementedError
     
+    @cached
     def _search_obs(self, 
         search_radius=None,
-        filetype="Lightcurve",
+        filetype=["lightcurve", "target pixel", "dv"],
         mission=["Kepler", "K2", "TESS"],
         provenance_name=None,
         author= None,
@@ -245,15 +265,16 @@ class MASTSearch(object):
             "".format(len(observations))
         )
         if len(observations) == 0:
-            raise SearchError(f"No data found for target {target}.")
+            raise SearchError(f"No data found for target {self.target}.")
 
         return observations
-            
+
+    @cached        
     def _query_mast(self, 
         search_radius: Union[float, u.Quantity, None] = None,
         project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
         provenance_name: Union[str, list[str], None] = None,
-        exptime: Union[int, float, tuple] = (0, 9999),
+        exptime: Union[int, float, tuple, type(None)] = (0,9999),#None,
         sequence_number: Union[int, list[int], None] = None,
         **extra_query_criteria):
 
@@ -316,6 +337,7 @@ class MASTSearch(object):
 
         return obs.to_pandas()
 
+    @cached
     def _search_prod(self):
         # Use the search result to get a product list
         products = Observations.get_product_list(Table.from_pandas(self.obs_table))
@@ -398,7 +420,7 @@ class MASTSearch(object):
         return mask
     
     def _filter(self,
-            exptime: Union[str, int, tuple[int], type(None)] = None,
+            exptime: Union[str, int, tuple[int], type(None)] = (0,9999),
             limit: int = None,
             project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
             provenance_name: Union[str, list[str]] = ["kepler", "k2", "spoc"],
