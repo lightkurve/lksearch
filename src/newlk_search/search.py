@@ -28,11 +28,14 @@ class MASTSearch(object):
     # Shared functions that are used for searches by any mission
     _REPR_COLUMNS = ["target_name", "provenance_name", "t_min", "t_max"]
 
+    #why is this needed here?  recursion error otherwise
+    table = None
 
     def __init__(self, 
                  target: Optional[Union[str, tuple[float], SkyCoord]] = None, 
                  obs_table:Optional[pd.DataFrame] = None, 
                  prod_table:Optional[pd.DataFrame] = None,
+                 table:Optional[pd.DataFrame] = None,
                  search_radius:Optional[Union[float,u.Quantity]] = None,
                  exptime:Optional[Union[str, int, tuple]] = (0,9999),#None,
                  mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
@@ -40,7 +43,6 @@ class MASTSearch(object):
                  limit: Optional[int] = 1000,
                  ):
         
-        self.table = None
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
             raise TypeError("Target must be a target name string, (ra, dec) tuple" 
@@ -57,6 +59,7 @@ class MASTSearch(object):
                 author=author,
                 limit=limit,
                 )
+            self.table = self.table[self._filter()]
             
             self.search_radius = search_radius
             self.exptime = exptime
@@ -65,8 +68,13 @@ class MASTSearch(object):
             self.limit = limit
 
         else:
-            # If we don't have a name, check to see if tables were passed
-            if(isinstance(obs_table, pd.DataFrame)):
+            #see if we were passed a joint table
+            if (isinstance(table, pd.DataFrame)):
+                self.table = table
+
+            # If we don't have a name or a joint table,
+            # check to see if tables were passed
+            elif(isinstance(obs_table, pd.DataFrame)):
                 # If we have an obs table and no name, use it
                 self.obs_table = obs_table
                 if(isinstance(prod_table, type(None))):
@@ -89,12 +97,13 @@ class MASTSearch(object):
         else:
             return("I am an uninitialized MASTSearch result")
 
-    # This is a possible addition to add a hyperlink to the dataproduct homepages.               
-    #def _repr_html_(self):
-    #    if(isinstance(self.table, pd.DataFrame)):
-    #        return self.table[self._REPR_COLUMNS ]._repr_html_()
-    #    else:
-    #        return("I am an uninitialized MASTSearch result")
+    # This is a possible addition to add a hyperlink to the dataproduct homepages.
+    # I think we want this anyways as this calls the pandas table html output which is nicer               
+    def _repr_html_(self):
+        if(isinstance(self.table, pd.DataFrame)):
+            return self.table[self._REPR_COLUMNS ]._repr_html_()
+        else:
+            return("I am an uninitialized MASTSearch result")
     
     def __getitem__(self, key):
         if isinstance(key, (slice, int)):
@@ -137,7 +146,6 @@ class MASTSearch(object):
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
         joint_table = self._update_table(joint_table)
-
         return joint_table
 
         
@@ -182,14 +190,14 @@ class MASTSearch(object):
         
 
     # probably overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls
-    def _update_table(self, products):
-        products.rename(columns={"t_exptime":"exptime","provenance_name":"author"})
+    def _update_table(self, joint_table):
+        joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author"})
         # Other additions may include the following
         #self._add_columns("something")
         #self._add_urls_to_authors()
         #self._add_s3_url_column()      
         #self._sort_by_priority()
-        return products
+        return joint_table
     
     def _add_s3_url_column():
         # self.table would updated to have an extra column of s3 URLS if possible
@@ -414,8 +422,7 @@ class MASTSearch(object):
         }
 
         for value in ftype_suffix[filetype]:
-            print(value)
-            mask |= self.productFilename.str.endswith(value)
+            mask |= self.productFilename.str.endswith(value)        
         return mask
     
     def _filter(self,
@@ -438,7 +445,7 @@ class MASTSearch(object):
         mask = np.zeros(len(self.table), dtype=bool)
 
         #First filter on filetype
-        file_mask = mask
+        file_mask = mask.copy()
 
         #This is the list of allowed filetypes we can interact with
         allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
@@ -453,13 +460,13 @@ class MASTSearch(object):
             file_mask |= self._filter_product_endswith(ftype)
 
         #Next Filter on project
-        project_mask = mask
+        project_mask = mask.copy()
         for proj in project:
             project_mask |= self.table.project_obs.values == proj
 
         #Next Filter on provenance
-        provenance_mask = mask
-        for author in provenance_mask:
+        provenance_mask = mask.copy()
+        for author in provenance_name:
            provenance_mask |=  self.table.provenance_name.str.lower() == author
             
         # Filter by cadence
