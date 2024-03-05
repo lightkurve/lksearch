@@ -50,7 +50,6 @@ class MASTSearch(object):
         self.target = target
         if not isinstance(target, type(None)):
             self._parse_input(self.target)  
-            print(f"in init, mission is {mission}")
             self.table = self._search(
                 search_radius=search_radius,
                 exptime=exptime,
@@ -90,7 +89,7 @@ class MASTSearch(object):
         else:
             return("I am an uninitialized MASTSearch result")
 
-     # This is a possible addition to add a hyperlink to the dataproduct homepages.               
+    # This is a possible addition to add a hyperlink to the dataproduct homepages.               
     #def _repr_html_(self):
     #    if(isinstance(self.table, pd.DataFrame)):
     #        return self.table[self._REPR_COLUMNS ]._repr_html_()
@@ -99,12 +98,12 @@ class MASTSearch(object):
     
     def __getitem__(self, key):
         if isinstance(key, (slice, int)):
-            mask = np.in1d(np.arange(len(self)), np.arange(len(self))[key])
+            mask = np.in1d(np.arange(len(self.table)), np.arange(len(self.table))[key])
             return self._mask(mask)
         if isinstance(key, (str, list)):
             return self.table[key]
         if hasattr(key, "__iter__"):
-            if len(key) == len(self):
+            if len(key) == len(self.table):
                 return self._mask(key)
      
     def _mask(self, mask):
@@ -126,7 +125,7 @@ class MASTSearch(object):
                 author:  Union[str, list[str]] = None,
                 limit: int = 1000,
                 ):
-        print(f"In _search, mission is {mission}")
+
         self.obs_table = self._search_obs(search_radius=search_radius, 
                                           exptime=exptime, 
                                           cadence=cadence,
@@ -232,7 +231,6 @@ class MASTSearch(object):
             mission = ["TESS"]    
         # Ensure mission is a list
         mission = np.atleast_1d(mission).tolist()
-        print(f"in _search_obs mission is {mission}")
         if provenance_name is not None:
             provenance_name = np.atleast_1d(provenance_name).tolist()
             # If author "TESS" is used, we assume it is SPOC
@@ -283,7 +281,7 @@ class MASTSearch(object):
         #**extra_query_criteria,):
         # Constructs the appropriate query for mast
         log.debug(f"Searching for {self.target} with {exptime} on project {project}")
-        print(f"In query_mast, searching for target {self.target}")
+
         # We pass the following `query_criteria` to MAST regardless of whether
         # we search by position or target name:
         query_criteria = {"project": project, **extra_query_criteria}
@@ -296,7 +294,7 @@ class MASTSearch(object):
 
         if self.exact_target and (search_radius is None):
             log.debug(f"Started querying MAST for observations with exact name {self.exact_target_name}")
-            print(f"In query_mast, extact target {self.exact_target_name}")
+
             #do an exact name search with target_name= 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=NoResultsWarning)
@@ -328,8 +326,6 @@ class MASTSearch(object):
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=NoResultsWarning)
                     warnings.filterwarnings("ignore", message="t_exptime is continuous")
-                    print(f"In query_mast, searching object {self.target_search_string}")
-                    print(query_criteria)
                     obs = Observations.query_criteria(objectname = self.target_search_string, **query_criteria)
                 obs.sort("distance")
                 return obs.to_pandas()
@@ -418,7 +414,8 @@ class MASTSearch(object):
         }
 
         for value in ftype_suffix[filetype]:
-            mask |= self.productFilename[column_name].str.endswith(value)
+            print(value)
+            mask |= self.productFilename.str.endswith(value)
         return mask
     
     def _filter(self,
@@ -446,7 +443,8 @@ class MASTSearch(object):
         #This is the list of allowed filetypes we can interact with
         allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
 
-        filter_ftype = allowed_ftype[[file.lower() for file in filetype if file.lower() in allowed_ftype]]
+        filter_ftype =  [file.lower() for file in filetype if file.lower() in allowed_ftype]
+        
         if len(filter_ftype) == 0:
             filter_ftype = allowed_ftype
             log.warning("Invalid filetype filtered. Returning all data.")
@@ -462,11 +460,11 @@ class MASTSearch(object):
         #Next Filter on provenance
         provenance_mask = mask
         for author in provenance_mask:
-           provenance_mask |=  self.table.provenance_name.values.lower() == author
+           provenance_mask |=  self.table.provenance_name.str.lower() == author
             
         # Filter by cadence
         if(not isinstance(exptime, type(None))):
-            exptime_mask = self._mask_by_exptime(products, exptime)
+            exptime_mask = self._mask_by_exptime(exptime)
         else:
             exptime_mask = not mask
 
@@ -486,23 +484,23 @@ class MASTSearch(object):
     
 
     # Again, may want to add to self.mask if we go that route. 
-    def _mask_by_exptime(self, products, exptime):
+    def _mask_by_exptime(self, exptime):
         """Helper function to filter by exposure time.
         Returns a boolean array """
         if isinstance(exptime, (int, float)):
-            mask = products["exptime"] == exptime
+            mask = self.table.t_exptime == exptime
         elif isinstance(exptime, tuple):
-            mask = (products["exptime"] >= min(exptime) & (products["exptime"] <= max(exptime)))
+            mask = (self.table.t_exptime >= min(exptime) & (self.table.t_exptime <= max(exptime)))
         elif isinstance(exptime, str):
             exptime = exptime.lower()
             if exptime in ["fast"]:
-                mask = products["exptime"] < 60
+                mask = self.table.t_exptime < 60
             elif exptime in ["short"]:
-                mask = (products["exptime"] >= 60) & (products["exptime"] <= 120)
+                mask = (self.table.t_exptime >= 60) & (self.table.t_exptime <= 120)
             elif exptime in ["long", "ffi"]:
-                mask = products["exptime"] > 120
+                mask = self.table.t_exptime > 120
             else:
-                mask = np.ones(len(products), dtype=bool)
+                mask = np.ones(len(self.table.t_exptime), dtype=bool)
                 log.debug('invalid string input. No exptime filter applied')
         return mask
 
@@ -617,7 +615,6 @@ class KeplerSearch(MASTSearch):
         ):
         #if isinstance(target, int):
         #    raise TypeError("Target must be a target name string or astropy coordinate object")
-        print(f"Search_timeseries {mission}")
         joint_table = self._search_timeseries(self.target, 
                                          search_radius=search_radius, 
                                          exptime=exptime, 
