@@ -47,16 +47,16 @@ class MASTSearch(object):
                             "or astropy coordinate object")
 
         # If target is not None, Parse the input
-
+        self.target = target
         if not isinstance(target, type(None)):
-            self.target = self._parse_input(target)  
-
+            self._parse_input(self.target)  
+            print(f"in init, mission is {mission}")
             self.table = self._search(
-                search_radius,
-                exptime,
-                mission,
-                author,
-                limit,
+                search_radius=search_radius,
+                exptime=exptime,
+                mission=mission,
+                author=author,
+                limit=limit,
                 )
             
             self.search_radius = search_radius
@@ -119,14 +119,14 @@ class MASTSearch(object):
     
     @cached
     def _search(self,
-                search_radius:Optional[Union[float,u.Quantity]] = None,
-                exptime:Optional[Union[str, int, tuple]] = (0,9999),
-                cadence: Optional[Union[str, int, tuple]] = None, #Kepler specific option?
-                mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
-                author:  Optional[Union[str, list[str]]] = None,
-                limit: Optional[int] = 1000,
+                search_radius:Union[float,u.Quantity] = None,
+                exptime:Union[str, int, tuple] = (0,9999),
+                cadence: Union[str, int, tuple] = None, #Kepler specific option?
+                mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
+                author:  Union[str, list[str]] = None,
+                limit: int = 1000,
                 ):
-
+        print(f"In _search, mission is {mission}")
         self.obs_table = self._search_obs(search_radius=search_radius, 
                                           exptime=exptime, 
                                           cadence=cadence,
@@ -232,7 +232,7 @@ class MASTSearch(object):
             mission = ["TESS"]    
         # Ensure mission is a list
         mission = np.atleast_1d(mission).tolist()
-
+        print(f"in _search_obs mission is {mission}")
         if provenance_name is not None:
             provenance_name = np.atleast_1d(provenance_name).tolist()
             # If author "TESS" is used, we assume it is SPOC
@@ -283,7 +283,7 @@ class MASTSearch(object):
         #**extra_query_criteria,):
         # Constructs the appropriate query for mast
         log.debug(f"Searching for {self.target} with {exptime} on project {project}")
-
+        print(f"In query_mast, searching for target {self.target}")
         # We pass the following `query_criteria` to MAST regardless of whether
         # we search by position or target name:
         query_criteria = {"project": project, **extra_query_criteria}
@@ -296,6 +296,7 @@ class MASTSearch(object):
 
         if self.exact_target and (search_radius is None):
             log.debug(f"Started querying MAST for observations with exact name {self.exact_target_name}")
+            print(f"In query_mast, extact target {self.exact_target_name}")
             #do an exact name search with target_name= 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=NoResultsWarning)
@@ -327,7 +328,8 @@ class MASTSearch(object):
                 with warnings.catch_warnings():
                     warnings.filterwarnings("ignore", category=NoResultsWarning)
                     warnings.filterwarnings("ignore", message="t_exptime is continuous")
-                
+                    print(f"In query_mast, searching object {self.target_search_string}")
+                    print(query_criteria)
                     obs = Observations.query_criteria(objectname = self.target_search_string, **query_criteria)
                 obs.sort("distance")
                 return obs.to_pandas()
