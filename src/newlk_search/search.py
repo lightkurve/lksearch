@@ -17,6 +17,8 @@ from astropy.coordinates import SkyCoord
 from astropy.table import Table, join
 
 
+from memoization import cached
+
 log = logging.getLogger(__name__)
 
 class SearchError(Exception):
@@ -25,18 +27,29 @@ class SearchError(Exception):
 class MASTSearch(object):
     # Shared functions that are used for searches by any mission
     _REPR_COLUMNS = ["target_name", "provenance_name", "t_min", "t_max"]
-    
-    obs_table = None
-    prof_table = None
-    table = None
 
-    def __init__(self, target: Optional[Union[str, tuple[float], SkyCoord]] = None, 
+
+    def __init__(self, 
+                 target: Optional[Union[str, tuple[float], SkyCoord]] = None, 
                  obs_table:Optional[pd.DataFrame] = None, 
-                 prod_table:Optional[pd.DataFrame] = None):
+                 prod_table:Optional[pd.DataFrame] = None,
+                 search_radius:Optional[Union[float,u.Quantity]] = None,
+                 exptime:Optional[Union[str, int, tuple]] = (0,9999),
+                 # cadence: Optional[Union[str, int, tuple]] = None, #Kepler specific option?
+                 mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
+                 author:  Optional[Union[str, list[str]]] = None,
+                 limit: Optional[int] = 1000,
+                 ):
+        self.search_radius = search_radius
+        self.exptime = exptime
+        self.mission = mission
+        self.author = author
+        self.limit = limit
 
-        #Legacy functionality - no longer query kic/tic by int only
+        #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
-            raise TypeError("Target must be a target name string or astropy coordinate object")
+            raise TypeError("Target must be a target name string, (ra, dec) tuple" 
+                            "or astropy coordinate object")
 
         # If target is not None, Parse the input
         if not isinstance(target, type(None)):
@@ -65,13 +78,13 @@ class MASTSearch(object):
         if(isinstance(self.table, pd.DataFrame)):
             return self.table[self._REPR_COLUMNS].__repr__()
         else:
-            return("I am an uninitialized MASTSearchResult")
-      
+            return("I am an uninitialized MASTSearch result")
+                   
     def _repr_html_(self):
         if(isinstance(self.table, pd.DataFrame)):
             return self.table[self._REPR_COLUMNS ]._repr_html_()
         else:
-            return("I am an uninitialized MASTSearchResult")
+            return("I am an uninitialized MASTSearch result")
     
     def __getitem__(self, key):
         if isinstance(key, (slice, int)):
@@ -92,23 +105,17 @@ class MASTSearch(object):
                 indices.get_level_values(1)
             ].drop_duplicates(),
         )
+    
+    @cached
+    def _search(self):
 
-    def _search(self,
-        radius:  Union[float, u.Quantity] = None,
-        exptime:  Union[str, int, tuple] = (0, 9999),
-        cadence: Union[str, int, tuple] = None,
-        mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        author:  Union[str, list[str]] = None,
-        limit:    int = None,
-        ):
-
-        self.obs_table = self._search_obs(radius=radius, 
-                                          exptime=exptime, 
-                                          cadence=cadence,
-                                          mission=mission,
+        self.obs_table = self._search_obs(search_radius=self.search_radius, 
+                                          exptime=self.exptime, 
+                                          cadence=self.cadence,
+                                          mission=self.mission,
                                           filetype=["lightcurve", "target pixel", "dv"],
-                                          author=author,
-                                          limit=limit,
+                                          author=self.author,
+                                          limit=self.limit,
                                           )
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
@@ -118,7 +125,7 @@ class MASTSearch(object):
 
         
     def _parse_input(self, search_name):
-        """ Prepares target search name based on input type(Is it a skycoord, tuple, or string..."""
+        """ Prepares target search name based on input type(Is it a skycoord, tuple, or string...)"""
         # We used to allow an int to be sent and do some educated-guess parsing
         # If passed a SkyCoord, convert it to an "ra, dec" string for MAST
         self.exact_target = False
@@ -171,7 +178,7 @@ class MASTSearch(object):
         raise NotImplementedError
     
     def _search_obs(self, 
-        radius=None,
+        search_radius=None,
         filetype="Lightcurve",
         mission=["Kepler", "K2", "TESS"],
         provenance_name=None,
@@ -225,7 +232,7 @@ class MASTSearch(object):
 
         #from astroquery.mast import Observations
         observations = self._query_mast(
-            radius=radius,
+            search_radius=search_radius,
             project=mission,
             provenance_name=provenance_name,
             exptime=exptime,
@@ -243,7 +250,7 @@ class MASTSearch(object):
         return observations
             
     def _query_mast(self, 
-        radius: Union[float, u.Quantity, None] = None,
+        search_radius: Union[float, u.Quantity, None] = None,
         project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
         provenance_name: Union[str, list[str], None] = None,
         exptime: Union[int, float, tuple] = (0, 9999),
@@ -266,7 +273,7 @@ class MASTSearch(object):
         if exptime is not None:
             query_criteria["t_exptime"] = exptime
 
-        if self.exact_target and (radius is None):
+        if self.exact_target and (search_radius is None):
             log.debug(f"Started querying MAST for observations with exact name {self.exact_target_name}")
             #do an exact name search with target_name= 
             with warnings.catch_warnings():
@@ -280,19 +287,19 @@ class MASTSearch(object):
                 obs["distance"] = 0.0
                 return obs.to_pandas()
         else:
-            if radius is None:
-                radius = 0.0001 * u.arcsec
+            if search_radius is None:
+                search_radius = 0.0001 * u.arcsec
                 
-            elif not isinstance(radius, u.quantity.Quantity):
-                log.warning(f'Radius {radius} units not specified, assuming arcsec')
-                radius = radius * u.arcsec
+            elif not isinstance(search_radius, u.quantity.Quantity):
+                log.warning(f'Search radius {search_radius} units not specified, assuming arcsec')
+                search_radius = search_radius * u.arcsec
 
-            query_criteria["radius"] = str(radius.to(u.deg))
+            query_criteria["radius"] = str(search_radius.to(u.deg))
 
             try:
                 log.debug(
                     "Started querying MAST for observations within "
-                    f"{radius.to(u.arcsec)} arcsec of objectname='{self.target}'."
+                    f"{search_radius.to(u.arcsec)} arcsec of objectname='{self.target}'."
                     f"Via {self.target_search_string} search string and query_criteria: "
                     f"{query_criteria}"
                 )
@@ -327,17 +334,34 @@ class MASTSearch(object):
         
         log.debug(f"MAST found {len(joint_table)} matching data products.")
         return joint_table
-    
+   
+    @property
     def timeseries(self):
-        """return the products in self.table that are a time-series measurement"""
-        mask = self.table['description'] == "Light curves"
+        """return a MASTSearch object with self.table only containing products that are a time-series measurement"""
+        #mask = self.table.productFilename.str.endswith("lc.fits")
+        # Not sure about the call below. Will exptime already have been handled in the mast search?
+        mask = self._filter_product_endswith('lightcurve') 
         return(self._mask(mask))
-
+    
+    @property
     def cubedata(self):
-        """return the products in self.table that are image cubes"""
-        mask = self.table['description'] == "Target pixel files"
+        """ return a MASTSearch object with self.table only containing products that are image cubes """
+        mask = self._filter_product_endswith('target pixel') 
+        #return self._cubedata()
+        return (self._mask(mask))
+    
+    #def _cubedata(self):
+    #    """ passthrough that mission searches can call """
+    #    mask = self.table.productFilename.str.endswith("tp.fits")
+    #    return(self._mask(mask))
+    
+    @property    
+    def dvreports(self):
+        """return a MASTSearch object with self.table only containing products that are data validation pdf files"""
+        #mask = self.table.productFilename.str.endswith(".pdf")
+        mask = self._filter(filetype='report')
         return(self._mask(mask))
-        
+    
     def _sort_by_priority():
         # Basic sort
         raise NotImplementedError("To Do")
@@ -350,66 +374,79 @@ class MASTSearch(object):
     def _add_kepler_sequence_num(self):
         seq_num = self.table["sequence_number"].values.astype(str)
 
-         # Kepler sequence_number values were not populated at the time of
+        # Kepler sequence_number values were not populated at the time of
         # writing this code, so we parse them from the description field.
         mask = ((self.table["project"] == "Kepler") &
                 self.table["sequence_number"].isna())
         re_expr = r".*Q(\d+)"
         seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in self.table.loc[mask,["description"]].str.values]
 
-    # a mask version. We discusses using pandas masks and having self.mask instead. 
-    def _filter_products(self,
-            products,
-            # campaign: Union[int, list[int]] = None,
-            # quarter: Union[int, list[int]] = None,
-            # month: Union[int, list[int]]= None,
-            # sector: Union[int, list[int]] = None,
-            exptime: Union[str, int, tuple[int]] = (0, 9999),
+
+    def _filter_product_endswith(self, 
+                       filetype: str,
+                       ):
+        mask =  np.zeros(len(self.table), dtype=bool)
+        #This is the dictionary of what files end with that correspond to each allowed file type
+        ftype_suffix = {
+            "lightcurve": ["lc.fits"],
+            "target pixel": ["tp.fits", "targ.fits.gz"],
+            "dvreport": ["dvr.pdf","dvm.pdf","dvs.pdf"]
+        }
+
+        for value in ftype_suffix[filetype]:
+            mask |= self.productFilename[column_name].str.endswith(value)
+        return mask
+    
+    def _filter(self,
+            exptime: Union[str, int, tuple[int], type(None)] = None,
             limit: int = None,
             project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
             provenance_name: Union[str, list[str]] = ["kepler", "k2", "spoc"],
-            filetype: Union[str, list[str]] = ["Target Pixel"], #lightcurve, target pixel, ffi, or dv
+            filetype: Union[str, list[str]] = ["target pixel", "lightcurve", "dvreport"], #lightcurve, target pixel, report
         ) -> pd.DataFrame:
         # Modify this so that it can choose what types of products to keep
-
-        mask = np.zeros(len(products), dtype=bool)
-        allowed_ftype = ["lightcurve", "target pixel", "ffi", "dv"]
-        if not any(f in allowed_ftype for f in [x.lower() for x in np.atleast_1d(filetype).tolist()]):
-            filetype = allowed_type
-            log.debug("User specified invalid filetype. Return all data.")
-        # I removed the kepler-specific stuff here
-
-        # HLSP products need to be filtered by extension
-        if "lightcurve" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-            print("looking for lightcurves")
-            mask |= np.array(
-                [uri.lower().endswith("lc.fits") for uri in products["productFilename"]]
-            )
-        # TODO:The elifs only allow for 1 type (target pixel or ffi), is that the behavior we want?
-        if "target pixel" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-            mask &= np.array(
-                [
-                    uri.lower().endswith(("tp.fits", "targ.fits.gz"))
-                    for uri in products["productFilename"]
-                ]
-            )
-        if "ffi" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-            mask |= np.array(["TESScut" in desc for desc in products["description"]])
-
+        """Since this will be used by mission specific search we want this to filter:
+            Filetype
+            ExposureTime/cadence
+            Author(Provenance)/Project - e.g. (SPOC/TESSSpoc)
+            <Segment/Quarter/Sector/Campaign> this will be in mission specific search
+            
+            """
         
-        if "dv" in [x.lower() for x in np.atleast_1d(filetype).tolist()]:
-            mask |= np.array(
-                [
-                    uri.lower().endswith(("dvr.pdf","dvm.pdf","dvs.pdf"))
-                    for uri in products["productFilename"]
-                ]
-            )
+        self.exptime = exptime
+        mask = np.zeros(len(self.table), dtype=bool)
 
+        #First filter on filetype
+        file_mask = mask
 
+        #This is the list of allowed filetypes we can interact with
+        allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
+
+        filter_ftype = allowed_ftype[[file.lower() for file in filetype if file.lower() in allowed_ftype]]
+        if len(filter_ftype) == 0:
+            filter_ftype = allowed_ftype
+            log.warning("Invalid filetype filtered. Returning all data.")
+                
+        for ftype in filter_ftype:
+            file_mask |= self._filter_product_endswith(ftype)
+
+        #Next Filter on project
+        project_mask = mask
+        for proj in project:
+            project_mask |= self.table.project_obs.values == proj
+
+        #Next Filter on provenance
+        provenance_mask = mask
+        for author in provenance_mask:
+           provenance_mask |=  self.table.provenance_name.values.lower() == author
+            
         # Filter by cadence
-        mask &= self._mask_by_exptime(products, exptime)
+        if(not isinstance(exptime, type(None))):
+            exptime_mask = self._mask_by_exptime(products, exptime)
+        else:
+            exptime_mask = not mask
 
-        # If no products are left, return an empty dataframe with the same columns
+        '''# If no products are left, return an empty dataframe with the same columns
         if sum(mask) == 0:
             return pd.DataFrame(columns = products.keys())
 
@@ -418,7 +455,10 @@ class MASTSearch(object):
         products.sort_values(by=["distance", "productFilename"], ignore_index=True)
         if limit is not None:
             return products[0:limit]
-        return products
+        return products'''
+        # I think this hidden filter function should now just return the mask
+        mask = file_mask & project_mask & provenance_mask & exptime_mask
+        return mask
     
 
     # Again, may want to add to self.mask if we go that route. 
@@ -538,7 +578,7 @@ class KeplerSearch(MASTSearch):
 
     def search_timeseries(self,
 
-        radius:  Union[float, u.Quantity] = None,
+        search_radius:  Union[float, u.Quantity] = None,
         exptime:  Union[str, int, tuple] = (0, 9999),
         cadence: Union[str, int, tuple] = None,
         mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
@@ -555,7 +595,7 @@ class KeplerSearch(MASTSearch):
         #    raise TypeError("Target must be a target name string or astropy coordinate object")
         print(f"Search_timeseries {mission}")
         joint_table = self._search_timeseries(self.target, 
-                                         radius=radius, 
+                                         search_radius=search_radius, 
                                          exptime=exptime, 
                                          cadence=cadence,
                                          mission=mission,
