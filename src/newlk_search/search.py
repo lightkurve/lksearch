@@ -415,7 +415,8 @@ class MASTSearch(object):
 
         for value in ftype_suffix[filetype]:
             print(value)
-            mask |= self.productFilename.str.endswith(value)
+            mask |= self.table.productFilename.str.endswith(value)
+
         return mask
     
     def _filter(self,
@@ -437,28 +438,29 @@ class MASTSearch(object):
         self.exptime = exptime
         mask = np.zeros(len(self.table), dtype=bool)
 
-        #First filter on filetype
-        file_mask = mask
+       
 
         #This is the list of allowed filetypes we can interact with
         allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
 
         filter_ftype =  [file.lower() for file in filetype if file.lower() in allowed_ftype]
+         #First filter on filetype
         
         if len(filter_ftype) == 0:
             filter_ftype = allowed_ftype
             log.warning("Invalid filetype filtered. Returning all data.")
-                
+
+        file_mask = mask.copy()
         for ftype in filter_ftype:
             file_mask |= self._filter_product_endswith(ftype)
 
         #Next Filter on project
-        project_mask = mask
+        project_mask = mask.copy()
         for proj in project:
             project_mask |= self.table.project_obs.values == proj
 
         #Next Filter on provenance
-        provenance_mask = mask
+        provenance_mask = mask.copy()
         for author in provenance_mask:
            provenance_mask |=  self.table.provenance_name.str.lower() == author
             
