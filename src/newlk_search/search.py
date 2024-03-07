@@ -16,7 +16,6 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table, join
 
-
 from memoization import cached
 
 log = logging.getLogger(__name__)
@@ -387,7 +386,7 @@ class MASTSearch(object):
     def dvreports(self):
         """return a MASTSearch object with self.table only containing products that are data validation pdf files"""
         #mask = self.table.productFilename.str.endswith(".pdf")
-        mask = self._filter(filetype='report')
+        mask = self._filter_product_endswith(filetype='dvreport')
         return(self._mask(mask))
     
     def _sort_by_priority():
@@ -422,7 +421,7 @@ class MASTSearch(object):
         }
 
         for value in ftype_suffix[filetype]:
-            mask |= self.productFilename.str.endswith(value)        
+            mask |= self.table.productFilename.str.endswith(value)        
         return mask
     
     def _filter(self,
