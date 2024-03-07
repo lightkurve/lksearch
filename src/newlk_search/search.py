@@ -84,11 +84,11 @@ class MASTSearch(object):
             else:
                 raise(ValueError("No Target or object table supplied"))
 
-    def __getattr__(self, attr):
-        try:
-            return getattr(self.table, attr)
-        except AttributeError:
-            raise AttributeError(f"'Result' object has no attribute '{attr}'")
+    #def __getattr__(self, attr):
+    #    try:
+    #        return getattr(self.table, attr)
+    #    except AttributeError:
+    #        raise AttributeError(f"'Result' object has no attribute '{attr}'")
 
     def __repr__(self):
         if(isinstance(self.table, pd.DataFrame)):
