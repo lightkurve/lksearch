@@ -25,7 +25,9 @@ class SearchError(Exception):
 
 class MASTSearch(object):
     # Shared functions that are used for searches by any mission
-    _REPR_COLUMNS = ["target_name", "provenance_name", "t_min", "t_max"]
+    #    "mission",
+    # Start time?
+    _REPR_COLUMNS = ["target_name", "author", "provenance_name", "exptime","distance"]
 
     #why is this needed here?  recursion error otherwise
     table = None
@@ -83,6 +85,7 @@ class MASTSearch(object):
                 self.table = self._join_tables()
             else:
                 raise(ValueError("No Target or object table supplied"))
+         self._update_table(self, self.table)
 
     #def __getattr__(self, attr):
     #    try:
@@ -190,13 +193,14 @@ class MASTSearch(object):
 
     # probably overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls
     def _update_table(self, joint_table):
-        joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author"})
+        # I think I want this to happen in place. 
+        joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author"}, inplace=True)
         # Other additions may include the following
         #self._add_columns("something")
         #self._add_urls_to_authors()
         #self._add_s3_url_column()      
         #self._sort_by_priority()
-        return joint_table
+        #return joint_table
     
     def _add_s3_url_column():
         # self.table would updated to have an extra column of s3 URLS if possible
