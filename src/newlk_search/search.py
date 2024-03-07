@@ -42,16 +42,48 @@ class MASTSearch(object):
                  limit: Optional[int] = 1000,
                  ):
         
-        table = self.__generate_search_table(target, 
-                                             obs_table, 
-                                             prod_table,
-                                             table,
-                                             search_radius,
-                                             exptime,
-                                             mission,
-                                             author,
-                                             limit,)
-        self.table = table
+        #Legacy functionality - no longer query kic/tic by integer value only
+        if isinstance(target, int):
+            raise TypeError("Target must be a target name string, (ra, dec) tuple" 
+                            "or astropy coordinate object")
+
+        # If target is not None, Parse the input
+        self.target = target
+        if not isinstance(target, type(None)):
+            self._parse_input(self.target)  
+            self.table = self._search(
+                search_radius=search_radius,
+                exptime=exptime,
+                mission=mission,
+                author=author,
+                limit=limit,
+                )
+            self.table = self.table[self._filter()]
+            
+            self.search_radius = search_radius
+            self.exptime = exptime
+            self.mission = mission
+            self.author = author
+            self.limit = limit
+
+        else:
+            #see if we were passed a joint table
+            if (isinstance(table, pd.DataFrame)):
+                self.table = table
+
+            # If we don't have a name or a joint table,
+            # check to see if tables were passed
+            elif(isinstance(obs_table, pd.DataFrame)):
+                # If we have an obs table and no name, use it
+                self.obs_table = obs_table
+                if(isinstance(prod_table, type(None))):
+                    #get the prod table if we don't have it
+                    prod_table = self._search_products(self)
+                self.prod_table = prod_table
+                self.table = self._join_tables()
+            else:
+                raise(ValueError("No Target or object table supplied"))
+
     #def __getattr__(self, attr):
     #    try:
     #        return getattr(self.table, attr)
@@ -92,61 +124,6 @@ class MASTSearch(object):
             ].drop_duplicates(),
         )
     
-    def __generate_search_table(self,
-                                target: Optional[Union[str, tuple[float], SkyCoord]] = None, 
-                                obs_table:Optional[pd.DataFrame] = None, 
-                                prod_table:Optional[pd.DataFrame] = None,
-                                table:Optional[pd.DataFrame] = None,
-                                search_radius:Optional[Union[float,u.Quantity]] = None,
-                                exptime:Optional[Union[str, int, tuple]] = (0,9999),#None,
-                                mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
-                                author:  Optional[Union[str, list[str]]] = None,
-                                limit: Optional[int] = 1000, 
-                                ):
-                #Legacy functionality - no longer query kic/tic by integer value only
-        if isinstance(target, int):
-            raise TypeError("Target must be a target name string, (ra, dec) tuple" 
-                            "or astropy coordinate object")
-
-        # If target is not None, Parse the input
-        self.target = target
-        if not isinstance(target, type(None)):
-            self._parse_input(self.target)  
-            table = self._search(
-                search_radius=search_radius,
-                exptime=exptime,
-                mission=mission,
-                author=author,
-                limit=limit,
-                )
-            table = table[self._filter(table)]
-            
-            self.search_radius = search_radius
-            self.exptime = exptime
-            self.mission = mission
-            self.author = author
-            self.limit = limit
-
-        else:
-            #see if we were passed a joint table
-            if (isinstance(table, pd.DataFrame)):
-                table = table
-
-            # If we don't have a name or a joint table,
-            # check to see if tables were passed
-            elif(isinstance(obs_table, pd.DataFrame)):
-                # If we have an obs table and no name, use it
-                self.obs_table = obs_table
-                if(isinstance(prod_table, type(None))):
-                    #get the prod table if we don't have it
-                    prod_table = self._search_products(self)
-                self.prod_table = prod_table
-                table = self._join_tables()
-            else:
-                raise(ValueError("No Target or object table supplied"))
-
-        return table
-
     @cached
     def _search(self,
                 search_radius:Union[float,u.Quantity] = None,
@@ -183,7 +160,6 @@ class MASTSearch(object):
           
         elif isinstance(search_name, tuple):
             self.target_search_string = f"{search_name[0]}, {search_name[1]}"
-            self.SkyCoord = SkyCoord(search_name, Frame)
 
         elif isinstance(search_name, str):
             self.target_search_string = search_name
@@ -391,13 +367,13 @@ class MASTSearch(object):
         """return a MASTSearch object with self.table only containing products that are a time-series measurement"""
         #mask = self.table.productFilename.str.endswith("lc.fits")
         # Not sure about the call below. Will exptime already have been handled in the mast search?
-        mask = self._filter_product_endswith(self.table,'lightcurve') 
+        mask = self._filter_product_endswith('lightcurve') 
         return(self._mask(mask))
     
     @property
     def cubedata(self):
         """ return a MASTSearch object with self.table only containing products that are image cubes """
-        mask = self._filter_product_endswith(self.table,'target pixel') 
+        mask = self._filter_product_endswith('target pixel') 
         #return self._cubedata()
         return (self._mask(mask))
     
@@ -434,10 +410,9 @@ class MASTSearch(object):
 
 
     def _filter_product_endswith(self, 
-                                 table,
-                                 filetype: str,
-                                 ):
-        mask =  np.zeros(len(table), dtype=bool)
+                       filetype: str,
+                       ):
+        mask =  np.zeros(len(self.table), dtype=bool)
         #This is the dictionary of what files end with that correspond to each allowed file type
         ftype_suffix = {
             "lightcurve": ["lc.fits"],
@@ -446,11 +421,10 @@ class MASTSearch(object):
         }
 
         for value in ftype_suffix[filetype]:
-            mask |= table.productFilename.str.endswith(value)        
+            mask |= self.table.productFilename.str.endswith(value)        
         return mask
     
     def _filter(self,
-            table: pd.DataFrame, 
             exptime: Union[str, int, tuple[int], type(None)] = (0,9999),
             limit: int = None,
             project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
@@ -467,7 +441,7 @@ class MASTSearch(object):
             """
         
         self.exptime = exptime
-        mask = np.zeros(len(table), dtype=bool)
+        mask = np.zeros(len(self.table), dtype=bool)
 
         #First filter on filetype
         file_mask = mask.copy()
@@ -482,21 +456,21 @@ class MASTSearch(object):
             log.warning("Invalid filetype filtered. Returning all data.")
                 
         for ftype in filter_ftype:
-            file_mask |= self._filter_product_endswith(table,ftype)
+            file_mask |= self._filter_product_endswith(ftype)
 
         #Next Filter on project
         project_mask = mask.copy()
         for proj in project:
-            project_mask |= table.project_obs.values == proj
+            project_mask |= self.table.project_obs.values == proj
 
         #Next Filter on provenance
         provenance_mask = mask.copy()
         for author in provenance_name:
-           provenance_mask |=  table.provenance_name.str.lower() == author
+           provenance_mask |=  self.table.provenance_name.str.lower() == author
             
         # Filter by cadence
         if(not isinstance(exptime, type(None))):
-            exptime_mask = self._mask_by_exptime(table, exptime)
+            exptime_mask = self._mask_by_exptime(exptime)
         else:
             exptime_mask = not mask
 
@@ -516,25 +490,28 @@ class MASTSearch(object):
     
 
     # Again, may want to add to self.mask if we go that route. 
-    def _mask_by_exptime(self, table, exptime):
+    def _mask_by_exptime(self, exptime):
         """Helper function to filter by exposure time.
         Returns a boolean array """
         if isinstance(exptime, (int, float)):
-            mask = table.t_exptime == exptime
+            mask = self.table.t_exptime == exptime
         elif isinstance(exptime, tuple):
-            mask = (table.t_exptime >= min(exptime) & (table.t_exptime <= max(exptime)))
+            mask = (self.table.t_exptime >= min(exptime) & (self.table.t_exptime <= max(exptime)))
         elif isinstance(exptime, str):
             exptime = exptime.lower()
             if exptime in ["fast"]:
-                mask = table.t_exptime < 60
+                mask = self.table.t_exptime < 60
             elif exptime in ["short"]:
-                mask = (table.t_exptime >= 60) & (table.t_exptime <= 120)
+                mask = (self.table.t_exptime >= 60) & (self.table.t_exptime <= 120)
             elif exptime in ["long", "ffi"]:
-                mask = table.t_exptime > 120
+                mask = self.table.t_exptime > 120
             else:
-                mask = np.ones(len(table.t_exptime), dtype=bool)
+                mask = np.ones(len(self.table.t_exptime), dtype=bool)
                 log.debug('invalid string input. No exptime filter applied')
-        return mask    
+        return mask
+
+
+    
 
 
 
@@ -551,7 +528,6 @@ class TESSSearch(MASTSearch):
     def _get_ffi():
         from tesswcs import pointings
         from tesswcs import WCS
-
         log.debug("Checking tesswcs for TESSCut cutouts")
         tesscut_desc=[]
         tesscut_mission=[]
