@@ -516,16 +516,41 @@ class MASTSearch(object):
 
 
 class TESSSearch(MASTSearch):
+     def __init__(self, target: str | tuple[float] | Any | None = None, 
+                  obs_table: DataFrame | None = None, 
+                  prod_table: DataFrame | None = None, 
+                  table: DataFrame | None = None, 
+                  search_radius: float | Any | None = None, 
+                  exptime: str | int | tuple | None = (0, 9999), 
+                  author: str | list[str] | None = None, 
+                  limit: int | None = 1000):
+        
+        mission = "TESS"
+        super().__init__(target, 
+                         obs_table, 
+                         prod_table, 
+                         table, 
+                         search_radius, 
+                         exptime, 
+                         mission, 
+                         author, 
+                         limit)
+        self._add_ffi_products()
      
     #@properties like sector
     def search_cubedata(hlsp=False):
         # _cubedata + _get_ffi
         raise NotImplementedError
 
+    def _add_ffi_products(self):
+        #get the ffi info for the targets
+        ffi_info = self._get_ffi_info()
+        #add the ffi info to the table
+
     # FFIs only available when using TESSSearch. 
     # Use TESS WCS to just return a table of sectors and dates? 
     # Then download_ffi requires a sector and time range?
-    def _get_ffi():
+    def _get_ffi_info(self):
         from tesswcs import pointings
         from tesswcs import WCS
         log.debug("Checking tesswcs for TESSCut cutouts")
