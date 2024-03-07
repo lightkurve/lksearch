@@ -602,6 +602,28 @@ class TESSSearch(MASTSearch):
     
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 class KeplerSearch(MASTSearch):
         
@@ -609,54 +631,33 @@ class KeplerSearch(MASTSearch):
     @property
     def mission(self):
         return "Kepler"
+    
+    @cached
+    def _search(self,
+                search_radius:Union[float,u.Quantity] = None,
+                exptime:Union[str, int, tuple] = (0,9999),
+                cadence: Union[str, int, tuple] = None, #Kepler specific option?
+                quarter: int = None,
+                mission: Union[str, list[str]] = ["Kepler"],
+                author:  Union[str, list[str]] = None,
+                limit: int = 1000,
+                ):
         
 
-
-    def search_timeseries(self,
-
-        search_radius:  Union[float, u.Quantity] = None,
-        exptime:  Union[str, int, tuple] = (0, 9999),
-        cadence: Union[str, int, tuple] = None,
-        mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        filetype: str = "Lightcurve",
-        author:  Union[str, list[str]] = None,
-        # Get rid of this in the default call and implement in the mission-specific version?
-        #quarter:  Union[int, list[int]] = None,
-        #month:    Union[int, list[int]] = None,
-        #campaign: Union[int, list[int]] = None,
-        #sector:   Union[int, list[int]] = None,
-        limit:    int = None,
-        ):
-        #if isinstance(target, int):
-        #    raise TypeError("Target must be a target name string or astropy coordinate object")
-        joint_table = self._search_timeseries(self.target, 
-                                         search_radius=search_radius, 
-                                         exptime=exptime, 
-                                         cadence=cadence,
-                                         mission=mission,
-                                         filetype=filetype,
-                                         author=author,
-                                         #quarter=quarter,
-                                         #month=month,
-                                         #campaign=campaign,
-                                         #sector=sector,
-                                         limit=limit,
-                                         )
+        # TODO: add quarter to search_obs? or have that be the MAST version (sequence)
+        self.obs_table = self._search_obs(search_radius=search_radius, 
+                                          exptime=exptime, 
+                                          cadence=cadence,
+                                          mission=mission,
+                                          filetype=["lightcurve", "target pixel", "dv"],
+                                          author=author,
+                                          limit=limit,
+                                          )
+        self.prod_table = self._search_prod()
+        joint_table = self._join_tables()
         joint_table = self._update_table(joint_table)
-        self.table = joint_table 
         return joint_table
-
-
-
-
-
-    def search_cubedata(hlsp=False):
-        # Regular _search_cubedata + processing
-        # INCLUDE:
-        #  _filter_kepler 
-        #  fix+times
-        #  handle_kbonus
-        raise NotImplementedError
+        
 
     def _fix_times():
         # Fixes Kepler times
@@ -721,13 +722,13 @@ class KeplerSearch(MASTSearch):
                 # Check if the observation date matches the specified Quarter/month from the lookup table
                 if date not in table["StartTime"][table['Month'].isin(month) & table['Quarter'].isin(quarter)].values:
                     mask[idx] = False
-        products = products[mask]
-
-        products.sort_values(by=["distance", "productFilename"])
-
-        return products
+        return mask
     
+
+
     def sortKepler():
+
+
         raise NotImplementedError
 
 class K2Search(MASTSearch):
