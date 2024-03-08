@@ -15,6 +15,7 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table, join
+from astropy.time import Time
 
 from memoization import cached
 
@@ -27,7 +28,8 @@ class MASTSearch(object):
     # Shared functions that are used for searches by any mission
     #    "mission",
     # Start time?
-    _REPR_COLUMNS = ["target_name","project_obs","provenance_name", "t_exptime", "distance", "description"]
+    #distance
+    _REPR_COLUMNS = ["target_name","project_obs","author", "exptime",  "description"]
 
     #why is this needed here?  recursion error otherwise
     table = None
@@ -85,7 +87,7 @@ class MASTSearch(object):
                 self.table = self._join_tables()
             else:
                 raise(ValueError("No Target or object table supplied"))
-
+        self.table = self._update_table(self.table)
 
     #def __getattr__(self, attr):
     #    try:
@@ -126,6 +128,55 @@ class MASTSearch(object):
                 indices.get_level_values(1)
             ].drop_duplicates(),
         )
+    
+    # may overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls?
+    def _update_table(self, joint_table):
+        # Ideally I'd like to replace of t_exptime and pro
+        joint_table = joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author","obs_collection_obs":"mission"})
+        
+        year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
+                # # `t_min` is incorrect for Kepler products, so we extract year from the filename for those
+        for idx in np.where(joint_table["author"] == "Kepler")[0]:
+            year[idx] = re.findall(
+                r"\d+.(\d{4})\d+", joint_table["productFilename"].iloc[idx]
+            )[0]
+        
+        joint_table["year"] = year.astype(int)
+
+
+
+
+        '''
+        Full list of features
+        ['intentType', 'obs_collection_obs', 'provenance_name',
+       'instrument_name', 'project_obs', 'filters', 'wavelength_region',
+       'target_name', 'target_classification', 'obs_id', 's_ra', 's_dec',
+       'dataproduct_type_obs', 'proposal_pi', 'calib_level_obs', 't_min',
+       't_max', 't_exptime', 'em_min', 'em_max', 'obs_title', 't_obs_release',
+       'proposal_id_obs', 'proposal_type', 'sequence_number', 's_region',
+       'jpegURL', 'dataURL', 'dataRights_obs', 'mtFlag', 'srcDen', 'obsid',
+       'objID', 'objID1', 'distance', 'obsID', 'obs_collection_prod',
+       'dataproduct_type_prod', 'description', 'type', 'dataURI',
+       'productType', 'productGroupDescription', 'productSubGroupDescription',
+       'productDocumentationURL', 'project_prod', 'prvversion',
+       'proposal_id_prod', 'productFilename', 'size', 'parent_obsid',
+       'dataRights_prod', 'calib_level_prod']'''
+        
+        keep_cols = ['exptime', 'author', 'mission', 'filters', 'wavelength_region', 
+                     'target_name', 'obs_id', 's_ra', 's_dec', 'dataproduct_type_obs',
+                     'calib_level_obs', 't_min', 't_max', 'sequence_number', 
+                     'dataRights_obs', 'mtFlag', 'obsid', 'description', 'dataURI',
+                      'productType', 'productFilename' , 'parent_obsid' , 
+                      'calib_level_prod', 'project_obs'  ]
+        
+        joint_table = joint_table[keep_cols]
+
+        # Other additions may include the following
+        #self._add_columns("something")
+        #self._add_urls_to_authors()
+        #self._add_s3_url_column()      
+        #self._sort_by_priority()
+        return joint_table
     
     @cached
     def _search(self,
@@ -642,7 +693,7 @@ class TESSSearch(MASTSearch):
     def filter_hlsp():
         raise NotImplementedError
     
-    '''
+    
 
 
 
@@ -701,16 +752,7 @@ class KeplerSearch(MASTSearch):
         joint_table = self._update_table(joint_table)
         return joint_table
         
-    # probably overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls
-    def _update_table(self, joint_table):
-        # I think I want this to happen in place. 
-        joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author"}, inplace=True)
-        # Other additions may include the following
-        #self._add_columns("something")
-        #self._add_urls_to_authors()
-        #self._add_s3_url_column()      
-        #self._sort_by_priority()
-        return joint_table
+
     
 
     def _fix_times():
@@ -781,9 +823,16 @@ class KeplerSearch(MASTSearch):
 
 
     def sortKepler():
+        sort_priority = {"Kepler": 1, 
+                         "KBONUS-BKG": 2, 
+                         }
+        df = self.table
+        df["sort_order"] = self.table['author'].map(sort_priority).fillna(9)
+        df.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"], ignore_index=True, inplace=True)
+        self.table = df
 
 
-        raise NotImplementedError
+
 
 class K2Search(MASTSearch):
 
