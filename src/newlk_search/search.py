@@ -151,24 +151,25 @@ class MASTSearch(object):
         return joint_table
 
         
-    def _parse_input(self, search_name):
+    def _parse_input(self, search_input):
         """ Prepares target search name based on input type(Is it a skycoord, tuple, or string...)"""
         # We used to allow an int to be sent and do some educated-guess parsing
         # If passed a SkyCoord, convert it to an "ra, dec" string for MAST
         self.exact_target = False
 
-        if isinstance(search_name, SkyCoord):
-            self.target_search_string = f"{search_name.ra.deg}, {search_name.dec.deg}"
-            self.SkyCoord = search_name
+        if isinstance(search_input, SkyCoord):
+            self.target_search_string = f"{search_input.ra.deg}, {search_input.dec.deg}"
+            self.SkyCoord = search_input
           
-        elif isinstance(search_name, tuple):
-            self.target_search_string = f"{search_name[0]}, {search_name[1]}"
+        elif isinstance(search_input, tuple):
+            self.target_search_string = f"{search_input[0]}, {search_input[1]}"
+            self.SkyCoord = SkyCoord(search_input, frame='icrs', unit='deg')
 
-        elif isinstance(search_name, str):
-            self.target_search_string = search_name
-    
+        elif isinstance(search_input, str):
+            self.target_search_string = search_input
+            self.SkyCoord = SkyCoord.from_name(search_input, frame='icrs')
 
-            target_lower = str(search_name).lower()
+            target_lower = str(search_input).lower()
             # Was a Kepler target ID passed?
             kplr_match = re.match(r"^(kplr|kic) ?(\d+)$", target_lower)
             if kplr_match:
@@ -515,15 +516,18 @@ class MASTSearch(object):
 
 
 
-'''class TESSSearch(MASTSearch):
-     def __init__(self, target: str | tuple[float] | Any | None = None, 
-                  obs_table: DataFrame | None = None, 
-                  prod_table: DataFrame | None = None, 
-                  table: DataFrame | None = None, 
-                  search_radius: float | Any | None = None, 
-                  exptime: str | int | tuple | None = (0, 9999), 
-                  author: str | list[str] | None = None, 
-                  limit: int | None = 1000):
+class TESSSearch(MASTSearch):
+
+    def __init__(self, 
+                target: Optional[Union[str, tuple[float], SkyCoord]] = None,
+                obs_table:Optional[pd.DataFrame] = None, 
+                prod_table:Optional[pd.DataFrame] = None,
+                table:Optional[pd.DataFrame] = None,
+                search_radius:Optional[Union[float,u.Quantity]] = None,
+                exptime:Optional[Union[str, int, tuple]] = (0,9999),#None,
+                author:  Optional[Union[str, list[str]]] = None,
+                limit: Optional[int] = 1000,
+                ):
         
         mission = "TESS"
         super().__init__(target, 
@@ -536,23 +540,24 @@ class MASTSearch(object):
                          author, 
                          limit)
         self._add_ffi_products()
-     
-    #@properties like sector
-    def search_cubedata(hlsp=False):
-        # _cubedata + _get_ffi
-        raise NotImplementedError
-
+    
     def _add_ffi_products(self):
         #get the ffi info for the targets
         ffi_info = self._get_ffi_info()
         #add the ffi info to the table
+        self.table = pd.concat([self.table, ffi_info])
+        #sort the table
+
 
     # FFIs only available when using TESSSearch. 
     # Use TESS WCS to just return a table of sectors and dates? 
     # Then download_ffi requires a sector and time range?
+        
     def _get_ffi_info(self):
         from tesswcs import pointings
         from tesswcs import WCS
+
+
         log.debug("Checking tesswcs for TESSCut cutouts")
         tesscut_desc=[]
         tesscut_mission=[]
@@ -561,31 +566,44 @@ class MASTSearch(object):
         tesscut_exptime=[]
         tesscut_seqnum=[]
 
-        coords = _resolve_object(target)
         # Check each sector / camera / ccd for observability
-        for row in pointings.iterrows():
-            tess_ra, tess_dec, tess_roll = row[2:5]
+        #Submit a tesswcs PR for to convert table to pandas
+
+        for i,row in pointings.to_pandas().iterrows():
+            tess_ra = row['RA']
+            tess_dec = row['Dec']
+            tess_roll = row['Roll']
+            sector = row['Sector'].astype(int)
+
+            AddSector = False
+            sector_camera = []
+            sector_ccd = []
             for camera in np.arange(1, 5):
                 for ccd in np.arange(1, 5):
                     # predict the WCS
                     wcs = WCS.predict(tess_ra, tess_dec, tess_roll , camera=camera, ccd=ccd)
                     # check if the target falls inside the CCD
-                    if wcs.footprint_contains(coords):
-                        sector = row[0]
-                        log.debug(f"Target Observable in Sector {sector}, Camera {camera}, CCD {ccd}")
-                        tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
-                        tesscut_mission.append(f"TESS Sector {sector:02d}")
-                        tesscut_tmin.append(row[5]- 2400000.5) # Time(row[5], format="jd").iso)
-                        tesscut_tmax.append(row[6]- 2400000.5) # Time(row[6], format="jd").iso)
-                        tesscut_exptime.append(_tess_sector2exptime(sector))
-                        tesscut_seqnum.append(sector)
+                    if wcs.footprint_contains(self.SkyCoord):
+                        AddSector = True
+                        sector_camera = sector_camera.append(camera)
+                        sector_ccd = sector_ccd.append(camera)
+
+            if AddSector:
+                log.debug(f"Target Observable in Sector {sector}, Camera {sector_camera}, CCD {sector_ccd}")
+                tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
+                tesscut_mission.append(f"TESS Sector {sector:02d}")
+                tesscut_tmin.append(row['Start']- 2400000.5) # Time(row[5], format="jd").iso)
+                tesscut_tmax.append(row['End']- 2400000.5) # Time(row[6], format="jd").iso)
+                tesscut_exptime.append(self._sector2ffiexptime(sector))
+                tesscut_seqnum.append(sector)
+
         
         # Build the ffi dataframe from the observability
         n_results = len(tesscut_seqnum)
         ffi_result = pd.DataFrame({"description" : tesscut_desc,
                                           "mission": tesscut_mission,
-                                          "target_name" : [str(target)] * n_results,
-                                          "targetid" : [str(target)] * n_results,
+                                          "target_name" : [self.target_search_string] * n_results,
+                                          "targetid" : [self.target_search_string] * n_results,
                                           "t_min" : tesscut_tmin,
                                           "t_max" : tesscut_tmax,
                                           "exptime" : tesscut_exptime,
@@ -604,7 +622,15 @@ class MASTSearch(object):
 
         return ffi_result
     
-
+    def _sector2ffiexptime(self, sector):
+        if sector <27:
+            return 1800
+        elif ((sector >= 27) &
+              (sector <= 55)):
+            return 600
+        elif sector >= 56:
+            return 200
+        
 
     def sort_TESS():
         # base sort + TESS HLSP handling?
