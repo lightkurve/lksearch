@@ -27,7 +27,7 @@ class MASTSearch(object):
     # Shared functions that are used for searches by any mission
     #    "mission",
     # Start time?
-    _REPR_COLUMNS = ["target_name", "author", "provenance_name", "exptime","distance"]
+    _REPR_COLUMNS = ["target_name","project_obs","provenance_name", "t_exptime", "distance", "description"]
 
     #why is this needed here?  recursion error otherwise
     table = None
@@ -85,7 +85,7 @@ class MASTSearch(object):
                 self.table = self._join_tables()
             else:
                 raise(ValueError("No Target or object table supplied"))
-         self._update_table(self, self.table)
+
 
     #def __getattr__(self, attr):
     #    try:
@@ -147,7 +147,7 @@ class MASTSearch(object):
                                           )
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
-        joint_table = self._update_table(joint_table)
+
         return joint_table
 
         
@@ -191,16 +191,7 @@ class MASTSearch(object):
            raise TypeError("Target must be a target name string or astropy coordinate object")
         
 
-    # probably overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls
-    def _update_table(self, joint_table):
-        # I think I want this to happen in place. 
-        joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author"}, inplace=True)
-        # Other additions may include the following
-        #self._add_columns("something")
-        #self._add_urls_to_authors()
-        #self._add_s3_url_column()      
-        #self._sort_by_priority()
-        #return joint_table
+
     
     def _add_s3_url_column():
         # self.table would updated to have an extra column of s3 URLS if possible
@@ -524,7 +515,7 @@ class MASTSearch(object):
 
 
 
-class TESSSearch(MASTSearch):
+'''class TESSSearch(MASTSearch):
      def __init__(self, target: str | tuple[float] | Any | None = None, 
                   obs_table: DataFrame | None = None, 
                   prod_table: DataFrame | None = None, 
@@ -625,7 +616,7 @@ class TESSSearch(MASTSearch):
     def filter_hlsp():
         raise NotImplementedError
     
-    
+    '''
 
 
 
@@ -684,6 +675,17 @@ class KeplerSearch(MASTSearch):
         joint_table = self._update_table(joint_table)
         return joint_table
         
+    # probably overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls
+    def _update_table(self, joint_table):
+        # I think I want this to happen in place. 
+        joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author"}, inplace=True)
+        # Other additions may include the following
+        #self._add_columns("something")
+        #self._add_urls_to_authors()
+        #self._add_s3_url_column()      
+        #self._sort_by_priority()
+        return joint_table
+    
 
     def _fix_times():
         # Fixes Kepler times
