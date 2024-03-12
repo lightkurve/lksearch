@@ -45,6 +45,7 @@ class MASTSearch(object):
                  author:  Optional[Union[str, list[str]]] = None,
                  limit: Optional[int] = 1000,
                  ):
+        # Author - define a 'mission' flag that is just spoc or whatever.
         
         self.search_radius = search_radius
         self.search_exptime = exptime
@@ -57,6 +58,7 @@ class MASTSearch(object):
                             "or astropy coordinate object")
 
         # If target is not None, Parse the input
+        #TODO: get rid of saving prod and obs to self
         self.target = target
         if not isinstance(target, type(None)):
             self._target_from_name()
@@ -214,6 +216,7 @@ class MASTSearch(object):
        'proposal_id_prod', 'productFilename', 'size', 'parent_obsid',
        'dataRights_prod', 'calib_level_prod']'''
         
+        # TODO: instead, these are just repr columns?
         keep_cols = ['exptime', 'author', 'mission', 'filters', 'wavelength_region', 
                      'target_name', 'obs_id', 's_ra', 's_dec', 'dataproduct_type_obs',
                      'calib_level_obs', 't_min', 't_max', 'sequence_number', 
@@ -786,7 +789,9 @@ class KeplerSearch(MASTSearch):
         search_radius:Optional[Union[float,u.Quantity]] = None,
         exptime:Optional[Union[str, int, tuple]] = (0,9999),
         author:  Optional[Union[str, list[str]]] = None,
-        limit: Optional[int] = 1000,):
+        limit: Optional[int] = 1000,
+        quarter: Optional[int] = None,
+        month: Optional[int] = None):
         
         super().__init__(target=target, 
                          mission=["Kepler"], 
