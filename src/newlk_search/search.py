@@ -47,10 +47,10 @@ class MASTSearch(object):
                  ):
         
         self.search_radius = search_radius
-        self.exptime = exptime
-        self.mission = mission
-        self.author = author
-        self.limit = limit
+        self.search_exptime = exptime
+        self.search_mission = mission
+        self.search_author = author
+        self.search_limit = limit
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
             raise TypeError("Target must be a target name string, (ra, dec) tuple" 
@@ -70,15 +70,15 @@ class MASTSearch(object):
         self._parse_input(self.target)  
         self.table = self._search(
             search_radius=self.search_radius,
-            exptime=self.exptime,
-            mission=self.mission,
-            author=self.author,
-            limit=self.limit,
+            exptime=self.search_exptime,
+            mission=self.search_mission,
+            author=self.search_author,
+            limit=self.search_limit,
             )
-        mask = self._filter(exptime=self.exptime, 
-                                             limit=self.limit,
-                                             project = self.mission,
-                                             provenance_name = self.author,
+        mask = self._filter(exptime=self.search_exptime, 
+                                             limit=self.search_limit,
+                                             project = self.search_mission,
+                                             provenance_name = self.search_author,
                                              ) #setting provenance_name=None will return HLSPs
                                 
         self.table = self.table[mask]
@@ -101,6 +101,7 @@ class MASTSearch(object):
         else:
             raise(ValueError("No Target or object table supplied"))
         
+
     @property
     def ra(self):
         """Right Ascension coordinate for each data product found."""
@@ -110,6 +111,32 @@ class MASTSearch(object):
     def dec(self):
         """Declination coordinate for each data product found."""
         return self.table["s_dec"].values
+    
+
+    @property
+    def exptime(self):
+        """Exposure times for all returned products"""
+        return self.table["exptime"].values
+    
+    @property
+    def mission(self):
+        """Kepler quarter or TESS sector names for each data product found."""
+        return self.table["mission"].values
+
+    @property
+    def year(self):
+        """Year the observation was made."""
+        return self.table["year"].values
+
+    @property
+    def author(self):
+        """Pipeline name for each data product found."""
+        return self.table["author"].values
+
+    @property
+    def target_name(self):
+        """Target name for each data product found."""
+        return self.table["target_name"].values
 
     #def __getattr__(self, attr):
     #    try:
@@ -192,7 +219,7 @@ class MASTSearch(object):
                      'calib_level_obs', 't_min', 't_max', 'sequence_number', 
                      'dataRights_obs', 'mtFlag', 'obsid', 'description', 'dataURI',
                       'productType', 'productFilename' , 'parent_obsid' , 
-                      'calib_level_prod', 'project_obs', 'distance']
+                      'calib_level_prod', 'project_obs', 'distance','year']
         
         joint_table = joint_table[keep_cols]
 
@@ -512,7 +539,7 @@ class MASTSearch(object):
             
             """
 
-        self.exptime = exptime
+        self.search_exptime = exptime
         mask = np.zeros(len(self.table), dtype=bool)
 
 
