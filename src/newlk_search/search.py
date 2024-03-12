@@ -51,7 +51,6 @@ class MASTSearch(object):
         self.mission = mission
         self.author = author
         self.limit = limit
-        print(self.search_radius, self.exptime, self.mission, self.author)
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
             raise TypeError("Target must be a target name string, (ra, dec) tuple" 
@@ -68,7 +67,6 @@ class MASTSearch(object):
 
 
     def _target_from_name(self):
-        print(self.search_radius, self.exptime, self.mission, self.author)
         self._parse_input(self.target)  
         self.table = self._search(
             search_radius=self.search_radius,
@@ -77,7 +75,6 @@ class MASTSearch(object):
             author=self.author,
             limit=self.limit,
             )
-        print(self.table.keys())
         mask = self._filter(exptime=self.exptime, 
                                              limit=self.limit,
                                              project = self.mission,
@@ -104,7 +101,15 @@ class MASTSearch(object):
         else:
             raise(ValueError("No Target or object table supplied"))
         
+    @property
+    def ra(self):
+        """Right Ascension coordinate for each data product found."""
+        return self.table["s_ra"].values
 
+    @property
+    def dec(self):
+        """Declination coordinate for each data product found."""
+        return self.table["s_dec"].values
 
     #def __getattr__(self, attr):
     #    try:
@@ -765,6 +770,9 @@ class KeplerSearch(MASTSearch):
                          exptime=exptime, 
                          author=author, 
                          limit=limit)
+        
+
+
 
 
     def _fix_times():
