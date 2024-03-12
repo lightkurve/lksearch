@@ -29,7 +29,7 @@ class MASTSearch(object):
     #    "mission",
     # Start time?
     #distance
-    _REPR_COLUMNS = ["target_name","project_obs","author", "exptime",  "description"]
+    _REPR_COLUMNS = ["target_name","project_obs","author", "exptime", "distance", "description"]
 
     #why is this needed here?  recursion error otherwise
     table = None
@@ -46,6 +46,12 @@ class MASTSearch(object):
                  limit: Optional[int] = 1000,
                  ):
         
+        self.search_radius = search_radius
+        self.exptime = exptime
+        self.mission = mission
+        self.author = author
+        self.limit = limit
+        print(self.search_radius, self.exptime, self.mission, self.author)
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
             raise TypeError("Target must be a target name string, (ra, dec) tuple" 
@@ -54,40 +60,51 @@ class MASTSearch(object):
         # If target is not None, Parse the input
         self.target = target
         if not isinstance(target, type(None)):
-            self._parse_input(self.target)  
-            self.table = self._search(
-                search_radius=search_radius,
-                exptime=exptime,
-                mission=mission,
-                author=author,
-                limit=limit,
-                )
-            self.table = self.table[self._filter()]
-            
-            self.search_radius = search_radius
-            self.exptime = exptime
-            self.mission = mission
-            self.author = author
-            self.limit = limit
-
+            self._target_from_name()
         else:
-            #see if we were passed a joint table
-            if (isinstance(table, pd.DataFrame)):
-                self.table = table
-
-            # If we don't have a name or a joint table,
-            # check to see if tables were passed
-            elif(isinstance(obs_table, pd.DataFrame)):
-                # If we have an obs table and no name, use it
-                self.obs_table = obs_table
-                if(isinstance(prod_table, type(None))):
-                    #get the prod table if we don't have it
-                    prod_table = self._search_products(self)
-                self.prod_table = prod_table
-                self.table = self._join_tables()
-            else:
-                raise(ValueError("No Target or object table supplied"))
+            self._target_from_table(table, obs_table, prod_table)
         self.table = self._update_table(self.table)
+
+
+
+    def _target_from_name(self):
+        print(self.search_radius, self.exptime, self.mission, self.author)
+        self._parse_input(self.target)  
+        self.table = self._search(
+            search_radius=self.search_radius,
+            exptime=self.exptime,
+            mission=self.mission,
+            author=self.author,
+            limit=self.limit,
+            )
+        print(self.table.keys())
+        mask = self._filter(exptime=self.exptime, 
+                                             limit=self.limit,
+                                             project = self.mission,
+                                             provenance_name = self.author,
+                                             ) #setting provenance_name=None will return HLSPs
+                                
+        self.table = self.table[mask]
+
+    def _target_from_table(self, table, obs_table, prod_table):
+        #see if we were passed a joint table
+        if (isinstance(table, pd.DataFrame)):
+            self.table = table
+
+        # If we don't have a name or a joint table,
+        # check to see if tables were passed
+        elif(isinstance(obs_table, pd.DataFrame)):
+            # If we have an obs table and no name, use it
+            self.obs_table = obs_table
+            if(isinstance(prod_table, type(None))):
+                #get the prod table if we don't have it
+                prod_table = self._search_products(self)
+            self.prod_table = prod_table
+            self.table = self._join_tables()
+        else:
+            raise(ValueError("No Target or object table supplied"))
+        
+
 
     #def __getattr__(self, attr):
     #    try:
@@ -132,6 +149,9 @@ class MASTSearch(object):
     # may overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls?
     def _update_table(self, joint_table):
         # Ideally I'd like to replace of t_exptime and pro
+        #joint_table['exptime'] = joint_table['t_exptime'].copy()
+        #joint_table['author'] = joint_table['provenance_name'].copy()
+        #joint_table['mission'] = joint_table['obs_collection_obs'].copy()
         joint_table = joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author","obs_collection_obs":"mission"})
         
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
@@ -167,7 +187,7 @@ class MASTSearch(object):
                      'calib_level_obs', 't_min', 't_max', 'sequence_number', 
                      'dataRights_obs', 'mtFlag', 'obsid', 'description', 'dataURI',
                       'productType', 'productFilename' , 'parent_obsid' , 
-                      'calib_level_prod', 'project_obs'  ]
+                      'calib_level_prod', 'project_obs', 'distance']
         
         joint_table = joint_table[keep_cols]
 
@@ -486,7 +506,7 @@ class MASTSearch(object):
             <Segment/Quarter/Sector/Campaign> this will be in mission specific search
             
             """
-        
+
         self.exptime = exptime
         mask = np.zeros(len(self.table), dtype=bool)
 
@@ -511,14 +531,19 @@ class MASTSearch(object):
 
         #Next Filter on project
         project_mask = mask.copy()
-        for proj in project:
-            project_mask |= self.table.project_obs.values == proj
+        if not isinstance(project_mask, type(None)):
+            for proj in project:
+                project_mask |= self.table.project_obs.values == proj
+        else:
+            project_mask = np.logical_not(project_mask)
 
         #Next Filter on provenance
         provenance_mask = mask.copy()
-
-        for author in provenance_name:
-           provenance_mask |=  self.table.provenance_name.str.lower() == author
+        if  not isinstance(provenance_name, type(None)):
+            for author in provenance_name:
+                provenance_mask |=  self.table.provenance_name.str.lower() == author
+        else:
+            provenance_mask = np.logical_not(provenance_mask)
             
         # Filter by cadence
         if(not isinstance(exptime, type(None))):
@@ -720,40 +745,27 @@ class TESSSearch(MASTSearch):
 
     
 class KeplerSearch(MASTSearch):
-        
-        #@properties like quarters
-    @property
-    def mission(self):
-        return "Kepler"
     
-    @cached
-    def _search(self,
-                search_radius:Union[float,u.Quantity] = None,
-                exptime:Union[str, int, tuple] = (0,9999),
-                cadence: Union[str, int, tuple] = None, #Kepler specific option?
-                quarter: int = None,
-                mission: Union[str, list[str]] = ["Kepler"],
-                author:  Union[str, list[str]] = None,
-                limit: int = 1000,
-                ):
+    def __init__(self,  
+        target: [Union[str, tuple[float], SkyCoord]],   
+        obs_table:Optional[pd.DataFrame] = None, 
+        prod_table:Optional[pd.DataFrame] = None,
+        table:Optional[pd.DataFrame] = None,
+        search_radius:Optional[Union[float,u.Quantity]] = None,
+        exptime:Optional[Union[str, int, tuple]] = (0,9999),
+        author:  Optional[Union[str, list[str]]] = None,
+        limit: Optional[int] = 1000,):
         
+        super().__init__(target=target, 
+                         mission=["Kepler"], 
+                         obs_table=obs_table, 
+                         prod_table=prod_table, 
+                         table=table, 
+                         search_radius=search_radius, 
+                         exptime=exptime, 
+                         author=author, 
+                         limit=limit)
 
-        # TODO: add quarter to search_obs? or have that be the MAST version (sequence)
-        self.obs_table = self._search_obs(search_radius=search_radius, 
-                                          exptime=exptime, 
-                                          cadence=cadence,
-                                          mission=mission,
-                                          filetype=["lightcurve", "target pixel", "dv"],
-                                          author=author,
-                                          limit=limit,
-                                          )
-        self.prod_table = self._search_prod()
-        joint_table = self._join_tables()
-        joint_table = self._update_table(joint_table)
-        return joint_table
-        
-
-    
 
     def _fix_times():
         # Fixes Kepler times
