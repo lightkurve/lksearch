@@ -44,6 +44,7 @@ class MASTSearch(object):
                  mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
                  author:  Optional[Union[str, list[str]]] = None,
                  limit: Optional[int] = 1000,
+                 sequence: Optional[int] = None,
                  ):
         # Author - define a 'mission' flag that is just spoc or whatever.
         
@@ -52,6 +53,7 @@ class MASTSearch(object):
         self.search_mission = mission
         self.search_author = author
         self.search_limit = limit
+        self.search_sequence = sequence
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
             raise TypeError("Target must be a target name string, (ra, dec) tuple" 
@@ -76,6 +78,7 @@ class MASTSearch(object):
             mission=self.search_mission,
             author=self.search_author,
             limit=self.search_limit,
+            sequence=self.search_sequence,
             )
         mask = self._filter(exptime=self.search_exptime, 
                                              limit=self.search_limit,
@@ -174,10 +177,13 @@ class MASTSearch(object):
         """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
         indices = self.table[mask].index
         return MASTSearch(
-            obs_table=self.obs_table.loc[indices.get_level_values(0)].drop_duplicates(),
-            prod_table=self.prod_table.loc[
-                indices.get_level_values(1)
-            ].drop_duplicates(),
+            table = self.table.loc[indices]
+
+            #obs_table=self.obs_table.loc[indices.get_level_values(0)].drop_duplicates(),
+            #prod_table=self.prod_table.loc[
+            #    indices.get_level_values(1)
+            #].drop_duplicates(),
+            
         )
     
     # may overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls?
@@ -241,6 +247,7 @@ class MASTSearch(object):
                 mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
                 author:  Union[str, list[str]] = None,
                 limit: int = 1000,
+                sequence: int = None,
                 ):
 
         self.obs_table = self._search_obs(search_radius=search_radius, 
@@ -250,6 +257,7 @@ class MASTSearch(object):
                                           filetype=["lightcurve", "target pixel", "dv"],
                                           author=author,
                                           limit=limit,
+                                          sequence=sequence,
                                           )
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
@@ -312,32 +320,33 @@ class MASTSearch(object):
         provenance_name=None,
         author= None,
         exptime=(0, 9999),
-        quarter=None,
-        month=None,
-        campaign=None,
+        sequence=None,
+        #quarter=None,
+        #month=None,
+        #campaign=None,
         cadence = None,
-        sector=None,
+        #sector=None,
         limit=None,):
         # Helper function that returns a Search Result object containing MAST products
         # combines the results of Observations.query_criteria (called via self.query_mast) and Observations.get_product_list
 
-        if [bool(quarter), 
+        '''if [bool(quarter), 
             bool(campaign),
             bool(sector)].count(True) > 1:
                 raise LightkurveError("Ambiguity Error; multiple quarter/campaign/sector specified."
-                    "If searching for specific data across different missions, perform separate searches by mission.")
+                    "If searching for specific data across different missions, perform separate searches by mission.")'''
         
         # Is this what we want to do/ where we want the error thrown?
         if filetype == 'ffi':
             raise SearchError(f"FFI search not implemented in MASTSearch. Please use TESSSearch.")
         
         # if a quarter/campaign/sector is specified, search only that mission
-        if quarter is not None:
+        '''if quarter is not None:
             mission = ["Kepler"]
         if campaign is not None:
             mission = ["K2"]
         if sector is not None:
-            mission = ["TESS"]    
+            mission = ["TESS"]  '''  
         # Ensure mission is a list
         mission = np.atleast_1d(mission).tolist()
         if provenance_name is not None:
@@ -363,7 +372,7 @@ class MASTSearch(object):
             project=mission,
             provenance_name=provenance_name,
             exptime=exptime,
-            sequence_number=campaign or sector,
+            sequence_number=sequence,
             **extra_query_criteria,
         )
         log.debug(
@@ -809,8 +818,11 @@ class KeplerSearch(MASTSearch):
                          search_radius=search_radius, 
                          exptime=exptime, 
                          author=author, 
-                         limit=limit)
+                         limit=limit, 
+                         sequence=None)
         self._add_kepler_mission_product()
+        # Can't search mast with quarter/month directly, so filter on that after the fact. 
+        self.table = self.table[self._filter_kepler(quarter, month)]
         
 
 
@@ -853,13 +865,13 @@ class KeplerSearch(MASTSearch):
         seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in joint_table.loc[mask,["description"]].values]
 
     def _filter_kepler(
-            products,
+            self, 
             quarter: Union[int, list[int]] = None,
             month: Union[int, list[int]]= None,
             limit: int = None,
         ) -> pd.DataFrame:
         # Filter Kepler product by month/quarter
-
+        products = self.table
 
         mask = np.ones(len(products), dtype=bool)
 
