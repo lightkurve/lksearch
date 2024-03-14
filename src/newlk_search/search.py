@@ -29,7 +29,7 @@ class MASTSearch(object):
     #    "mission",
     # Start time?
     #distance
-    _REPR_COLUMNS = ["target_name","project_obs","author", "exptime", "distance", "description"]
+    _REPR_COLUMNS = ["target_name","author", "mission","exptime", "distance", "description"]
 
     #why is this needed here?  recursion error otherwise
     table = None
@@ -753,7 +753,15 @@ class TESSSearch(MASTSearch):
     def filter_hlsp():
         raise NotImplementedError
     
-    
+    # This was in Christina's PR to search. Is this a way we want to handle HLSPs?
+    #def _mask_bad_authors(authors):
+    # """Returns a mask to remove authors we don't have readers for."""
+    # bad_authors = np.asarray([author not in AUTHOR_LINKS.keys() for author in authors])
+    # if bad_authors.any():
+    #     log.warn(
+    #         f"Authors {np.unique(authors[bad_authors])} have been removed as `lightkurve` does not have a specific reader for these HLSPs.",
+    # )
+    # return ~bad_authors
 
 
 
@@ -802,18 +810,36 @@ class KeplerSearch(MASTSearch):
                          exptime=exptime, 
                          author=author, 
                          limit=limit)
+        self._add_kepler_mission_product()
         
 
 
-
+    def _add_kepler_mission_product(self):
+        # Some products are HLSPs and some are mission products
+        mission_product = np.zeros(len(self.table), dtype=bool)
+        mission_product[self.table["author"] == "Kepler"] = True
+        self.table['mission_product'] = mission_product
 
     def _fix_times():
         # Fixes Kepler times
         raise NotImplementedError
 
-    def _handle_kbonus():
-        # Deals with kbonus-specific issues
+    def _handle_kbonus(self):
+        # KBONUS times are masked as they are invalid for the quarter data
+        #kbonus_mask = self.table["author"] == "KBONUS-BKG"
         raise NotImplementedError
+    
+    @property
+    def HLSPs(self):
+        """return a MASTSearch object with self.table only containing High Level Science Products"""
+        mask = self.table['mission_product'] 
+        return(self._mask(~mask))
+    
+    @property
+    def mission_products(self):
+        """return a MASTSearch object with self.table only containing Mission Products"""
+        mask = self.table['mission_product'] 
+        return(self._mask(mask))
 
     def get_sequence_number(self):
         # Kepler sequence_number values were not populated at the time of
@@ -889,6 +915,16 @@ class KeplerSearch(MASTSearch):
 class K2Search(MASTSearch):
 
     #@properties like campaigns (seasons?)
+    def _fix_K2_sequence(self):
+        # K2 campaigns 9, 10, and 11 were split into two sections, which are
+        # listed separately in the table with suffixes "a" and "b"
+        
+        
+        #if obs_project == "K2" and result["sequence_number"][idx] in [9, 10, 11]:
+        #    for half, letter in zip([1, 2], ["a", "b"]):
+        #        if f"c{tmp_seqno}{half}" in result["productFilename"][idx]:
+        #            obs_seqno = f"{int(tmp_seqno):02d}{letter}"
+        raise NotImplementedError
 
     def search_cubedata(hlsp=False):
         # Regular _search_cubedata + processing
