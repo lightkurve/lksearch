@@ -42,7 +42,7 @@ class MASTSearch(object):
                  search_radius:Optional[Union[float,u.Quantity]] = None,
                  exptime:Optional[Union[str, int, tuple]] = (0,9999),#None,
                  mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
-                 author:  Optional[Union[str, list[str]]] = None,
+                 author:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"],
                  limit: Optional[int] = 1000,
                  sequence: Optional[int] = None,
                  ):
@@ -83,7 +83,7 @@ class MASTSearch(object):
         mask = self._filter(exptime=self.search_exptime, 
                                              limit=self.search_limit,
                                              project = self.search_mission,
-                                             provenance_name = self.search_author,
+                                             author = self.search_author,
                                              ) #setting provenance_name=None will return HLSPs
                                 
         self.table = self.table[mask]
@@ -317,15 +317,10 @@ class MASTSearch(object):
         search_radius=None,
         filetype=["lightcurve", "target pixel", "dv"],
         mission=["Kepler", "K2", "TESS"],
-        provenance_name=None,
-        author= None,
+        author=None,
         exptime=(0, 9999),
         sequence=None,
-        #quarter=None,
-        #month=None,
-        #campaign=None,
         cadence = None,
-        #sector=None,
         limit=None,):
         # Helper function that returns a Search Result object containing MAST products
         # combines the results of Observations.query_criteria (called via self.query_mast) and Observations.get_product_list
@@ -349,11 +344,11 @@ class MASTSearch(object):
             mission = ["TESS"]  '''  
         # Ensure mission is a list
         mission = np.atleast_1d(mission).tolist()
-        if provenance_name is not None:
-            provenance_name = np.atleast_1d(provenance_name).tolist()
+        if author is not None:
+            author = np.atleast_1d(author).tolist()
             # If author "TESS" is used, we assume it is SPOC
-            provenance_name = np.unique(
-                [p if p.lower() != "tess" else "SPOC" for p in provenance_name]
+            author = np.unique(
+                [p if p.lower() != "tess" else "SPOC" for p in author]
             )
             
         # Speed up by restricting the MAST query if we don't want FFI image data
@@ -370,7 +365,7 @@ class MASTSearch(object):
         observations = self._query_mast(
             search_radius=search_radius,
             project=mission,
-            provenance_name=provenance_name,
+            provenance_name=author,
             exptime=exptime,
             sequence_number=sequence,
             **extra_query_criteria,
@@ -539,7 +534,7 @@ class MASTSearch(object):
             exptime: Union[str, int, tuple[int], type(None)] = (0,9999),
             limit: int = None,
             project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-            provenance_name: Union[str, list[str]] = ["kepler", "k2", "spoc"],
+            author: Union[str, list[str]] = ["kepler", "k2", "spoc"],
             filetype: Union[str, list[str]] = ["target pixel", "lightcurve", "dvreport"], #lightcurve, target pixel, report
         ) -> pd.DataFrame:
         # Modify this so that it can choose what types of products to keep
@@ -581,11 +576,11 @@ class MASTSearch(object):
         else:
             project_mask = np.logical_not(project_mask)
 
-        #Next Filter on provenance
+        #Next Filter on author (provenance_name in mast table)
         provenance_mask = mask.copy()
-        if  not isinstance(provenance_name, type(None)):
-            for author in provenance_name:
-                provenance_mask |=  self.table.provenance_name.str.lower() == author
+        if  not isinstance(author, type(None)):
+            for a in np.atleast_1d(author).tolist():
+                provenance_mask |=  self.table.provenance_name.str.lower() == a.lower()
         else:
             provenance_mask = np.logical_not(provenance_mask)
             
