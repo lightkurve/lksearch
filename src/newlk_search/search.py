@@ -29,7 +29,7 @@ class MASTSearch(object):
     #    "mission",
     # Start time?
     #distance
-    _REPR_COLUMNS = ["target_name","author", "mission","exptime", "distance", "description"]
+    _REPR_COLUMNS = ["target_name","author", "mission","exptime", "distance", "year","description"]
 
     #why is this needed here?  recursion error otherwise
     table = None
@@ -168,7 +168,7 @@ class MASTSearch(object):
             mask = np.in1d(np.arange(len(self.table)), np.arange(len(self.table))[key])
             return self._mask(mask)
         if isinstance(key, (str, list)):
-            return self.table[key]
+            return self.table.iloc[key]
         if hasattr(key, "__iter__"):
             if len(key) == len(self.table):
                 return self._mask(key)
@@ -223,21 +223,21 @@ class MASTSearch(object):
        'dataRights_prod', 'calib_level_prod']'''
         
         # TODO: instead, these are just repr columns?
-        keep_cols = ['exptime', 'author', 'mission', 'filters', 'wavelength_region', 
+        '''keep_cols = ['exptime', 'author', 'mission', 'filters', 'wavelength_region', 
                      'target_name', 'obs_id', 's_ra', 's_dec', 'dataproduct_type_obs',
                      'calib_level_obs', 't_min', 't_max', 'sequence_number', 
                      'dataRights_obs', 'mtFlag', 'obsid', 'description', 'dataURI',
                       'productType', 'productFilename' , 'parent_obsid' , 
                       'calib_level_prod', 'project_obs', 'distance','year']
         
-        joint_table = joint_table[keep_cols]
+        joint_table = joint_table[keep_cols]'''
 
         # Other additions may include the following
         #self._add_columns("something")
         #self._add_urls_to_authors()
         #self._add_s3_url_column()      
         #self._sort_by_priority()
-        return joint_table
+        return joint_table.reset_index()
     
     @cached
     def _search(self,
