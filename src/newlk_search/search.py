@@ -178,7 +178,7 @@ class MASTSearch(object):
         indices = self.table[mask].index
         return MASTSearch(
             table = self.table.loc[indices]
-
+            # Commented this out as we talked about not saving obs/prod table
             #obs_table=self.obs_table.loc[indices.get_level_values(0)].drop_duplicates(),
             #prod_table=self.prod_table.loc[
             #    indices.get_level_values(1)
@@ -626,6 +626,10 @@ class MASTSearch(object):
                 mask = (self.table.t_exptime >= 60) & (self.table.t_exptime <= 120)
             elif exptime in ["long", "ffi"]:
                 mask = self.table.t_exptime > 120
+            elif exptime in ["shortest"]:
+                mask = self.table.t_exptime == min(self.table.t_exptime)
+            elif exptime in ["longest"]:
+                mask = self.table.t_exptime == max(self.table.t_exptime)
             else:
                 mask = np.ones(len(self.table.t_exptime), dtype=bool)
                 log.debug('invalid string input. No exptime filter applied')
@@ -823,14 +827,6 @@ class KeplerSearch(MASTSearch):
         self._add_kepler_mission_product()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
         self.table = self.table[self._filter_kepler(quarter, month)]
-        
-
-
-    def _add_kepler_mission_product(self):
-        # Some products are HLSPs and some are mission products
-        mission_product = np.zeros(len(self.table), dtype=bool)
-        mission_product[self.table["author"] == "Kepler"] = True
-        self.table['mission_product'] = mission_product
 
     def _fix_times():
         # Fixes Kepler times
@@ -840,7 +836,13 @@ class KeplerSearch(MASTSearch):
         # KBONUS times are masked as they are invalid for the quarter data
         #kbonus_mask = self.table["author"] == "KBONUS-BKG"
         raise NotImplementedError
-    
+
+    def _add_kepler_mission_product(self):
+        # Some products are HLSPs and some are mission products
+        mission_product = np.zeros(len(self.table), dtype=bool)
+        mission_product[self.table["author"] == "Kepler"] = True
+        self.table['mission_product'] = mission_product
+
     @property
     def HLSPs(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""
@@ -871,6 +873,7 @@ class KeplerSearch(MASTSearch):
             limit: int = None,
         ) -> pd.DataFrame:
         # Filter Kepler product by month/quarter
+        # TODO: should this return the mask or replace self.table directly?
         products = self.table
 
         mask = np.ones(len(products), dtype=bool)
