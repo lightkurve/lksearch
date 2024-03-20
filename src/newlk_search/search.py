@@ -923,6 +923,36 @@ class KeplerSearch(MASTSearch):
 
 
 class K2Search(MASTSearch):
+    def __init__(self,
+        target: [Union[str, tuple[float], SkyCoord]],   
+        obs_table:Optional[pd.DataFrame] = None, 
+        prod_table:Optional[pd.DataFrame] = None,
+        table:Optional[pd.DataFrame] = None,
+        search_radius:Optional[Union[float,u.Quantity]] = None,
+        exptime:Optional[Union[str, int, tuple]] = (0,9999),
+        author:  Optional[Union[str, list[str]]] = None,
+        limit: Optional[int] = 1000,
+        campaign: Optional[int] = None,
+        ):
+        
+        super().__init__(target=target, 
+                         mission=["K2"], 
+                         obs_table=obs_table, 
+                         prod_table=prod_table, 
+                         table=table, 
+                         search_radius=search_radius, 
+                         exptime=exptime, 
+                         author=author, 
+                         limit=limit, 
+                         sequence=campaign)
+        self._add_K2_mission_product()
+        # Can't search mast with quarter/month directly, so filter on that after the fact. 
+
+    def _add_K2_mission_product(self):
+        # Some products are HLSPs and some are mission products
+        mission_product = np.zeros(len(self.table), dtype=bool)
+        mission_product[self.table["author"] == "K2"] = True
+        self.table['mission_product'] = mission_product
 
     #@properties like campaigns (seasons?)
     def _fix_K2_sequence(self):
@@ -936,9 +966,9 @@ class K2Search(MASTSearch):
         #            obs_seqno = f"{int(tmp_seqno):02d}{letter}"
         raise NotImplementedError
 
-    def search_cubedata(hlsp=False):
+    '''def search_cubedata(hlsp=False):
         # Regular _search_cubedata + processing
-        raise NotImplementedError
+        raise NotImplementedError'''
 
     def parse_split_campaigns():
         raise NotImplementedError

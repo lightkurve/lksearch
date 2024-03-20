@@ -25,11 +25,9 @@ import shutil
 
 from lightkurve.utils import LightkurveWarning, LightkurveError
 from src.newlk_search.search import (
-    search_timeseries,
-    search_cubedata,
-    search_tesscut,
-    SearchError,
-    SearchResult,
+    KeplerSearch,
+    TESSSearch,
+    K2Search
     log,
 )
 from lightkurve import (
@@ -58,38 +56,42 @@ def remove_custom_config():
 #@pytest.mark.remote_data
 def test_search_cubedata():
     # EPIC 210634047 was observed twice in long cadence
-    assert len(search_cubedata("EPIC 210634047", mission="K2").table) == 2
+    #assert len(search_cubedata("EPIC 210634047", mission="K2").table) == 2
+    assert len(K2Search("EPIC 210634047").cubedata.table) == 2
     # ...including Campaign 4
     assert (
-        len(search_cubedata("EPIC 210634047", mission="K2", campaign=4).table)
+        len(K2Search("EPIC 210634047", campaign=4).cubedata.table)
         == 1
     )
     # KIC 11904151 (Kepler-10) was observed in LC in 15 Quarters
+    # Note cadence='long' is now exptime='long'
     assert (
         len(
-            search_cubedata(
-                "KIC 11904151", mission="Kepler", cadence="long"
-            ).table
+            KeplerSearch(
+                "KIC 11904151", exptime="long"
+            ).cubedata.table
         )
         == 15
     )
     # ...including quarter 11 but not 12:
     assert (
         len(
-            search_cubedata(
-                "KIC 11904151", mission="Kepler", cadence="long", quarter=11
-            ).unique_targets
+            KeplerSearch(
+                "KIC 11904151", exptime='long', quarter=11
+                ).cubedata.table
         )
         == 1
     )
     assert (
         len(
-            search_cubedata(
-                "KIC 11904151", mission="Kepler", cadence="long", quarter=12
-            ).table
+            KeplerSearch(
+                "KIC 11904151", exptime="long", quarter=12
+            ).cubedata.table
         )
         == 0
     )
+
+    # NS CHECKED TESTS UP TO THIS POINT
     search_cubedata("KIC 11904151", quarter=11, cadence="long").download()
     # with mission='TESS', it should return TESS observations
     tic = "TIC 273985862"  # Has been observed in multiple sectors including 1
