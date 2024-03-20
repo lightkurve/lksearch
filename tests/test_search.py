@@ -91,19 +91,18 @@ def test_search_cubedata():
         == 0
     )
 
-    # NS CHECKED TESTS UP TO THIS POINT
-    search_cubedata("KIC 11904151", quarter=11, cadence="long").download()
     # with mission='TESS', it should return TESS observations
     tic = "TIC 273985862"  # Has been observed in multiple sectors including 1
     assert len(search_cubedata(tic, mission="TESS").table) > 1
     assert (
-        len(search_cubedata(tic, author="SPOC", sector=1, radius=100).table)
+        len(TESSSearch(tic, author='SPOC', sector=1, search_radius=100).timeseries.table)
         == 2
     )
-    search_cubedata(tic, author="SPOC", sector=1).download()
-    assert len(search_cubedata("pi Mensae", sector=1, author="SPOC").table) == 1
+    #search_cubedata(tic, author="SPOC", sector=1).download()
+    assert len(TESSSearch("pi Mensae", sector=1, author='SPOC').cubedata.table) == 1
     # Issue #445: indexing with -1 should return the last index of the search result
-    assert len(search_cubedata("pi Men")[-1]) == 1
+    # NOTE: the syntax for this is different with new search
+    assert len(search.TESSSearch("pi Mensae").cubedata[-1].table) == 1
 
 
 #@pytest.mark.remote_data

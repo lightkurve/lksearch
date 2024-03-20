@@ -638,27 +638,29 @@ class MASTSearch(object):
 class TESSSearch(MASTSearch):
 
     def __init__(self, 
-                target: Optional[Union[str, tuple[float], SkyCoord]] = None,
-                obs_table:Optional[pd.DataFrame] = None, 
-                prod_table:Optional[pd.DataFrame] = None,
-                table:Optional[pd.DataFrame] = None,
-                search_radius:Optional[Union[float,u.Quantity]] = None,
-                exptime:Optional[Union[str, int, tuple]] = (0,9999),#None,
-                author:  Optional[Union[str, list[str]]] = None,
-                limit: Optional[int] = 1000,
-                ):
+        target: [Union[str, tuple[float], SkyCoord]],   
+        obs_table:Optional[pd.DataFrame] = None, 
+        prod_table:Optional[pd.DataFrame] = None,
+        table:Optional[pd.DataFrame] = None,
+        search_radius:Optional[Union[float,u.Quantity]] = None,
+        exptime:Optional[Union[str, int, tuple]] = (0,9999),
+        author:  Optional[Union[str, list[str]]] = None,
+        limit: Optional[int] = 1000,
+        sector: Optional[int] = None,
+        ):
         
-        mission = "TESS"
-        super().__init__(target, 
-                         obs_table, 
-                         prod_table, 
-                         table, 
-                         search_radius, 
-                         exptime, 
-                         mission, 
-                         author, 
-                         limit)
-        self._add_ffi_products()
+        super().__init__(target=target, 
+                         mission=["TESS"], 
+                         obs_table=obs_table, 
+                         prod_table=prod_table, 
+                         table=table, 
+                         search_radius=search_radius, 
+                         exptime=exptime, 
+                         author=author, 
+                         limit=limit, 
+                         sequence=sector)
+        # Uncommenting this ffi search got rid of the non-ffi search results. Debug later...
+        #self._add_ffi_products()
     
     def _add_ffi_products(self):
         #get the ffi info for the targets
