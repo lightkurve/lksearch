@@ -56,7 +56,7 @@ class MASTSearch(object):
         self.search_sequence = sequence
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
-            raise TypeError("Target must be a target name string, (ra, dec) tuple" 
+            raise TypeError("Target must be a target name string, (ra, dec) tuple, " 
                             "or astropy coordinate object")
 
         # If target is not None, Parse the input
@@ -105,7 +105,10 @@ class MASTSearch(object):
             self.table = self._join_tables()
         else:
             raise(ValueError("No Target or object table supplied"))
-        
+
+    def __len__(self):
+        """Returns the number of products in the SearchResult table."""
+        return len(self.table)
 
     @property
     def ra(self):

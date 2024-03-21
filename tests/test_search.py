@@ -116,7 +116,7 @@ def test_search_split_campaigns():
     campaigns = [9, 10, 11]
     ids = ["EPIC 228162462", "EPIC 228726301", "EPIC 202975993"]
     for c, idx in zip(campaigns, ids):
-        sr = search_cubedata(idx, campaign=c, cadence="long").table
+        sr = K2Search(idx, campaign=c, exptime="long").cubedata.table
         assert len(sr) == 2
 
 
@@ -126,25 +126,31 @@ def test_search_timeseries(caplog):
     # The name Kepler-10 somehow no longer works on MAST. So we use 2MASS instead:
     #   https://simbad.cds.unistra.fr/simbad/sim-id?Ident=%405506010&Name=Kepler-10
     assert (
-        len(search_timeseries("2MASS J19024305+5014286", mission="Kepler", author="Kepler", cadence="long").table)
+        len(KeplerSearch('2MASS J19024305+5014286', author='Kepler', exptime='long').timeseries.table)
         == 15
     )
     # An invalid KIC/EPIC ID or target name should be dealt with gracefully
     search_timeseries(-999)
-    assert "disambiguate" in caplog.text
+    #assert "disambiguate" in caplog.text
+    assert "Target must" in caplog.text
+    # TODO: This tries to search, should probs add a check before it gets to that point. 
     search_timeseries("DOES_NOT_EXIST (UNIT TEST)")
     assert "disambiguate" in caplog.text
+
     # If we ask for all cadence types, there should be four Kepler files given
-    assert len(search_timeseries("KIC 4914423", quarter=6, cadence="any", author="Kepler").table) == 4
+    assert len(KeplerSearch("KIC 4914423", quarter=6, exptime='any', author="Kepler").timeseries.table) == 4
+
     # ...and only one should have long cadence
-    assert len(search_timeseries("KIC 4914423", quarter=6, cadence="long", author="Kepler").table) == 1
+    assert len(KeplerSearch('KIC 4914423', quarter=6, exptime='long', author='Kepler').timeseries.table) == 1
     # Should be able to resolve an ra/dec
-    assert len(search_timeseries("297.5835, 40.98339", quarter=6, author="Kepler").table) == 1
+    assert len(KeplerSearch("297.5835, 40.98339", quarter=6, author="Kepler").timeseries.table) == 1
     # Should be able to resolve a SkyCoord
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
-    search = search_timeseries(c, quarter=6, author="Kepler")
+    search = KeplerSearch(c, quarter=6, author="Kepler").timeseries
     assert len(search.table) == 1
     assert len(search) == 1
+    #NS has modified checks to this point
+
     # We should be able to download a light curve
     search.download()
     # The second call to download should use the local cache
