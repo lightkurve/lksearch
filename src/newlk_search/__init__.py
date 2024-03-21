@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import absolute_import
 from . import config as _config
 
 import os
@@ -7,7 +7,7 @@ PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 
 class Conf(_config.ConfigNamespace):
     """
-    Configuration parameters for `lightkurve`.
+    Configuration parameters for `search`.
 
     Refer to `astropy.config.ConfigNamespace` for API details.
 
@@ -24,8 +24,6 @@ class Conf(_config.ConfigNamespace):
     cache_dir
         Default cache directory for data files downloaded, etc. Defaults to ``~/.lightkurve/cache`` if not specified.
 
-    warn_legacy_cache_dir
-        If set to True, issue warning if the legacy default cache directory exists. Default is True.
     """
     # Note: when using list or string_list datatype,
     # the behavior of astropy's parsing of the config file value:
@@ -47,11 +45,9 @@ class Conf(_config.ConfigNamespace):
         module="lightkurve.config"
     )
 
-    warn_legacy_cache_dir = _config.ConfigItem(
-        True,
-        "If set to True, issue warning if the legacy default cache directory exists.",
-        cfgtype="boolean",
-        module="lightkurve.config"
-    )
+
 
 conf = Conf()
+
+from .search import *
+from . import config

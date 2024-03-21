@@ -16,6 +16,10 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table, join
 from astropy.time import Time
+#from . import PACKAGEDIR, conf, config
+# TODO: not sure why the above relative import didn't work. This is a temporary hack. 
+import os
+PACKAGEDIR = os.getcwd()
 
 from memoization import cached
 
@@ -43,7 +47,6 @@ class MASTSearch(object):
                  exptime:Optional[Union[str, int, tuple]] = (0,9999),#None,
                  mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
                  author:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"],
-                 limit: Optional[int] = 1000,
                  sequence: Optional[int] = None,
                  ):
         # Author - define a 'mission' flag that is just spoc or whatever.
@@ -52,7 +55,6 @@ class MASTSearch(object):
         self.search_exptime = exptime
         self.search_mission = mission
         self.search_author = author
-        self.search_limit = limit
         self.search_sequence = sequence
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
@@ -70,6 +72,7 @@ class MASTSearch(object):
 
 
 
+
     def _target_from_name(self):
         self._parse_input(self.target)  
         self.table = self._search(
@@ -77,11 +80,9 @@ class MASTSearch(object):
             exptime=self.search_exptime,
             mission=self.search_mission,
             author=self.search_author,
-            limit=self.search_limit,
             sequence=self.search_sequence,
             )
         mask = self._filter(exptime=self.search_exptime, 
-                                             limit=self.search_limit,
                                              project = self.search_mission,
                                              author = self.search_author,
                                              ) #setting provenance_name=None will return HLSPs
@@ -105,6 +106,7 @@ class MASTSearch(object):
             self.table = self._join_tables()
         else:
             raise(ValueError("No Target or object table supplied"))
+        
 
     def __len__(self):
         """Returns the number of products in the SearchResult table."""
@@ -145,6 +147,7 @@ class MASTSearch(object):
     def target_name(self):
         """Target name for each data product found."""
         return self.table["target_name"].values
+    
 
     #def __getattr__(self, attr):
     #    try:
@@ -240,6 +243,8 @@ class MASTSearch(object):
         #self._add_urls_to_authors()
         #self._add_s3_url_column()      
         #self._sort_by_priority()
+
+        
         return joint_table.reset_index()
     
     @cached
@@ -249,7 +254,6 @@ class MASTSearch(object):
                 cadence: Union[str, int, tuple] = None, #Kepler specific option?
                 mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
                 author:  Union[str, list[str]] = None,
-                limit: int = 1000,
                 sequence: int = None,
                 ):
 
@@ -259,11 +263,11 @@ class MASTSearch(object):
                                           mission=mission,
                                           filetype=["lightcurve", "target pixel", "dv"],
                                           author=author,
-                                          limit=limit,
                                           sequence=sequence,
                                           )
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
+
 
         return joint_table
 
@@ -323,8 +327,7 @@ class MASTSearch(object):
         author=None,
         exptime=(0, 9999),
         sequence=None,
-        cadence = None,
-        limit=None,):
+        cadence = None,):
         # Helper function that returns a Search Result object containing MAST products
         # combines the results of Observations.query_criteria (called via self.query_mast) and Observations.get_product_list
 
@@ -483,13 +486,22 @@ class MASTSearch(object):
     def cubedata(self):
         """ return a MASTSearch object with self.table only containing products that are image cubes """
         mask = self._filter_product_endswith('target pixel') 
+        
         #return self._cubedata()
         return (self._mask(mask))
+    
     
     #def _cubedata(self):
     #    """ passthrough that mission searches can call """
     #    mask = self.table.productFilename.str.endswith("tp.fits")
     #    return(self._mask(mask))
+
+
+    def limit_results(self, limit: int):
+        mask = np.ones(len(self.table), dtype=bool)
+        mask[limit:] = False
+        print(mask)
+        return (self._mask(mask)) 
     
     @property    
     def dvreports(self):
@@ -535,7 +547,6 @@ class MASTSearch(object):
     
     def _filter(self,
             exptime: Union[str, int, tuple[int], type(None)] = (0,9999),
-            limit: int = None,
             project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
             author: Union[str, list[str]] = ["kepler", "k2", "spoc"],
             filetype: Union[str, list[str]] = ["target pixel", "lightcurve", "dvreport"], #lightcurve, target pixel, report
@@ -600,8 +611,7 @@ class MASTSearch(object):
         products = products[mask]
 
         products.sort_values(by=["distance", "productFilename"], ignore_index=True)
-        if limit is not None:
-            return products[0:limit]
+
         return products'''
         # I think this hidden filter function should now just return the mask
         mask = file_mask & project_mask & provenance_mask & exptime_mask
@@ -632,6 +642,15 @@ class MASTSearch(object):
                 mask = np.ones(len(self.table.t_exptime), dtype=bool)
                 log.debug('invalid string input. No exptime filter applied')
         return mask
+    
+
+    def download_timeseries():
+        raise NotImplementedError
+    
+    def download_cubedata():
+        raise NotImplementedError
+    
+    def download_
 
 
     
@@ -648,7 +667,6 @@ class TESSSearch(MASTSearch):
         search_radius:Optional[Union[float,u.Quantity]] = None,
         exptime:Optional[Union[str, int, tuple]] = (0,9999),
         author:  Optional[Union[str, list[str]]] = None,
-        limit: Optional[int] = 1000,
         sector: Optional[int] = None,
         ):
         
@@ -660,7 +678,6 @@ class TESSSearch(MASTSearch):
                          search_radius=search_radius, 
                          exptime=exptime, 
                          author=author, 
-                         limit=limit, 
                          sequence=sector)
         # Uncommenting this ffi search got rid of the non-ffi search results. Debug later...
         #self._add_ffi_products()
@@ -810,7 +827,6 @@ class KeplerSearch(MASTSearch):
         search_radius:Optional[Union[float,u.Quantity]] = None,
         exptime:Optional[Union[str, int, tuple]] = (0,9999),
         author:  Optional[Union[str, list[str]]] = None,
-        limit: Optional[int] = 1000,
         quarter: Optional[int] = None,
         month: Optional[int] = None):
         
@@ -822,7 +838,6 @@ class KeplerSearch(MASTSearch):
                          search_radius=search_radius, 
                          exptime=exptime, 
                          author=author, 
-                         limit=limit, 
                          sequence=None)
         self._add_kepler_mission_product()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
@@ -870,10 +885,10 @@ class KeplerSearch(MASTSearch):
             self, 
             quarter: Union[int, list[int]] = None,
             month: Union[int, list[int]]= None,
-            limit: int = None,
         ) -> pd.DataFrame:
+        import os
         # Filter Kepler product by month/quarter
-        # TODO: should this return the mask or replace self.table directly?
+        # TODO: should this return the mask or replace self.table directly? I'm leaning toward replace directly
         products = self.table
 
         mask = np.ones(len(products), dtype=bool)
@@ -936,7 +951,6 @@ class K2Search(MASTSearch):
         search_radius:Optional[Union[float,u.Quantity]] = None,
         exptime:Optional[Union[str, int, tuple]] = (0,9999),
         author:  Optional[Union[str, list[str]]] = None,
-        limit: Optional[int] = 1000,
         campaign: Optional[int] = None,
         ):
         
@@ -948,7 +962,6 @@ class K2Search(MASTSearch):
                          search_radius=search_radius, 
                          exptime=exptime, 
                          author=author, 
-                         limit=limit, 
                          sequence=campaign)
         self._add_K2_mission_product()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 

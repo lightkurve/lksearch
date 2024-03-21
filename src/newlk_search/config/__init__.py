@@ -97,7 +97,7 @@ def _ensure_cache_dir_exists(cache_dir):
         return cache_dir
 
 
-def warn_if_default_cache_dir_migration_needed():
+'''def warn_if_default_cache_dir_migration_needed():
     from .. import conf
 
     if not conf.warn_legacy_cache_dir:
@@ -122,4 +122,4 @@ def warn_if_default_cache_dir_migration_needed():
             f"and remove the legacy directory. "
             f"Refer to https://docs.lightkurve.org/reference/config.html#default-cache-directory-migration "
             f"for more information."
-        )
+        )'''
