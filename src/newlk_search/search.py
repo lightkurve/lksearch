@@ -16,6 +16,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table, join
 from astropy.time import Time
+from lightkurve.io import read
 #from . import PACKAGEDIR, conf, config
 # TODO: not sure why the above relative import didn't work. This is a temporary hack. 
 import os
@@ -650,7 +651,60 @@ class MASTSearch(object):
     def download_cubedata():
         raise NotImplementedError
     
-    def download_
+    def download_dvreports():
+        raise NotImplementedError
+    
+    def _download(
+        # Hidden helper function to download a single file
+        self, table, quality_bitmask, download_dir, **kwargs
+        ):
+        """Private method used by `download_timeseries()` and `download_cubedata()` to download
+        exactly one file from the MAST archive.
+
+        Always returns a `TargetPixelFile` or `LightCurve` object.
+
+        Note FFI cutouts are not handled here. Please refer to TESSSearch instead. 
+        """
+        # Make sure astroquery uses the same level of verbosity
+        logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
+
+        if download_dir is None:
+            download_dir = self._default_download_dir()
+
+
+        # Whenever `astroquery.mast.Observations.download_products` is called,
+        # a HTTP request will be sent to determine the length of the file
+        # prior to checking if the file already exists in the local cache.
+        # For performance, we skip this HTTP request and immediately try to
+        # find the file in the cache.  The path we check here is consistent
+        # with the one hard-coded inside `astroquery.mast.Observations._download_files()`
+        # in Astroquery v0.4.1.  It would be good to submit a PR to astroquery
+        # so we can avoid having to use this hard-coded hack.
+        path = os.path.join(
+            download_dir.rstrip("/"),
+            "mastDownload",
+            table["mission"][0], #obs_collection was renamed mission I believe
+            table["obs_id"][0],
+            table["productFilename"][0],
+        )
+        if os.path.exists(path):
+            log.debug("File found in local cache.")
+        else:
+            from astroquery.mast import Observations
+
+            download_url = table[:1]["dataURI"][0]
+            log.debug("Started downloading {}.".format(download_url))
+            download_response = Observations.download_products(
+                table[:1], mrp_only=False, download_dir=download_dir
+            )[0]
+            if download_response["Status"] != "COMPLETE":
+                raise LightkurveError(
+                    f"Download of {download_url} failed. "
+                    f"MAST returns {download_response['Status']}: {download_response['Message']}"
+                )
+            path = download_response["Local Path"]
+            log.debug("Finished downloading.")
+        return read(path, quality_bitmask=quality_bitmask, **kwargs)
 
 
     
@@ -688,6 +742,7 @@ class TESSSearch(MASTSearch):
         #add the ffi info to the table
         self.table = pd.concat([self.table, ffi_info])
         #sort the table
+
 
 
     # FFIs only available when using TESSSearch. 
@@ -780,8 +835,6 @@ class TESSSearch(MASTSearch):
     def download_ffi():
         raise NotImplementedError
 
-    def filter_hlsp():
-        raise NotImplementedError
     
     # This was in Christina's PR to search. Is this a way we want to handle HLSPs?
     #def _mask_bad_authors(authors):
