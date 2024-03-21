@@ -645,8 +645,88 @@ class MASTSearch(object):
         return mask
     
 
-    def download_timeseries():
-        raise NotImplementedError
+    def download_timeseries(
+        self, author=None, quality_bitmask="default", download_dir=None, **kwargs):
+        # Should quality_bitmask be special for KeplerSearch/K2Search/TESSSearch?
+        """Download and open all timeseries data products in the search result.
+
+        This method will return a `~lightkurve.TargetPixelFileCollection` or
+        `~lightkurve.LightCurveCollection`.
+
+        Parameters
+        ----------
+        quality_bitmask : str or int, optional
+            Bitmask (integer) which identifies the quality flag bitmask that should
+            be used to mask out bad cadences. If a string is passed, it has the
+            following meaning:
+
+                * "none": no cadences will be ignored
+                * "default": cadences with severe quality issues will be ignored
+                * "hard": more conservative choice of flags to ignore
+                  This is known to remove good data.
+                * "hardest": removes all data that has been flagged
+                  This mask is not recommended.
+
+            See the :class:`KeplerQualityFlags <lightkurve.utils.KeplerQualityFlags>` or :class:`TessQualityFlags <lightkurve.utils.TessQualityFlags>` class for details on the bitmasks.
+        download_dir : str, optional
+            Location where the data files will be stored.
+            If `None` is passed, the value from `cache_dir` configuration parameter is used,
+            with "~/.lightkurve/cache" as the default.
+
+            See `~lightkurve.config.get_cache_dir()` for details.
+        flux_column : str, optional
+            The column in the FITS file to be read as `flux`. Defaults to 'pdcsap_flux'.
+            Typically 'pdcsap_flux' or 'sap_flux'.
+        kwargs : dict, optional
+            Extra keyword arguments passed on to the file format reader function.
+
+        Returns
+        -------
+        collection : `~lightkurve.collections.Collection` object
+            Returns a `~lightkurve.LightCurveCollection` or
+            `~lightkurve.TargetPixelFileCollection`,
+            containing all entries in the products table
+
+        Raises
+        ------
+        HTTPError
+            If the TESSCut service times out (i.e. returns HTTP status 504).
+        SearchError
+            If any other error occurs."""
+        
+        table = self.timeseries.table
+        if len(table) == 0:
+            warnings.warn(
+                "Cannot download from an empty search result.", LightkurveWarning
+            )
+            return None
+        
+        # Restrict the ability to download products from different pipelines
+        if len(np.unique(table['author'])):
+            warnings.warn(
+                f"Lightcurves from different sources present. Restricting to {table['author'][0]} "
+            )
+            table = table[table['author'] == table['author'][0]]
+        log.debug("{} files will be downloaded.".format(len(table)))       
+
+        products = []
+        for index, row in table.iterrows():
+            products.append(
+                self._download(
+                    table_row=row,
+                    quality_bitmask=quality_bitmask,
+                    download_dir=download_dir,
+                    **kwargs,
+                )
+            )
+
+        return LightCurveCollection(products)
+    
+    def _default_download_dir(self):
+        # TODO: again, I can't inport config so hard code it for now
+        # return config.get_cache_dir()
+        return '/Users/nschanch/.lightkurve/cache'
+
     
     def download_cubedata():
         raise NotImplementedError
@@ -656,7 +736,7 @@ class MASTSearch(object):
     
     def _download(
         # Hidden helper function to download a single file
-        self, table, quality_bitmask, download_dir, **kwargs
+        self, table_row, quality_bitmask, download_dir, **kwargs
         ):
         """Private method used by `download_timeseries()` and `download_cubedata()` to download
         exactly one file from the MAST archive.
@@ -683,19 +763,19 @@ class MASTSearch(object):
         path = os.path.join(
             download_dir.rstrip("/"),
             "mastDownload",
-            table["mission"][0], #obs_collection was renamed mission I believe
-            table["obs_id"][0],
-            table["productFilename"][0],
+            table_row["mission"], #obs_collection was renamed mission I believe
+            table_row["obs_id"],
+            table_row["productFilename"],
         )
         if os.path.exists(path):
             log.debug("File found in local cache.")
         else:
             from astroquery.mast import Observations
 
-            download_url = table[:1]["dataURI"][0]
+            download_url = table_row["dataURI"]
             log.debug("Started downloading {}.".format(download_url))
             download_response = Observations.download_products(
-                table[:1], mrp_only=False, download_dir=download_dir
+                table_row['obsID'], mrp_only=False, download_dir=download_dir
             )[0]
             if download_response["Status"] != "COMPLETE":
                 raise LightkurveError(
