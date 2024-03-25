@@ -17,14 +17,22 @@ from astropy.coordinates import SkyCoord
 from astropy.table import Table, join
 from astropy.time import Time
 from lightkurve.io import read
+
+from .cache import cache
 #from . import PACKAGEDIR, conf, config
 # TODO: not sure why the above relative import didn't work. This is a temporary hack. 
+
 import os
 PACKAGEDIR = os.getcwd()
+PREFER_CLOUD = True # Set from config file
+DOWNLOAD_CLOUD = True # For MAST???
 
 from memoization import cached
 
+#from src.newlk_search.cache import cache
+
 log = logging.getLogger(__name__)
+
 
 class SearchError(Exception):
     pass
@@ -34,7 +42,7 @@ class MASTSearch(object):
     #    "mission",
     # Start time?
     #distance
-    _REPR_COLUMNS = ["target_name","author", "mission","exptime", "distance", "year","description"]
+    _REPR_COLUMNS = ["target_name","pipeline", "mission","exptime", "distance", "year","description"]
 
     #why is this needed here?  recursion error otherwise
     table = None
@@ -47,15 +55,14 @@ class MASTSearch(object):
                  search_radius:Optional[Union[float,u.Quantity]] = None,
                  exptime:Optional[Union[str, int, tuple]] = (0,9999),#None,
                  mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
-                 author:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"],
+                 pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"],
                  sequence: Optional[int] = None,
                  ):
-        # Author - define a 'mission' flag that is just spoc or whatever.
         
         self.search_radius = search_radius
         self.search_exptime = exptime
         self.search_mission = mission
-        self.search_author = author
+        self.search_pipeline = pipeline
         self.search_sequence = sequence
         #Legacy functionality - no longer query kic/tic by integer value only
         if isinstance(target, int):
@@ -69,6 +76,7 @@ class MASTSearch(object):
             self._target_from_name()
         else:
             self._target_from_table(table, obs_table, prod_table)
+        
         self.table = self._update_table(self.table)
 
 
@@ -80,12 +88,12 @@ class MASTSearch(object):
             search_radius=self.search_radius,
             exptime=self.search_exptime,
             mission=self.search_mission,
-            author=self.search_author,
+            pipeline=self.search_pipeline,
             sequence=self.search_sequence,
             )
         mask = self._filter(exptime=self.search_exptime, 
                                              project = self.search_mission,
-                                             author = self.search_author,
+                                             pipeline = self.search_pipeline,
                                              ) #setting provenance_name=None will return HLSPs
                                 
         self.table = self.table[mask]
@@ -140,15 +148,39 @@ class MASTSearch(object):
         return self.table["year"].values
 
     @property
-    def author(self):
+    def pipeline(self):
         """Pipeline name for each data product found."""
-        return self.table["author"].values
+        return self.table["pipeline"].values
 
     @property
     def target_name(self):
         """Target name for each data product found."""
         return self.table["target_name"].values
-    
+
+    @property
+    @cached
+    def uris(self):
+        uris = self.table["dataURI"].values
+
+        if(PREFER_CLOUD):
+            cloud_uris = self.cloud_uris
+        uris = self.table["dataURI"].values
+        
+        mask = cloud_uris != None
+        uris[mask] = cloud_uris[mask]
+        return uris 
+
+    @property
+    @cached
+    def cloud_uris(self):
+        """ Returns the cloud uris for products in table. """
+        Observations.enable_cloud_dataset()
+        return np.asarray(Observations.get_cloud_uris(Table.from_pandas(self.table), full_url=True))
+
+    @property
+    def uri(self):
+        "return cloud UIR & mast URI where cloud does not exist"
+        raise NotImplementedError    
 
     #def __getattr__(self, attr):
     #    try:
@@ -197,25 +229,23 @@ class MASTSearch(object):
     def _update_table(self, joint_table):
         # Ideally I'd like to replace of t_exptime and pro
         #joint_table['exptime'] = joint_table['t_exptime'].copy()
-        #joint_table['author'] = joint_table['provenance_name'].copy()
+        #joint_table['pipeline'] = joint_table['provenance_name'].copy()
         #joint_table['mission'] = joint_table['obs_collection_obs'].copy()
-        joint_table = joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"author","obs_collection_obs":"mission"})
+        joint_table = joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"pipeline","obs_collection_obs":"mission"})
         
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
                 # # `t_min` is incorrect for Kepler products, so we extract year from the filename for those
-        for idx in np.where(joint_table["author"] == "Kepler")[0]:
+        for idx in np.where(joint_table["pipeline"] == "Kepler")[0]:
             year[idx] = re.findall(
                 r"\d+.(\d{4})\d+", joint_table["productFilename"].iloc[idx]
             )[0]
-        
         joint_table["year"] = year.astype(int)
-
-
+        joint_table["obs_collection"] = joint_table["obs_collection_prod"]
 
 
         '''
         Full list of features
-        ['intentType', 'obs_collection_obs', 'provenance_name',
+        ['intentType', 'obscollection_obs', 'provennce_name',
        'instrument_name', 'project_obs', 'filters', 'wavelength_region',
        'target_name', 'target_classification', 'obs_id', 's_ra', 's_dec',
        'dataproduct_type_obs', 'proposal_pi', 'calib_level_obs', 't_min',
@@ -229,15 +259,6 @@ class MASTSearch(object):
        'proposal_id_prod', 'productFilename', 'size', 'parent_obsid',
        'dataRights_prod', 'calib_level_prod']'''
         
-        # TODO: instead, these are just repr columns?
-        '''keep_cols = ['exptime', 'author', 'mission', 'filters', 'wavelength_region', 
-                     'target_name', 'obs_id', 's_ra', 's_dec', 'dataproduct_type_obs',
-                     'calib_level_obs', 't_min', 't_max', 'sequence_number', 
-                     'dataRights_obs', 'mtFlag', 'obsid', 'description', 'dataURI',
-                      'productType', 'productFilename' , 'parent_obsid' , 
-                      'calib_level_prod', 'project_obs', 'distance','year']
-        
-        joint_table = joint_table[keep_cols]'''
 
         # Other additions may include the following
         #self._add_columns("something")
@@ -254,7 +275,7 @@ class MASTSearch(object):
                 exptime:Union[str, int, tuple] = (0,9999),
                 cadence: Union[str, int, tuple] = None, #Kepler specific option?
                 mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-                author:  Union[str, list[str]] = None,
+                pipeline:  Union[str, list[str]] = None,
                 sequence: int = None,
                 ):
 
@@ -263,7 +284,7 @@ class MASTSearch(object):
                                           cadence=cadence,
                                           mission=mission,
                                           filetype=["lightcurve", "target pixel", "dv"],
-                                          author=author,
+                                          pipeline=pipeline,
                                           sequence=sequence,
                                           )
         self.prod_table = self._search_prod()
@@ -316,16 +337,19 @@ class MASTSearch(object):
 
 
     
-    def _add_s3_url_column():
+    def _add_s3_url_column(self, joint_table):
         # self.table would updated to have an extra column of s3 URLS if possible
-        raise NotImplementedError
+        Observations.enable_cloud_dataset()
+        cloud_uris = Observations.get_cloud_uris(Table.from_pandas(joint_table), full_url=True)
+        joint_table["cloud_uri"] = cloud_uris
+        return joint_table   
     
     @cached
     def _search_obs(self, 
         search_radius=None,
         filetype=["lightcurve", "target pixel", "dv"],
         mission=["Kepler", "K2", "TESS"],
-        author=None,
+        pipeline=None,
         exptime=(0, 9999),
         sequence=None,
         cadence = None,):
@@ -351,11 +375,11 @@ class MASTSearch(object):
             mission = ["TESS"]  '''  
         # Ensure mission is a list
         mission = np.atleast_1d(mission).tolist()
-        if author is not None:
-            author = np.atleast_1d(author).tolist()
-            # If author "TESS" is used, we assume it is SPOC
-            author = np.unique(
-                [p if p.lower() != "tess" else "SPOC" for p in author]
+        if pipeline is not None:
+            pipeline = np.atleast_1d(pipeline).tolist()
+            # If pipeline "TESS" is used, we assume it is SPOC
+            pipeline = np.unique(
+                [p if p.lower() != "tess" else "SPOC" for p in pipeline]
             )
             
         # Speed up by restricting the MAST query if we don't want FFI image data
@@ -372,22 +396,21 @@ class MASTSearch(object):
         observations = self._query_mast(
             search_radius=search_radius,
             project=mission,
-            provenance_name=author,
+            provenance_name=pipeline,
             exptime=exptime,
             sequence_number=sequence,
             **extra_query_criteria,
         )
         log.debug(
-            "MAST found {} observations. "
+            f"MAST found {len(observations)} observations. "
             "Now querying MAST for the corresponding data products."
-            "".format(len(observations))
         )
         if len(observations) == 0:
             raise SearchError(f"No data found for target {self.target}.")
 
         return observations
 
-    @cached        
+    @cached
     def _query_mast(self, 
         search_radius: Union[float, u.Quantity, None] = None,
         project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
@@ -462,6 +485,7 @@ class MASTSearch(object):
         return products.to_pandas()
 
     def _join_tables(self):
+
         joint_table = pd.merge(
             self.obs_table.reset_index().rename({"index": "obs_index"}, axis="columns"),
             self.prod_table.reset_index().rename(
@@ -516,7 +540,7 @@ class MASTSearch(object):
     def _add_columns():
         raise NotImplementedError("To Do")
     
-    def _add_urls_to_authors():
+    def _add_urls_for_pipeline():
         raise NotImplementedError("To Do")
     
     def _add_kepler_sequence_num(self):
@@ -548,14 +572,14 @@ class MASTSearch(object):
     def _filter(self,
             exptime: Union[str, int, tuple[int], type(None)] = (0,9999),
             project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-            author: Union[str, list[str]] = ["kepler", "k2", "spoc"],
+            pipeline: Union[str, list[str]] = ["kepler", "k2", "spoc"],
             filetype: Union[str, list[str]] = ["target pixel", "lightcurve", "dvreport"], #lightcurve, target pixel, report
         ) -> pd.DataFrame:
         # Modify this so that it can choose what types of products to keep
         """Since this will be used by mission specific search we want this to filter:
             Filetype
             ExposureTime/cadence
-            Author(Provenance)/Project - e.g. (SPOC/TESSSpoc)
+            Pipe(Provenance)/Project - e.g. (SPOC/TESSSpoc)
             <Segment/Quarter/Sector/Campaign> this will be in mission specific search
             
             """
@@ -590,10 +614,10 @@ class MASTSearch(object):
         else:
             project_mask = np.logical_not(project_mask)
 
-        #Next Filter on author (provenance_name in mast table)
+        #Next Filter on pipeline (provenance_name in mast table)
         provenance_mask = mask.copy()
-        if  not isinstance(author, type(None)):
-            for a in np.atleast_1d(author).tolist():
+        if  not isinstance(pipeline, type(None)):
+            for a in np.atleast_1d(pipeline).tolist():
                 provenance_mask |=  self.table.provenance_name.str.lower() == a.lower()
         else:
             provenance_mask = np.logical_not(provenance_mask)
@@ -642,6 +666,41 @@ class MASTSearch(object):
                 mask = np.ones(len(self.table.t_exptime), dtype=bool)
                 log.debug('invalid string input. No exptime filter applied')
         return mask
+
+    #@cache
+    def _download_one(self, row,
+                 cloud: bool = True,
+                 cloud_only: bool = False, 
+                 cache: bool = True,
+                 download_dir: str = '.'):
+        manifest = Observations.download_products(Table.from_pandas(row),
+                                                  download_dir = download_dir,
+                                                  cache = cache, 
+                                                  cloud_only = cloud_only)
+        return manifest[0]
+    
+    def Download(self,
+                 cloud: bool = True,
+                 cloud_only: bool = False, 
+                 cache: bool = True,
+                 download_dir: str = '~/.'):
+        #TODO magic caching
+        """ 
+            Should this download to the local directory by default or to a hidden cache directory?
+            If local - may be more convenient in a world without lightkurve
+            Cachine more seamless if a user is searching for the same file(s) accross different project
+            directories 
+        """
+        if(cloud):
+            Observations.enable_cloud_dataset()
+
+        #manifest = Observations.download_products(Table.from_pandas(self.table),
+        #                                          download_dir = download_dir,
+        #                                          cache = cache, 
+        #                                          cloud_only = cloud_only)
+        manifest = [self._download_one(row) for _, row in self.table.iterrows()]
+        return manifest
+
     
 
     def _default_download_dir(self):
@@ -665,7 +724,7 @@ class TESSSearch(MASTSearch):
         table:Optional[pd.DataFrame] = None,
         search_radius:Optional[Union[float,u.Quantity]] = None,
         exptime:Optional[Union[str, int, tuple]] = (0,9999),
-        author:  Optional[Union[str, list[str]]] = None,
+        pipeline:  Optional[Union[str, list[str]]] = None,
         sector: Optional[int] = None,
         ):
         
@@ -676,7 +735,7 @@ class TESSSearch(MASTSearch):
                          table=table, 
                          search_radius=search_radius, 
                          exptime=exptime, 
-                         author=author, 
+                         pipeline=pipeline, 
                          sequence=sector)
         # Uncommenting this ffi search got rid of the non-ffi search results. Debug later...
         #self._add_ffi_products()
@@ -750,7 +809,7 @@ class TESSSearch(MASTSearch):
                                           "exptime" : tesscut_exptime,
                                           "productFilename" : ["TESScut"] * n_results,
                                           "provenance_name" : ["TESScut"] * n_results,
-                                          "author" : ["TESScut"] * n_results,
+                                          "pipeline" : ["TESScut"] * n_results,
                                           "distance" : [0] * n_results,
                                           "sequence_number" : tesscut_seqnum,
                                           "project" : ["TESS"] * n_results,
@@ -824,7 +883,7 @@ class KeplerSearch(MASTSearch):
         table:Optional[pd.DataFrame] = None,
         search_radius:Optional[Union[float,u.Quantity]] = None,
         exptime:Optional[Union[str, int, tuple]] = (0,9999),
-        author:  Optional[Union[str, list[str]]] = None,
+        pipeline:  Optional[Union[str, list[str]]] = None,
         quarter: Optional[int] = None,
         month: Optional[int] = None):
         
@@ -835,7 +894,7 @@ class KeplerSearch(MASTSearch):
                          table=table, 
                          search_radius=search_radius, 
                          exptime=exptime, 
-                         author=author, 
+                         pipeline=pipeline, 
                          sequence=None)
         self._add_kepler_mission_product()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
@@ -847,13 +906,13 @@ class KeplerSearch(MASTSearch):
 
     def _handle_kbonus(self):
         # KBONUS times are masked as they are invalid for the quarter data
-        #kbonus_mask = self.table["author"] == "KBONUS-BKG"
+        #kbonus_mask = self.table["pipeline"] == "KBONUS-BKG"
         raise NotImplementedError
 
     def _add_kepler_mission_product(self):
         # Some products are HLSPs and some are mission products
         mission_product = np.zeros(len(self.table), dtype=bool)
-        mission_product[self.table["author"] == "Kepler"] = True
+        mission_product[self.table["pipeline"] == "Kepler"] = True
         self.table['mission_product'] = mission_product
 
     @property
@@ -933,7 +992,7 @@ class KeplerSearch(MASTSearch):
                          "KBONUS-BKG": 2, 
                          }
         df = self.table
-        df["sort_order"] = self.table['author'].map(sort_priority).fillna(9)
+        df["sort_order"] = self.table['pipeline'].map(sort_priority).fillna(9)
         df.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"], ignore_index=True, inplace=True)
         self.table = df
 
@@ -948,7 +1007,7 @@ class K2Search(MASTSearch):
         table:Optional[pd.DataFrame] = None,
         search_radius:Optional[Union[float,u.Quantity]] = None,
         exptime:Optional[Union[str, int, tuple]] = (0,9999),
-        author:  Optional[Union[str, list[str]]] = None,
+        pipeline:  Optional[Union[str, list[str]]] = None,
         campaign: Optional[int] = None,
         ):
         
@@ -959,7 +1018,7 @@ class K2Search(MASTSearch):
                          table=table, 
                          search_radius=search_radius, 
                          exptime=exptime, 
-                         author=author, 
+                         pipeline=pipeline, 
                          sequence=campaign)
         self._add_K2_mission_product()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
@@ -967,7 +1026,7 @@ class K2Search(MASTSearch):
     def _add_K2_mission_product(self):
         # Some products are HLSPs and some are mission products
         mission_product = np.zeros(len(self.table), dtype=bool)
-        mission_product[self.table["author"] == "K2"] = True
+        mission_product[self.table["pipeline"] == "K2"] = True
         self.table['mission_product'] = mission_product
 
     #@properties like campaigns (seasons?)

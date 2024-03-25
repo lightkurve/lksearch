@@ -6,7 +6,6 @@ import astropy.config as astropyconfig
 
 ROOTNAME = 'lightkurve'
 
-
 class ConfigNamespace(astropyconfig.ConfigNamespace):
     rootname = ROOTNAME
 
