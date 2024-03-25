@@ -501,7 +501,6 @@ class MASTSearch(object):
     def limit_results(self, limit: int):
         mask = np.ones(len(self.table), dtype=bool)
         mask[limit:] = False
-        print(mask)
         return (self._mask(mask)) 
     
     @property    
@@ -645,146 +644,12 @@ class MASTSearch(object):
         return mask
     
 
-    def download_timeseries(
-        self, author=None, quality_bitmask="default", download_dir=None, **kwargs):
-        # Should quality_bitmask be special for KeplerSearch/K2Search/TESSSearch?
-        """Download and open all timeseries data products in the search result.
-
-        This method will return a `~lightkurve.TargetPixelFileCollection` or
-        `~lightkurve.LightCurveCollection`.
-
-        Parameters
-        ----------
-        quality_bitmask : str or int, optional
-            Bitmask (integer) which identifies the quality flag bitmask that should
-            be used to mask out bad cadences. If a string is passed, it has the
-            following meaning:
-
-                * "none": no cadences will be ignored
-                * "default": cadences with severe quality issues will be ignored
-                * "hard": more conservative choice of flags to ignore
-                  This is known to remove good data.
-                * "hardest": removes all data that has been flagged
-                  This mask is not recommended.
-
-            See the :class:`KeplerQualityFlags <lightkurve.utils.KeplerQualityFlags>` or :class:`TessQualityFlags <lightkurve.utils.TessQualityFlags>` class for details on the bitmasks.
-        download_dir : str, optional
-            Location where the data files will be stored.
-            If `None` is passed, the value from `cache_dir` configuration parameter is used,
-            with "~/.lightkurve/cache" as the default.
-
-            See `~lightkurve.config.get_cache_dir()` for details.
-        flux_column : str, optional
-            The column in the FITS file to be read as `flux`. Defaults to 'pdcsap_flux'.
-            Typically 'pdcsap_flux' or 'sap_flux'.
-        kwargs : dict, optional
-            Extra keyword arguments passed on to the file format reader function.
-
-        Returns
-        -------
-        collection : `~lightkurve.collections.Collection` object
-            Returns a `~lightkurve.LightCurveCollection` or
-            `~lightkurve.TargetPixelFileCollection`,
-            containing all entries in the products table
-
-        Raises
-        ------
-        HTTPError
-            If the TESSCut service times out (i.e. returns HTTP status 504).
-        SearchError
-            If any other error occurs."""
-        
-        table = self.timeseries.table
-        if len(table) == 0:
-            warnings.warn(
-                "Cannot download from an empty search result.", LightkurveWarning
-            )
-            return None
-        
-        # Restrict the ability to download products from different pipelines
-        if len(np.unique(table['author'])):
-            warnings.warn(
-                f"Lightcurves from different sources present. Restricting to {table['author'][0]} "
-            )
-            table = table[table['author'] == table['author'][0]]
-        log.debug("{} files will be downloaded.".format(len(table)))       
-
-        products = []
-        for index, row in table.iterrows():
-            products.append(
-                self._download(
-                    table_row=row,
-                    quality_bitmask=quality_bitmask,
-                    download_dir=download_dir,
-                    **kwargs,
-                )
-            )
-
-        return LightCurveCollection(products)
-    
     def _default_download_dir(self):
         # TODO: again, I can't inport config so hard code it for now
         # return config.get_cache_dir()
         return '/Users/nschanch/.lightkurve/cache'
 
     
-    def download_cubedata():
-        raise NotImplementedError
-    
-    def download_dvreports():
-        raise NotImplementedError
-    
-    def _download(
-        # Hidden helper function to download a single file
-        self, table_row, quality_bitmask, download_dir, **kwargs
-        ):
-        """Private method used by `download_timeseries()` and `download_cubedata()` to download
-        exactly one file from the MAST archive.
-
-        Always returns a `TargetPixelFile` or `LightCurve` object.
-
-        Note FFI cutouts are not handled here. Please refer to TESSSearch instead. 
-        """
-        # Make sure astroquery uses the same level of verbosity
-        logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
-
-        if download_dir is None:
-            download_dir = self._default_download_dir()
-
-
-        # Whenever `astroquery.mast.Observations.download_products` is called,
-        # a HTTP request will be sent to determine the length of the file
-        # prior to checking if the file already exists in the local cache.
-        # For performance, we skip this HTTP request and immediately try to
-        # find the file in the cache.  The path we check here is consistent
-        # with the one hard-coded inside `astroquery.mast.Observations._download_files()`
-        # in Astroquery v0.4.1.  It would be good to submit a PR to astroquery
-        # so we can avoid having to use this hard-coded hack.
-        path = os.path.join(
-            download_dir.rstrip("/"),
-            "mastDownload",
-            table_row["mission"], #obs_collection was renamed mission I believe
-            table_row["obs_id"],
-            table_row["productFilename"],
-        )
-        if os.path.exists(path):
-            log.debug("File found in local cache.")
-        else:
-            from astroquery.mast import Observations
-
-            download_url = table_row["dataURI"]
-            log.debug("Started downloading {}.".format(download_url))
-            download_response = Observations.download_products(
-                table_row['obsID'], mrp_only=False, download_dir=download_dir
-            )[0]
-            if download_response["Status"] != "COMPLETE":
-                raise LightkurveError(
-                    f"Download of {download_url} failed. "
-                    f"MAST returns {download_response['Status']}: {download_response['Message']}"
-                )
-            path = download_response["Local Path"]
-            log.debug("Finished downloading.")
-        return read(path, quality_bitmask=quality_bitmask, **kwargs)
 
 
     
