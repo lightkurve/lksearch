@@ -673,7 +673,7 @@ class MASTSearch(object):
                  cloud_only: bool = False, 
                  cache: bool = True,
                  download_dir: str = '.'):
-        manifest = Observations.download_products(Table.from_pandas(row),
+        manifest = Observations.download_products(Table().from_pandas(row.to_frame(name=" ").transpose()),
                                                   download_dir = download_dir,
                                                   cache = cache, 
                                                   cloud_only = cloud_only)
@@ -683,7 +683,7 @@ class MASTSearch(object):
                  cloud: bool = True,
                  cloud_only: bool = False, 
                  cache: bool = True,
-                 download_dir: str = '~/.'):
+                 download_dir: str =  "~/."):
         #TODO magic caching
         """ 
             Should this download to the local directory by default or to a hidden cache directory?
@@ -698,7 +698,10 @@ class MASTSearch(object):
         #                                          download_dir = download_dir,
         #                                          cache = cache, 
         #                                          cloud_only = cloud_only)
-        manifest = [self._download_one(row) for _, row in self.table.iterrows()]
+        manifest = [self._download_one(row, 
+                                       cloud_only,
+                                       cache,
+                                       download_dir) for _,row in self.table.iterrows()]
         return manifest
 
     
@@ -706,7 +709,7 @@ class MASTSearch(object):
     def _default_download_dir(self):
         # TODO: again, I can't inport config so hard code it for now
         # return config.get_cache_dir()
-        return '/Users/nschanch/.lightkurve/cache'
+        return "~/."
 
     
 
