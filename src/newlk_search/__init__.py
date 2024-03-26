@@ -3,10 +3,12 @@ from __future__ import absolute_import
 from . import config as _config
 
 import os
+
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 
 
-from . import __version__
+from .version import __version__
+from . import config as _config
 
 class Conf(_config.ConfigNamespace):
     """
@@ -53,4 +55,3 @@ class Conf(_config.ConfigNamespace):
 conf = Conf()
 
 from .search import *
-from . import config
