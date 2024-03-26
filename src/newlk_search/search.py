@@ -234,7 +234,7 @@ class MASTSearch(object):
         joint_table = joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"pipeline","obs_collection_obs":"mission"})
         
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
-                # # `t_min` is incorrect for Kepler products, so we extract year from the filename for those
+        # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
         for idx in np.where(joint_table["pipeline"] == "Kepler")[0]:
             year[idx] = re.findall(
                 r"\d+.(\d{4})\d+", joint_table["productFilename"].iloc[idx]
@@ -669,10 +669,13 @@ class MASTSearch(object):
 
     #@cache
     def _download_one(self, row,
-                 cloud: bool = True,
                  cloud_only: bool = False, 
                  cache: bool = True,
                  download_dir: str = '.'):
+        """ Helper function that downloads an individual row.  
+        This may be more efficient if we are caching, but we can sent a full table
+        to download_products to get multiple items.  
+        """
         manifest = Observations.download_products(Table.from_pandas(row),
                                                   download_dir = download_dir,
                                                   cache = cache, 
@@ -683,13 +686,13 @@ class MASTSearch(object):
                  cloud: bool = True,
                  cloud_only: bool = False, 
                  cache: bool = True,
-                 download_dir: str = '~/.'):
-        #TODO magic caching
+                 download_dir: str = self._default_download_dir()):
         """ 
             Should this download to the local directory by default or to a hidden cache directory?
-            If local - may be more convenient in a world without lightkurve
+            If local - may be more convenient in a world without lightkurve for independant packages 
+            since we don't have an assosciated read package
             Cachine more seamless if a user is searching for the same file(s) accross different project
-            directories 
+            directories and has a pipeline workflow with input functions
         """
         if(cloud):
             Observations.enable_cloud_dataset()
@@ -698,15 +701,16 @@ class MASTSearch(object):
         #                                          download_dir = download_dir,
         #                                          cache = cache, 
         #                                          cloud_only = cloud_only)
-        manifest = [self._download_one(row) for _, row in self.table.iterrows()]
+        manifest = [self._download_one(row, 
+                                       cloud_only, 
+                                       cache,
+                                       download_dir) for _, row in self.table.iterrows()]
         return manifest
-
-    
 
     def _default_download_dir(self):
         # TODO: again, I can't inport config so hard code it for now
         # return config.get_cache_dir()
-        return '/Users/nschanch/.lightkurve/cache'
+        return '~/.'
 
     
 
@@ -852,27 +856,6 @@ class TESSSearch(MASTSearch):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     
 class KeplerSearch(MASTSearch):
     
@@ -897,12 +880,17 @@ class KeplerSearch(MASTSearch):
                          pipeline=pipeline, 
                          sequence=None)
         self._add_kepler_mission_product()
+        self.get_sequence_number()
+        self.sortKepler()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
         self.table = self.table[self._filter_kepler(quarter, month)]
+        
 
+    '''
+    # Now implemented in base class
     def _fix_times():
         # Fixes Kepler times
-        raise NotImplementedError
+        raise NotImplementedError'''
 
     def _handle_kbonus(self):
         # KBONUS times are masked as they are invalid for the quarter data
@@ -937,6 +925,7 @@ class KeplerSearch(MASTSearch):
                 self.table["sequence_number"].isna())
         re_expr = r".*Q(\d+)"
         seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in joint_table.loc[mask,["description"]].values]
+        self.table['sequence_number'] = seq_num
 
     def _filter_kepler(
             self, 
