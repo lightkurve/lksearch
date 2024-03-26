@@ -5,6 +5,9 @@ from . import config as _config
 import os
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 
+
+from . import __version__
+
 class Conf(_config.ConfigNamespace):
     """
     Configuration parameters for `search`.
