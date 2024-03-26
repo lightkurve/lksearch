@@ -672,11 +672,15 @@ class MASTSearch(object):
                  cloud_only: bool = False, 
                  cache: bool = True,
                  download_dir: str = '.'):
+<<<<<<< HEAD
         """ Helper function that downloads an individual row.  
         This may be more efficient if we are caching, but we can sent a full table
         to download_products to get multiple items.  
         """
         manifest = Observations.download_products(Table.from_pandas(row),
+=======
+        manifest = Observations.download_products(Table().from_pandas(row.to_frame(name=" ").transpose()),
+>>>>>>> 29da7a07644aaa9ffced6f47624ffe68c68638c8
                                                   download_dir = download_dir,
                                                   cache = cache, 
                                                   cloud_only = cloud_only)
@@ -686,7 +690,12 @@ class MASTSearch(object):
                  cloud: bool = True,
                  cloud_only: bool = False, 
                  cache: bool = True,
+<<<<<<< HEAD
                  download_dir: str = self._default_download_dir()):
+=======
+                 download_dir: str =  "~/."):
+        #TODO magic caching
+>>>>>>> 29da7a07644aaa9ffced6f47624ffe68c68638c8
         """ 
             Should this download to the local directory by default or to a hidden cache directory?
             If local - may be more convenient in a world without lightkurve for independant packages 
@@ -702,15 +711,25 @@ class MASTSearch(object):
         #                                          cache = cache, 
         #                                          cloud_only = cloud_only)
         manifest = [self._download_one(row, 
+<<<<<<< HEAD
                                        cloud_only, 
                                        cache,
                                        download_dir) for _, row in self.table.iterrows()]
+=======
+                                       cloud_only,
+                                       cache,
+                                       download_dir) for _,row in self.table.iterrows()]
+>>>>>>> 29da7a07644aaa9ffced6f47624ffe68c68638c8
         return manifest
 
     def _default_download_dir(self):
         # TODO: again, I can't inport config so hard code it for now
         # return config.get_cache_dir()
+<<<<<<< HEAD
         return '~/.'
+=======
+        return "~/."
+>>>>>>> 29da7a07644aaa9ffced6f47624ffe68c68638c8
 
     
 
