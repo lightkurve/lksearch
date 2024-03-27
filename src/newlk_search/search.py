@@ -107,10 +107,9 @@ class MASTSearch(object):
         self.target = target
         if isinstance(table, type(None)):
             self._target_from_name(target)
+            self.table = self._update_table(self.table)
         else:
             self._target_from_table(table, obs_table, prod_table)
-        
-        self.table = self._update_table(self.table)
 
 
 
@@ -131,7 +130,6 @@ class MASTSearch(object):
                                 
         self.table = self.table[mask]
 
-    @cached
     def _target_from_table(self, table, obs_table, prod_table):
         #see if we were passed a joint table
         if (isinstance(table, pd.DataFrame)):
@@ -192,7 +190,7 @@ class MASTSearch(object):
         return self.table["target_name"].values
 
     @property
-    @cached
+    #@cached
     def uris(self):
         """ Location Information of the products in the table"""
         uris = self.table["dataURI"].values
@@ -205,7 +203,7 @@ class MASTSearch(object):
         return uris 
 
     @property
-    @cached
+    #@cached
     def cloud_uris(self):
         """ Returns the cloud uris for products in table. """
         Observations.enable_cloud_dataset()
@@ -266,9 +264,13 @@ class MASTSearch(object):
                 r"\d+.(\d{4})\d+", joint_table["productFilename"].iloc[idx]
             )[0]
         joint_table["year"] = year.astype(int)
-        joint_table["obs_collection"] = joint_table["obs_collection_prod"]
 
-
+        #rename identical columns
+        joint_table.rename(columns={'obs_collection': 'obs_collection_prod', 
+                                    'project': 'project_prod',
+                                    'dataproduct_type': 'dataproduct_type_prod',
+                                    'proposal_id': 'proposal_id_prod',
+                                    'dataRights': 'dataRights_prod'}, inplace=True)
         '''
         Full list of features
         ['intentType', 'obscollection_obs', 'provennce_name',
@@ -737,7 +739,7 @@ class MASTSearch(object):
 class TESSSearch(MASTSearch):
 
     def __init__(self, 
-        target: [Union[str, tuple[float], SkyCoord]],   
+        target: Optional[Union[str, tuple[float], SkyCoord]] = None,   
         obs_table:Optional[pd.DataFrame] = None, 
         prod_table:Optional[pd.DataFrame] = None,
         table:Optional[pd.DataFrame] = None,
@@ -746,7 +748,6 @@ class TESSSearch(MASTSearch):
         pipeline:  Optional[Union[str, list[str]]] = None,
         sector: Optional[int] = None,
         ):
-        
         super().__init__(target=target, 
                          mission=["TESS"], 
                          obs_table=obs_table, 
@@ -763,7 +764,7 @@ class TESSSearch(MASTSearch):
     def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
         indices = self.table[mask].index
-        return TESSSearch(target=self.target,
+        return TESSSearch(
             table = self.table.loc[indices]
         )  
   
