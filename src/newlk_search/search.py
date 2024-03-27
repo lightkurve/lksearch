@@ -260,8 +260,11 @@ class MASTSearch(object):
         #joint_table['exptime'] = joint_table['t_exptime'].copy()
         #joint_table['pipeline'] = joint_table['provenance_name'].copy()
         #joint_table['mission'] = joint_table['obs_collection_obs'].copy()
-        joint_table = joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"pipeline","obs_collection_obs":"mission"})
-        
+        #joint_table = joint_table.rename(columns={"t_exptime":"exptime","provenance_name":"pipeline","obs_collection_obs":"mission"})
+        joint_table = joint_table.rename(columns={"t_exptime":"exptime"})
+        joint_table['pipeline'] = joint_table['provenance_name'].copy()
+        joint_table['mission'] = joint_table['obs_collection_obs'].copy()
+
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
         # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
         for idx in np.where(joint_table["pipeline"] == "Kepler")[0]:
@@ -904,7 +907,7 @@ class KeplerSearch(MASTSearch):
                          sequence=None)
         self._add_kepler_mission_product()
         self.get_sequence_number()
-        self.sortKepler()
+        self.sort_Kepler()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
         self.table = self.table[self._filter_kepler(quarter, month)]
         
@@ -949,6 +952,12 @@ class KeplerSearch(MASTSearch):
         re_expr = r".*Q(\d+)"
         seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in joint_table.loc[mask,["description"]].values]
         self.table['sequence_number'] = seq_num
+
+        # Update 'mission' with the sequence number
+        self.table["mission"] = [f" {proj} - Campaign {seq}" 
+                            for proj, seq in zip(
+                                self.table['mission'].values.astype(str),
+                                seq_num)]
 
     def _filter_kepler(
             self, 
@@ -999,7 +1008,7 @@ class KeplerSearch(MASTSearch):
     
 
 
-    def sortKepler():
+    def sort_Kepler():
         sort_priority = {"Kepler": 1, 
                          "KBONUS-BKG": 2, 
                          }
@@ -1033,13 +1042,17 @@ class K2Search(MASTSearch):
                          pipeline=pipeline, 
                          sequence=campaign)
         self._add_K2_mission_product()
+        self._fix_K2_sequence()
+        self.sort_K2()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
+
 
     def _add_K2_mission_product(self):
         # Some products are HLSPs and some are mission products
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "K2"] = True
         self.table['mission_product'] = mission_product
+
 
     def _fix_K2_sequence(self):
         # K2 campaigns 9, 10, and 11 were split into two sections, which are
@@ -1059,11 +1072,8 @@ class K2Search(MASTSearch):
                                       seq_num)]
 
 
-
-    def parse_split_campaigns():
-        raise NotImplementedError
     
-    def sortK2(self):
+    def sort_K2(self):
         # No specific preference for K2 HLSPs
         sort_priority = {"K2": 1, 
                          }
@@ -1072,5 +1082,3 @@ class K2Search(MASTSearch):
         df.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"], ignore_index=True, inplace=True)
         self.table = df
 
-
-# Potential HLSP reader class in a different .py file?

@@ -5,14 +5,11 @@ from . import config as _config
 import os
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
+PREFER_CLOUD = True # Do you prefer URIs pointing to the Amazon bucket when available?
+DOWNLOAD_CLOUD = True # TODO: Ask Tyler if this only downloads if there is cloud data?
 
-
-<<<<<<< HEAD
-#from . import __version__
-=======
 from .version import __version__
-from . import config as _config
->>>>>>> bbf8232983c18c5490a62e50a6b704db8d2d46e1
+
 
 class Conf(_config.ConfigNamespace):
     """
