@@ -18,12 +18,10 @@ from astropy.table import Table, join
 from astropy.time import Time
 from lightkurve.io import read
 
-from .cache import cache
-#from . import PACKAGEDIR, conf, config
-# TODO: not sure why the above relative import didn't work. This is a temporary hack. 
+#import cache
+#from .config import conf, config
+from . import PACKAGEDIR , conf, config
 
-import os
-PACKAGEDIR = os.getcwd()
 PREFER_CLOUD = True # Set from config file
 DOWNLOAD_CLOUD = True # For MAST???
 
@@ -38,10 +36,45 @@ class SearchError(Exception):
     pass
 
 class MASTSearch(object):
+    """ 
+    Generic Search Class for data exploration that queries mast for observations performed by the:
+        Kepler
+        K2
+        TESS 
+    Missions, and returns the results in a convenient table with options to download.  
+    By default only mission products are returned.  
+    
+    Parameters
+    ----------
+    target: Optional[Union[str, tuple[float], SkyCoord]] = None
+        The target to search for observations of. Can be provided as a name (string), 
+        coordinates in decimal degrees (tuple), or Astropy `~astropy.coordinates.SkyCoord` Object.
+    obs_table:Optional[pd.DataFrame] = None
+        Optionally, can provice a Astropy `~astropy.table.Table` Object from 
+        AstroQuery `astroquery.mast.Observations.query_criteria' which will be used to construct the observations table
+    prod_table:Optional[pd.DataFrame] = None
+        Optionally, if you provide an obs_table, you may also provide a products table of assosciated products.  These 
+        two tables will be concatenated to become the primary joint table of data products.  
+    table:Optional[pd.DataFrame] = None
+        Optionally, may provide an stropy `~astropy.table.Table` Object  that is the already merged joint table of obs_table 
+        and prod_table. 
+    search_radius:Optional[Union[float,u.Quantity]] = None
+        The radius around the target name/location to search for observations.  Can be provided in arcsonds (float) or as an 
+        AstroPy `~astropy.units.u.Quantity` Object 
+    exptime:Optional[Union[str, int, tuple]] = (0,9999)
+        Exposure time to filter observation results on.  Can be provided as a mission-specific string, 
+        an int which forces an exact match to the time in seconds, or a tuple, which provides a range to filter on.  
+    mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"]
+        Mission(s) for which to search for data on
+    pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
+        Pipeline(s) which have produced the observed data
+    sequence: Optional[int] = None,   
+        Mission Specific Survey value that corresponds to Sector (TESS), Campaign (K2), or Quarter (Kepler)
+    """
     # Shared functions that are used for searches by any mission
     #    "mission",
     # Start time?
-    #distance
+    # distance
     _REPR_COLUMNS = ["target_name","pipeline", "mission","exptime", "distance", "year","description"]
 
     #why is this needed here?  recursion error otherwise
@@ -161,14 +194,14 @@ class MASTSearch(object):
     @property
     @cached
     def uris(self):
-        uris = self.table["dataURI"].values
-
-        if(PREFER_CLOUD):
-            cloud_uris = self.cloud_uris
+        """ Location Information of the products in the table"""
         uris = self.table["dataURI"].values
         
-        mask = cloud_uris != None
-        uris[mask] = cloud_uris[mask]
+        if(PREFER_CLOUD):
+            cloud_uris = self.cloud_uris
+            mask = cloud_uris != None
+            uris[mask] = cloud_uris[mask]
+
         return uris 
 
     @property
@@ -176,12 +209,7 @@ class MASTSearch(object):
     def cloud_uris(self):
         """ Returns the cloud uris for products in table. """
         Observations.enable_cloud_dataset()
-        return np.asarray(Observations.get_cloud_uris(Table.from_pandas(self.table), full_url=True))
-
-    @property
-    def uri(self):
-        "return cloud UIR & mast URI where cloud does not exist"
-        raise NotImplementedError    
+        return np.asarray(Observations.get_cloud_uris(Table.from_pandas(self.table), full_url=True)) 
 
     #def __getattr__(self, attr):
     #    try:
@@ -289,7 +317,6 @@ class MASTSearch(object):
                                           )
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
-
 
         return joint_table
 
@@ -669,7 +696,14 @@ class MASTSearch(object):
                  cloud_only: bool = False, 
                  cache: bool = True,
                  download_dir: str = '.'):
+
+        """ Helper function that downloads an individual row.  
+        This may be more efficient if we are caching, but we can sent a full table
+        to download_products to get multiple items.  
+        """
+
         manifest = Observations.download_products(Table().from_pandas(row.to_frame(name=" ").transpose()),
+
                                                   download_dir = download_dir,
                                                   cache = cache, 
                                                   cloud_only = cloud_only)
@@ -677,8 +711,8 @@ class MASTSearch(object):
     
     def Download(self,
                  cloud: bool = True,
-                 cloud_only: bool = False, 
                  cache: bool = True,
+                 cloud_only: bool = False, 
                  download_dir: str =  "~/."):
         #TODO magic caching
         """ 
@@ -691,10 +725,6 @@ class MASTSearch(object):
         if(cloud):
             Observations.enable_cloud_dataset()
 
-        #manifest = Observations.download_products(Table.from_pandas(self.table),
-        #                                          download_dir = download_dir,
-        #                                          cache = cache, 
-        #                                          cloud_only = cloud_only)
         manifest = [self._download_one(row, 
                                        cloud_only,
                                        cache,
@@ -766,7 +796,7 @@ class TESSSearch(MASTSearch):
         # Check each sector / camera / ccd for observability
         #Submit a tesswcs PR for to convert table to pandas
 
-        for i,row in pointings.to_pandas().iterrows():
+        for _,row in pointings.to_pandas().iterrows():
             tess_ra = row['RA']
             tess_dec = row['Dec']
             tess_roll = row['Roll']
@@ -1011,27 +1041,36 @@ class K2Search(MASTSearch):
         mission_product[self.table["pipeline"] == "K2"] = True
         self.table['mission_product'] = mission_product
 
-    #@properties like campaigns (seasons?)
     def _fix_K2_sequence(self):
         # K2 campaigns 9, 10, and 11 were split into two sections, which are
-        # listed separately in the table with suffixes "a" and "b"
-        
-        
-        #if obs_project == "K2" and result["sequence_number"][idx] in [9, 10, 11]:
-        #    for half, letter in zip([1, 2], ["a", "b"]):
-        #        if f"c{tmp_seqno}{half}" in result["productFilename"][idx]:
-        #            obs_seqno = f"{int(tmp_seqno):02d}{letter}"
-        raise NotImplementedError
+        # listed separately in the table with suffixes "a" and "b"        
+        seq_num = self.table["sequence_number"].values.astype(str)
 
-    '''def search_cubedata(hlsp=False):
-        # Regular _search_cubedata + processing
-        raise NotImplementedError'''
+        mask = self.table["sequence_number"].isin([9, 10, 11])
+
+        for index, row in self.table[mask].iterrows():
+            for half, letter in zip([1,2],["a","b"]):
+                if f"c{row['sequence_number']}{half}" in row["productFilename"]:
+                    seq_num[index] = f"{int(row['sequence_number']):02d}{letter}"
+
+        self.table["mission"] = [f" {proj} - Campaign {seq}" 
+                                  for proj, seq in zip(
+                                      self.table['mission'].values.astype(str),
+                                      seq_num)]
+
+
 
     def parse_split_campaigns():
         raise NotImplementedError
     
-    def sortK2():
-        raise NotImplementedError
+    def sortK2(self):
+        # No specific preference for K2 HLSPs
+        sort_priority = {"K2": 1, 
+                         }
+        df = self.table
+        df["sort_order"] = self.table['pipeline'].map(sort_priority).fillna(9)
+        df.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"], ignore_index=True, inplace=True)
+        self.table = df
 
 
 # Potential HLSP reader class in a different .py file?
