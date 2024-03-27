@@ -905,20 +905,12 @@ class KeplerSearch(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=None)
-<<<<<<< HEAD
-        self._add_kepler_mission_product()
-        self.get_sequence_number()
-        self.sort_Kepler()
-        # Can't search mast with quarter/month directly, so filter on that after the fact. 
-        self.table = self.table[self._filter_kepler(quarter, month)]
-=======
         if(table is not None):
             self._add_kepler_mission_product()
             self.get_sequence_number()
-            self.sortKepler()
+            self.sort_Kepler()
             # Can't search mast with quarter/month directly, so filter on that after the fact. 
             self.table = self.table[self._filter_kepler(quarter, month)]
->>>>>>> 32ca9916af6f1104e82522c5be0822a997857da8
         
     def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
@@ -1056,16 +1048,10 @@ class K2Search(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=campaign)
-<<<<<<< HEAD
-        self._add_K2_mission_product()
-        self._fix_K2_sequence()
-        self.sort_K2()
-        # Can't search mast with quarter/month directly, so filter on that after the fact. 
-
-
-=======
         if(table is not None):
             self._add_K2_mission_product()
+            self._fix_K2_sequence()
+            self.sort_K2()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
 
     def _mask(self, mask):
@@ -1075,7 +1061,6 @@ class K2Search(MASTSearch):
             table = self.table.loc[indices]
         ) 
      
->>>>>>> 32ca9916af6f1104e82522c5be0822a997857da8
     def _add_K2_mission_product(self):
         # Some products are HLSPs and some are mission products
         mission_product = np.zeros(len(self.table), dtype=bool)
