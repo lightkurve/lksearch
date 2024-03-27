@@ -73,7 +73,7 @@ class MASTSearch(object):
         #TODO: get rid of saving prod and obs to self
         self.target = target
         if not isinstance(target, type(None)):
-            self._target_from_name()
+            self._target_from_name(target)
         else:
             self._target_from_table(table, obs_table, prod_table)
         
@@ -81,9 +81,9 @@ class MASTSearch(object):
 
 
 
-
-    def _target_from_name(self):
-        self._parse_input(self.target)  
+    @cached
+    def _target_from_name(self, target):
+        self._parse_input(target)  
         self.table = self._search(
             search_radius=self.search_radius,
             exptime=self.search_exptime,
@@ -98,6 +98,7 @@ class MASTSearch(object):
                                 
         self.table = self.table[mask]
 
+    @cached
     def _target_from_table(self, table, obs_table, prod_table):
         #see if we were passed a joint table
         if (isinstance(table, pd.DataFrame)):
@@ -269,7 +270,6 @@ class MASTSearch(object):
         
         return joint_table.reset_index()
     
-    @cached
     def _search(self,
                 search_radius:Union[float,u.Quantity] = None,
                 exptime:Union[str, int, tuple] = (0,9999),
@@ -344,7 +344,6 @@ class MASTSearch(object):
         joint_table["cloud_uri"] = cloud_uris
         return joint_table   
     
-    @cached
     def _search_obs(self, 
         search_radius=None,
         filetype=["lightcurve", "target pixel", "dv"],
@@ -410,7 +409,6 @@ class MASTSearch(object):
 
         return observations
 
-    @cached
     def _query_mast(self, 
         search_radius: Union[float, u.Quantity, None] = None,
         project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
@@ -478,7 +476,6 @@ class MASTSearch(object):
 
         return obs.to_pandas()
 
-    @cached
     def _search_prod(self):
         # Use the search result to get a product list
         products = Observations.get_product_list(Table.from_pandas(self.obs_table))
@@ -672,15 +669,7 @@ class MASTSearch(object):
                  cloud_only: bool = False, 
                  cache: bool = True,
                  download_dir: str = '.'):
-<<<<<<< HEAD
-        """ Helper function that downloads an individual row.  
-        This may be more efficient if we are caching, but we can sent a full table
-        to download_products to get multiple items.  
-        """
-        manifest = Observations.download_products(Table.from_pandas(row),
-=======
         manifest = Observations.download_products(Table().from_pandas(row.to_frame(name=" ").transpose()),
->>>>>>> 29da7a07644aaa9ffced6f47624ffe68c68638c8
                                                   download_dir = download_dir,
                                                   cache = cache, 
                                                   cloud_only = cloud_only)
@@ -690,12 +679,8 @@ class MASTSearch(object):
                  cloud: bool = True,
                  cloud_only: bool = False, 
                  cache: bool = True,
-<<<<<<< HEAD
-                 download_dir: str = self._default_download_dir()):
-=======
                  download_dir: str =  "~/."):
         #TODO magic caching
->>>>>>> 29da7a07644aaa9ffced6f47624ffe68c68638c8
         """ 
             Should this download to the local directory by default or to a hidden cache directory?
             If local - may be more convenient in a world without lightkurve for independant packages 
@@ -711,25 +696,15 @@ class MASTSearch(object):
         #                                          cache = cache, 
         #                                          cloud_only = cloud_only)
         manifest = [self._download_one(row, 
-<<<<<<< HEAD
-                                       cloud_only, 
-                                       cache,
-                                       download_dir) for _, row in self.table.iterrows()]
-=======
                                        cloud_only,
                                        cache,
                                        download_dir) for _,row in self.table.iterrows()]
->>>>>>> 29da7a07644aaa9ffced6f47624ffe68c68638c8
         return manifest
 
     def _default_download_dir(self):
         # TODO: again, I can't inport config so hard code it for now
         # return config.get_cache_dir()
-<<<<<<< HEAD
-        return '~/.'
-=======
         return "~/."
->>>>>>> 29da7a07644aaa9ffced6f47624ffe68c68638c8
 
     
 
@@ -760,8 +735,7 @@ class TESSSearch(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=sector)
-        # Uncommenting this ffi search got rid of the non-ffi search results. Debug later...
-        #self._add_ffi_products()
+        self._add_ffi_products()
     
     def _add_ffi_products(self):
         #get the ffi info for the targets
