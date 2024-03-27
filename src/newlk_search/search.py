@@ -246,12 +246,6 @@ class MASTSearch(object):
         indices = self.table[mask].index
         return MASTSearch(
             table = self.table.loc[indices]
-            # Commented this out as we talked about not saving obs/prod table
-            #obs_table=self.obs_table.loc[indices.get_level_values(0)].drop_duplicates(),
-            #prod_table=self.prod_table.loc[
-            #    indices.get_level_values(1)
-            #].drop_duplicates(),
-            
         )
     
     # may overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls?
@@ -739,12 +733,6 @@ class MASTSearch(object):
         # return config.get_cache_dir()
         return "~/."
 
-    
-
-
-    
-
-
 
 class TESSSearch(MASTSearch):
 
@@ -768,16 +756,22 @@ class TESSSearch(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=sector)
-        self._add_ffi_products()
+        if(table is not None):
+            self._add_ffi_products()
+            self.sortTESS()
     
+    def _mask(self, mask):
+        """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
+        indices = self.table[mask].index
+        return TESSSearch(target=self.target,
+            table = self.table.loc[indices]
+        )  
+  
     def _add_ffi_products(self):
         #get the ffi info for the targets
         ffi_info = self._get_ffi_info()
         #add the ffi info to the table
         self.table = pd.concat([self.table, ffi_info])
-        #sort the table
-
-
 
     # FFIs only available when using TESSSearch. 
     # Use TESS WCS to just return a table of sectors and dates? 
@@ -862,9 +856,15 @@ class TESSSearch(MASTSearch):
             return 200
         
 
-    def sort_TESS():
+    def sortTESS(self):
         # base sort + TESS HLSP handling?
-        raise NotImplementedError
+        sort_priority = {"SPOC": 1, 
+                         "TESS-SPOC": 2, 
+                         "TESScut": 3,
+                         }
+
+        self.table["sort_order"] = self.table['pipeline'].map(sort_priority).fillna(9)
+        self.table.sort_values(by=["distance", "project", "sort_order", "sequence_number", "exptime"], ignore_index=True, inplace=True)
 
     def download_ffi():
         raise NotImplementedError
@@ -905,12 +905,27 @@ class KeplerSearch(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=None)
+<<<<<<< HEAD
         self._add_kepler_mission_product()
         self.get_sequence_number()
         self.sort_Kepler()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
         self.table = self.table[self._filter_kepler(quarter, month)]
+=======
+        if(table is not None):
+            self._add_kepler_mission_product()
+            self.get_sequence_number()
+            self.sortKepler()
+            # Can't search mast with quarter/month directly, so filter on that after the fact. 
+            self.table = self.table[self._filter_kepler(quarter, month)]
+>>>>>>> 32ca9916af6f1104e82522c5be0822a997857da8
         
+    def _mask(self, mask):
+        """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
+        indices = self.table[mask].index
+        return KeplerSearch(target=self.target,
+            table = self.table.loc[indices]
+        )  
 
     '''
     # Now implemented in base class
@@ -1041,12 +1056,26 @@ class K2Search(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=campaign)
+<<<<<<< HEAD
         self._add_K2_mission_product()
         self._fix_K2_sequence()
         self.sort_K2()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
 
 
+=======
+        if(table is not None):
+            self._add_K2_mission_product()
+        # Can't search mast with quarter/month directly, so filter on that after the fact. 
+
+    def _mask(self, mask):
+        """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
+        indices = self.table[mask].index
+        return K2Search(target=self.target,
+            table = self.table.loc[indices]
+        ) 
+     
+>>>>>>> 32ca9916af6f1104e82522c5be0822a997857da8
     def _add_K2_mission_product(self):
         # Some products are HLSPs and some are mission products
         mission_product = np.zeros(len(self.table), dtype=bool)
