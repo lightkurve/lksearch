@@ -105,7 +105,7 @@ class MASTSearch(object):
         # If target is not None, Parse the input
         #TODO: get rid of saving prod and obs to self
         self.target = target
-        if not isinstance(target, type(None)):
+        if isinstance(table, type(None)):
             self._target_from_name(target)
         else:
             self._target_from_table(table, obs_table, prod_table)
@@ -756,7 +756,7 @@ class TESSSearch(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=sector)
-        if(table is not None):
+        if(table is None):
             self._add_ffi_products()
             self.sortTESS()
     
@@ -905,7 +905,7 @@ class KeplerSearch(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=None)
-        if(table is not None):
+        if(table is None):
             self._add_kepler_mission_product()
             self.get_sequence_number()
             self.sort_Kepler()
@@ -1048,7 +1048,7 @@ class K2Search(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=campaign)
-        if(table is not None):
+        if(table is None):
             self._add_K2_mission_product()
             self._fix_K2_sequence()
             self.sort_K2()
