@@ -18,6 +18,7 @@ from astropy.table import Table, join
 from astropy.time import Time
 from lightkurve.io import read
 
+from copy import deepcopy
 #import cache
 #from .config import conf, config
 from . import PACKAGEDIR , conf, config
@@ -240,11 +241,10 @@ class MASTSearch(object):
                 return self._mask(key)
      
     def _mask(self, mask):
-        """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
-        indices = self.table[mask].index
-        return MASTSearch(
-            table = self.table.loc[indices]
-        )
+        """Masks down the product and observation tables given an input mask, then returns them as a new K2Search object."""
+        new_table = deepcopy(self)
+        new_table.table = self.table[mask]
+        return new_table
     
     # may overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls?
     def _update_table(self, joint_table):
@@ -760,13 +760,6 @@ class TESSSearch(MASTSearch):
         if(table is None):
             self._add_ffi_products()
             self.sortTESS()
-    
-    def _mask(self, mask):
-        """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
-        indices = self.table[mask].index
-        return TESSSearch(
-            table = self.table.loc[indices]
-        )  
   
     def _add_ffi_products(self):
         #get the ffi info for the targets
@@ -912,13 +905,6 @@ class KeplerSearch(MASTSearch):
             self.sort_Kepler()
             # Can't search mast with quarter/month directly, so filter on that after the fact. 
             self.table = self.table[self._filter_kepler(quarter, month)]
-        
-    def _mask(self, mask):
-        """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
-        indices = self.table[mask].index
-        return KeplerSearch(target=self.target,
-            table = self.table.loc[indices]
-        )  
 
     '''
     # Now implemented in base class
@@ -1055,12 +1041,6 @@ class K2Search(MASTSearch):
             self.sort_K2()
         # Can't search mast with quarter/month directly, so filter on that after the fact. 
 
-    def _mask(self, mask):
-        """Masks down the product and observation tables given an input mask, then rejoins them as a SearchResult."""
-        indices = self.table[mask].index
-        return K2Search(target=self.target,
-            table = self.table.loc[indices]
-        ) 
      
     def _add_K2_mission_product(self):
         # Some products are HLSPs and some are mission products
