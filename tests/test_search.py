@@ -38,7 +38,7 @@ from lightkurve import (
 
 #Added the below from this file
 #from src.test_conf import use_custom_config_file, remove_custom_config
-
+# TODO: check this
 def use_custom_config_file(cfg_filepath):
     """Copy the config file in the given path (in tests) to the default lightkurve config file """
     cfg_dest_path = Path(lk.config.get_config_dir(), 'lightkurve.cfg')
@@ -46,7 +46,7 @@ def use_custom_config_file(cfg_filepath):
     shutil.copy(cfg_src_path, cfg_dest_path)
     lk.conf.reload()
 
-
+# TODO: check this
 def remove_custom_config():
     cfg_dest_path = Path(lk.config.get_config_dir(), 'lightkurve.cfg')
     cfg_dest_path.unlink()
@@ -93,13 +93,14 @@ def test_search_cubedata():
 
     # with mission='TESS', it should return TESS observations
     tic = "TIC 273985862"  # Has been observed in multiple sectors including 1
-    assert len(search_cubedata(tic, mission="TESS").table) > 1
+    assert len(MASTSearch(tic, mission="TESS").table) > 1
     assert (
-        len(TESSSearch(tic, author='SPOC', sector=1, search_radius=100).timeseries.table)
+        len(TESSSearch(tic, pipeline='SPOC', sector=1, search_radius=100).timeseries.table)
         == 2
     )
+    # TODO: download test
     #search_cubedata(tic, author="SPOC", sector=1).download()
-    assert len(TESSSearch("pi Mensae", sector=1, author='SPOC').cubedata.table) == 1
+    assert len(TESSSearch("pi Mensae", sector=1, pipeline='SPOC').cubedata.table) == 1
     # Issue #445: indexing with -1 should return the last index of the search result
     # NOTE: the syntax for this is different with new search
     assert len(search.TESSSearch("pi Mensae").cubedata[-1].table) == 1

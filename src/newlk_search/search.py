@@ -21,10 +21,8 @@ from lightkurve.io import read
 from copy import deepcopy
 #import cache
 #from .config import conf, config
-from . import PACKAGEDIR , conf, config
+from . import PACKAGEDIR , PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
-PREFER_CLOUD = True # Set from config file
-DOWNLOAD_CLOUD = True # For MAST???
 
 from memoization import cached
 
@@ -95,7 +93,9 @@ class MASTSearch(object):
         
         self.search_radius = search_radius
         self.search_exptime = exptime
-        self.search_mission = mission
+        self.search_mission = np.atleast_1d(mission).tolist()
+        if pipeline is not None:
+            pipeline = np.atleast_1d(pipeline).tolist()
         self.search_pipeline = pipeline
         self.search_sequence = sequence
         #Legacy functionality - no longer query kic/tic by integer value only
@@ -243,7 +243,8 @@ class MASTSearch(object):
     def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then returns them as a new K2Search object."""
         new_table = deepcopy(self)
-        new_table.table = self.table[mask]
+        new_table.table = self.table[mask].reset_index()
+        
         return new_table
     
     # may overwrite this function in the individual KEplerSearch/TESSSearch/K2Search calls?
@@ -264,13 +265,16 @@ class MASTSearch(object):
                 r"\d+.(\d{4})\d+", joint_table["productFilename"].iloc[idx]
             )[0]
         joint_table["year"] = year.astype(int)
+        # TODO: make sure the time for TESS/Kepler/K2 all add 2400000.5
+        joint_table['start_time'] = Time(self.table['t_min'].values + 2400000.5, format='jd').iso
+        joint_table['end_time'] = Time(self.table['t_max'].values + 2400000.5, format='jd').iso
 
         #rename identical columns
-        joint_table.rename(columns={'obs_collection': 'obs_collection_prod', 
-                                    'project': 'project_prod',
-                                    'dataproduct_type': 'dataproduct_type_prod',
-                                    'proposal_id': 'proposal_id_prod',
-                                    'dataRights': 'dataRights_prod'}, inplace=True)
+        joint_table.rename(columns={'obs_collection_prod': 'obs_collection', 
+                                    'project_prod': 'project',
+                                    'dataproduct_type_prod': 'dataproduct_type',
+                                    'proposal_id_prod': 'proposal_id',
+                                    'dataRights_prod': 'dataRights'}, inplace=True)
         '''
         Full list of features
         ['intentType', 'obscollection_obs', 'provennce_name',
@@ -708,7 +712,7 @@ class MASTSearch(object):
                                                   cloud_only = cloud_only)
         return manifest[0]
     
-    def Download(self,
+    def download(self,
                  cloud: bool = True,
                  cache: bool = True,
                  cloud_only: bool = False, 
@@ -915,6 +919,8 @@ class KeplerSearch(MASTSearch):
     def _handle_kbonus(self):
         # KBONUS times are masked as they are invalid for the quarter data
         #kbonus_mask = self.table["pipeline"] == "KBONUS-BKG"
+  
+        #self.table['start_time'][kbonus_mask] = something
         raise NotImplementedError
 
     def _add_kepler_mission_product(self):
@@ -944,7 +950,7 @@ class KeplerSearch(MASTSearch):
         mask = ((self.table["project"] == "Kepler") &
                 self.table["sequence_number"].isna())
         re_expr = r".*Q(\d+)"
-        seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in joint_table.loc[mask,["description"]].values]
+        seq_num[mask] = [re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else "" for item in self.table.loc[mask,["description"]].values]
         self.table['sequence_number'] = seq_num
 
         # Update 'mission' with the sequence number
@@ -1002,13 +1008,13 @@ class KeplerSearch(MASTSearch):
     
 
 
-    def sort_Kepler():
+    def sort_Kepler(self):
         sort_priority = {"Kepler": 1, 
                          "KBONUS-BKG": 2, 
                          }
         df = self.table
         df["sort_order"] = self.table['pipeline'].map(sort_priority).fillna(9)
-        df.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"], ignore_index=True, inplace=True)
+        df = df.sort_values(by=["distance", "sort_order", "start_time", "exptime"], ignore_index=True)
         self.table = df
 
 
@@ -1035,11 +1041,11 @@ class K2Search(MASTSearch):
                          exptime=exptime, 
                          pipeline=pipeline, 
                          sequence=campaign)
+
         if(table is None):
             self._add_K2_mission_product()
             self._fix_K2_sequence()
             self.sort_K2()
-        # Can't search mast with quarter/month directly, so filter on that after the fact. 
 
      
     def _add_K2_mission_product(self):
@@ -1050,8 +1056,8 @@ class K2Search(MASTSearch):
 
 
     def _fix_K2_sequence(self):
-        # K2 campaigns 9, 10, and 11 were split into two sections, which are
-        # listed separately in the table with suffixes "a" and "b"        
+        # K2 campaigns 9, 10, and 11 were split into two sections
+        # list these separately in the table with suffixes "a" and "b"        
         seq_num = self.table["sequence_number"].values.astype(str)
 
         mask = self.table["sequence_number"].isin([9, 10, 11])
@@ -1065,6 +1071,7 @@ class K2Search(MASTSearch):
                                   for proj, seq in zip(
                                       self.table['mission'].values.astype(str),
                                       seq_num)]
+        
 
 
     
@@ -1074,6 +1081,6 @@ class K2Search(MASTSearch):
                          }
         df = self.table
         df["sort_order"] = self.table['pipeline'].map(sort_priority).fillna(9)
-        df.sort_values(by=["distance", "project", "sort_order", "start_time", "exptime"], ignore_index=True, inplace=True)
+        df = df.sort_values(by=["distance", "sort_order", "start_time", "exptime"], ignore_index=True)
         self.table = df
 
