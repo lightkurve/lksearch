@@ -763,7 +763,7 @@ class TESSSearch(MASTSearch):
                          sequence=sector)
         if(table is None):
             self._add_ffi_products()
-            self.sortTESS()
+            self.sort_TESS()
   
     def _add_ffi_products(self):
         #get the ffi info for the targets
@@ -854,16 +854,18 @@ class TESSSearch(MASTSearch):
             return 200
         
 
-    def sortTESS(self):
+    def sort_TESS(self):
         # base sort + TESS HLSP handling?
         sort_priority = {"SPOC": 1, 
                          "TESS-SPOC": 2, 
                          "TESScut": 3,
                          }
 
-        self.table["sort_order"] = self.table['pipeline'].map(sort_priority).fillna(9)
-        self.table.sort_values(by=["distance", "project", "sort_order", "sequence_number", "exptime"], ignore_index=True, inplace=True)
 
+        df = self.table
+        df["sort_order"] = df['pipeline'].map(sort_priority).fillna(9)
+        df = df.sort_values(by=["distance", "sort_order", "start_time", "exptime"], ignore_index=True)
+        self.table = df
     def download_ffi():
         raise NotImplementedError
 
@@ -954,7 +956,7 @@ class KeplerSearch(MASTSearch):
         self.table['sequence_number'] = seq_num
 
         # Update 'mission' with the sequence number
-        self.table["mission"] = [f" {proj} - Campaign {seq}" 
+        self.table["mission"] = [f" {proj} - Quarter {seq}" 
                             for proj, seq in zip(
                                 self.table['mission'].values.astype(str),
                                 seq_num)]

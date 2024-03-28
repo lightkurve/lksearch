@@ -25,6 +25,7 @@ import shutil
 
 from lightkurve.utils import LightkurveWarning, LightkurveError
 from src.newlk_search.search import (
+    MASTSearch,
     KeplerSearch,
     TESSSearch,
     K2Search
@@ -127,27 +128,29 @@ def test_search_timeseries(caplog):
     # The name Kepler-10 somehow no longer works on MAST. So we use 2MASS instead:
     #   https://simbad.cds.unistra.fr/simbad/sim-id?Ident=%405506010&Name=Kepler-10
     assert (
-        len(KeplerSearch('2MASS J19024305+5014286', author='Kepler', exptime='long').timeseries.table)
+        len(KeplerSearch('2MASS J19024305+5014286', pipeline='Kepler', exptime='long').timeseries.table)
         == 15
     )
     # An invalid KIC/EPIC ID or target name should be dealt with gracefully
-    search_timeseries(-999)
+    KeplerSearch((-999).timeseries)
     #assert "disambiguate" in caplog.text
     assert "Target must" in caplog.text
+
     # TODO: This tries to search, should probs add a check before it gets to that point. 
+    # Or just check there is a NameResolveError?
     search_timeseries("DOES_NOT_EXIST (UNIT TEST)")
     assert "disambiguate" in caplog.text
 
     # If we ask for all cadence types, there should be four Kepler files given
-    assert len(KeplerSearch("KIC 4914423", quarter=6, exptime='any', author="Kepler").timeseries.table) == 4
+    assert len(KeplerSearch("KIC 4914423", quarter=6, exptime='any', pipeline="Kepler").timeseries.table) == 4
 
     # ...and only one should have long cadence
-    assert len(KeplerSearch('KIC 4914423', quarter=6, exptime='long', author='Kepler').timeseries.table) == 1
+    assert len(KeplerSearch('KIC 4914423', quarter=6, exptime='long', pipeline='Kepler').timeseries.table) == 1
     # Should be able to resolve an ra/dec
-    assert len(KeplerSearch("297.5835, 40.98339", quarter=6, author="Kepler").timeseries.table) == 1
+    assert len(KeplerSearch("297.5835, 40.98339", quarter=6, pipeline="Kepler").timeseries.table) == 1
     # Should be able to resolve a SkyCoord
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
-    search = KeplerSearch(c, quarter=6, author="Kepler").timeseries
+    search = KeplerSearch(c, quarter=6, pipeline="Kepler").timeseries
     assert len(search.table) == 1
     assert len(search) == 1
 
@@ -163,12 +166,12 @@ def test_search_timeseries(caplog):
     assert len(TESSSearch(tic).timeseries.table) > 1
     assert (
         len(
-            TESSSearch(tic, author="spoc", sector=1, search_radius=100).timeseries.table
+            TESSSearch(tic, pipeline="spoc", sector=1, search_radius=100).timeseries.table
         )
         == 2
     )
     # TODO: search_timeseries(tic, mission="TESS", author="SPOC", sector=1).download()
-    assert len(TESSSearch("pi Mensae", author="SPOC", sector=1).timeseries.table) == 1
+    assert len(TESSSearch("pi Mensae", pipeline="SPOC", sector=1).timeseries.table) == 1
 
 
 #@pytest.mark.remote_data
@@ -241,7 +244,7 @@ def test_search_timeseries(caplog):
 #@pytest.mark.remote_data
 def test_search_with_skycoord():
     """Can we pass both names, SkyCoord objects, and coordinate strings?"""
-    sr_name = search.KeplerSearch("KIC 11904151", exptime='long').cubedata
+    sr_name = KeplerSearch("KIC 11904151", exptime='long').cubedata
     assert (
         len(sr_name) == 15
     )  # Kepler-10 as observed during 15 quarters in long cadence
@@ -264,11 +267,11 @@ def test_search_with_skycoord():
     assert_array_equal(
         sr_name.table["productFilename"], sr_sexagesimal.table["productFilename"]
     )
-    '''# Can we search using the KIC ID?
+
     sr_kic = KeplerSearch("KIC 11904151", exptime='long').cubedata
     assert_array_equal(
         sr_name.table["productFilename"], sr_kic.table["productFilename"]
-    )'''
+    )
 
 
 #@pytest.mark.remote_data
@@ -302,28 +305,26 @@ def test_collections():
     # TODO: get download working
     assert (
         len(
-            search_timeseries(
-                "EPIC 205998445", mission="K2", radius=900, limit=3, author="K2"
-            ).download_all()
+            MASTSearch("EPIC 205998445", mission="K2", search_radius=900, pipeline="K2").limit_results(3).download()
         )
         == 3
     )
     # if fewer targets are found than targetlimit, should still download all available
     assert (
-        len(K2Search("EPIC 205998445", search_radius=900, author="K2").cubedata.limit_results(6).table)
+        len(K2Search("EPIC 205998445", search_radius=900, pipeline="K2").cubedata.limit_results(6).table)
         == 4
     )
     # if download() is used when multiple files are available, should only download 1
     # TODO: deal with downloads later
     with pytest.warns(LightkurveWarning, match="4 files available to download"):
         assert isinstance(
-            search_cubedata(
-                "EPIC 205998445", mission="K2", radius=900, author="K2"
-            ).download(),
+            MASTSearch(
+                "EPIC 205998445", mission="K2", radius=900, pipeline="K2"
+            ).cubedata.download(),
             KeplerTargetPixelFile,
         )
 
-
+# NS got to here!
 #@pytest.mark.remote_data
 def test_properties():
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
