@@ -218,7 +218,10 @@ class MASTSearch(object):
 
     def __repr__(self):
         if(isinstance(self.table, pd.DataFrame)):
-            return self.table[self._REPR_COLUMNS].__repr__()
+            if len(self.table) > 0:
+                return self.table[self._REPR_COLUMNS].__repr__()
+            else:
+                return("No results found")
         else:
             return("I am an uninitialized MASTSearch result")
 
@@ -725,6 +728,11 @@ class MASTSearch(object):
             Cachine more seamless if a user is searching for the same file(s) accross different project
             directories and has a pipeline workflow with input functions
         """
+        if len(self.table) == 0:
+            warnings.warn(
+                "Cannot download from an empty search result.", LightkurveWarning
+            )
+            return None
         if(cloud):
             Observations.enable_cloud_dataset()
 
