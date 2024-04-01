@@ -272,22 +272,6 @@ class MASTSearch(object):
         joint_table = joint_table.rename(columns={"t_exptime": "exptime"})
         joint_table["pipeline"] = joint_table["provenance_name"].copy()
         joint_table["mission"] = joint_table["obs_collection_obs"].copy()
-
-        year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
-        # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
-        for idx in np.where(joint_table["pipeline"] == "Kepler")[0]:
-            year[idx] = re.findall(
-                r"\d+.(\d{4})\d+", joint_table["productFilename"].iloc[idx]
-            )[0]
-        joint_table["year"] = year.astype(int)
-        # TODO: make sure the time for TESS/Kepler/K2 all add 2400000.5
-        joint_table["start_time"] = Time(
-            self.table["t_min"].values + 2400000.5, format="jd"
-        ).iso
-        joint_table["end_time"] = Time(
-            self.table["t_max"].values + 2400000.5, format="jd"
-        ).iso
-
         # rename identical columns
         joint_table.rename(
             columns={
@@ -299,6 +283,25 @@ class MASTSearch(object):
             },
             inplace=True,
         )
+        joint_table = joint_table.reset_index()
+
+        year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
+        # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
+        for idx, row in joint_table.iterrows():
+            if (row['pipeline'] == "Kepler") & ("Data Validation" not in row['description']):
+                year[idx] = re.findall(
+                    r"\d+.(\d{4})\d+", row["productFilename"]
+                )[0]
+        joint_table["year"] = year.astype(int)
+        # TODO: make sure the time for TESS/Kepler/K2 all add 2400000.5
+        joint_table["start_time"] = Time(
+            self.table["t_min"].values + 2400000.5, format="jd"
+        ).iso
+        joint_table["end_time"] = Time(
+            self.table["t_max"].values + 2400000.5, format="jd"
+        ).iso
+
+
         """
         Full list of features
         ['intentType', 'obscollection_obs', 'provennce_name',
@@ -321,7 +324,7 @@ class MASTSearch(object):
         # self._add_s3_url_column()
         # self._sort_by_priority()
 
-        return joint_table.reset_index()
+        return joint_table
 
     def _search(
         self,
@@ -1016,18 +1019,19 @@ class KeplerSearch(MASTSearch):
 
         mask = (self.table["project"] == "Kepler") & self.table[
             "sequence_number"
-        ].isna()
+        ].isna() & ~self.table["description"].str.contains("Data Validation")
         re_expr = r".*Q(\d+)"
         seq_num[mask] = [
             re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else ""
             for item in self.table.loc[mask, ["description"]].values
         ]
+
         self.table["sequence_number"] = seq_num
 
         # Update 'mission' with the sequence number
         self.table["mission"] = [
-            f" {proj} - Quarter {seq}"
-            for proj, seq in zip(self.table["mission"].values.astype(str), seq_num)
+            f" {proj} - Q{seq}"
+            if seq !=  '<NA>' else f"{proj}" for proj, seq in zip(self.table["mission"].values.astype(str), seq_num)  
         ]
 
     def _filter_kepler(
@@ -1152,7 +1156,7 @@ class K2Search(MASTSearch):
                     seq_num[index] = f"{int(row['sequence_number']):02d}{letter}"
 
         self.table["mission"] = [
-            f" {proj} - Campaign {seq}"
+            f" {proj} - C{seq}"
             for proj, seq in zip(self.table["mission"].values.astype(str), seq_num)
         ]
 
