@@ -1048,17 +1048,15 @@ class TESSSearch(MASTSearch):
         #filter out uncalibrated ffi's & theoretical potential HLSP
         prod_mask = ffi_products['calib_level'] == 2
         ffi_products = ffi_products[prod_mask] 
-        print(ffi_products)
 
         new_table = deepcopy(self)
         
-        new_table._target_from_table(None, 
-                                     ffi_obs.to_pandas(), 
-                                     ffi_products.to_pandas())
-        print(new_table.table)
-       #new_table.table = new_table._update_table(new_table.table)
+        #new_table._target_from_table(ffi_products.to_pandas(), 
+        #                             ffi_obs.to_pandas(), 
+        #                             ffi_products.to_pandas())
+        #new_table.table = new_table._update_table(new_table.table)
 
-        return new_table
+        return ffi_products.to_pandas()
 
     def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = "~/.", 
                  TESScut_product="SPOC",

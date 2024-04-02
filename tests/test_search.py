@@ -619,7 +619,7 @@ def test_customize_search_result_display():
 def test_tesscut():
     """Can we find TESS tesscut tpfs"""
     target = "Kepler 16b"
-    assert len(TESSSearch("Kepler 16b").search_ffi(58682,58710, sector=14)) == 1281
+    assert len(TESSSearch("Kepler 16b").search_individual_ffi(58682,58710, sector=14)) == 1281
 
 #@pytest.mark.remote_data
 def test_tesscut():
