@@ -1222,7 +1222,7 @@ class K2Search(MASTSearch):
 
     def _target_to_exact_name(self, target):
         "parse K2 TIC to exact target name"
-        return f"ktwo{ktwo_match.group(2).zfill(9)}"
+        return f"ktwo{target.group(2).zfill(9)}"
 
 #
     def _add_K2_mission_product(self):
