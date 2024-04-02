@@ -913,17 +913,18 @@ class TESSSearch(MASTSearch):
         # Check each sector / camera / ccd for observability
         # Submit a tesswcs PR for to convert table to pandas
         pointings = pointings.to_pandas()
+        
         if(sector_list is None):
             sector_list = pointings["Sector"].values
+
         for _, row in pointings.iterrows():
             tess_ra = row["RA"]
             tess_dec = row["Dec"]
             tess_roll = row["Roll"]
             sector = row["Sector"].astype(int)
+            
             if(sector in np.atleast_1d(sector_list)):
                 AddSector = False
-                sector_camera = []
-                sector_ccd = []
                 for camera in np.arange(1, 5):
                     for ccd in np.arange(1, 5):
                         # predict the WCS
@@ -933,12 +934,10 @@ class TESSSearch(MASTSearch):
                         # check if the target falls inside the CCD
                         if wcs.footprint_contains(self.SkyCoord):
                             AddSector = True
-                            sector_camera = sector_camera.append(camera)
-                            sector_ccd = sector_ccd.append(ccd)
 
                 if AddSector:
                     log.debug(
-                        f"Target Observable in Sector {sector}, Camera {sector_camera}, CCD {sector_ccd}"
+                        f"Target Observable in Sector {sector}, Camera {camera}, CCD {ccd}"
                     )
                     tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
                     tesscut_mission.append(f"TESS Sector {sector:02d}")
