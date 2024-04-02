@@ -1070,8 +1070,9 @@ class TESSSearch(MASTSearch):
         if("TESScut" in self.table.provenance_name.unique()):
             mask = self.table["provenance_name"] == "TESScut"
             self._mask(~mask).download()
-            from astroquery.mast import TesscutClass
-            mf1 = TesscutClass.download_cutouts(coordinates=self.SkyCoord, 
+            from astroquery.mast import Tesscut
+            Tesscut.enable_cloud_dataset()
+            mf1 = Tesscut.download_cutouts(coordinates=self.SkyCoord, 
                                           size=TESScut_size, 
                                           sector=self.table['sequence_number'].values[mask], 
                                           product=TESScut_product, 
