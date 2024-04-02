@@ -880,6 +880,12 @@ class TESSSearch(MASTSearch):
             self._add_ffi_products(sector)
             self.sort_TESS()
 
+    @property 
+    def tesscut(self):
+        """return the TESScut only data"""
+        mask = self.table["pipeline"] == "TESScut"
+        return self._mask(mask)
+
     @property
     def cubedata(self):
         """return a MASTSearch object with self.table only containing products that are image cubes"""
@@ -1049,13 +1055,14 @@ class TESSSearch(MASTSearch):
         ffi_products = ffi_products[prod_mask] 
 
         new_table = deepcopy(self)
-        
+        new_table.table = pd.concat([new_table.table, ffi_products.to_pandas()],
+                                    join='outer')
         #new_table._target_from_table(ffi_products.to_pandas(), 
         #                             ffi_obs.to_pandas(), 
         #                             ffi_products.to_pandas())
         #new_table.table = new_table._update_table(new_table.table)
 
-        return ffi_products.to_pandas()
+        return new_table#ffi_products.to_pandas()
 
     def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = "~/.", 
                  TESScut_product="SPOC",
