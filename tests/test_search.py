@@ -29,7 +29,7 @@ from src.newlk_search.search import (
     MASTSearch,
     KeplerSearch,
     TESSSearch,
-    K2Search
+    K2Search,
     log,
 )
 from lightkurve import (
