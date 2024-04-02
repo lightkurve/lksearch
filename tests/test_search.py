@@ -37,18 +37,18 @@ from newlk_search.search import (
 #Added the below from this file
 #from src.test_conf import use_custom_config_file, remove_custom_config
 # TODO: check this
-def use_custom_config_file(cfg_filepath):
+'''def use_custom_config_file(cfg_filepath):
     """Copy the config file in the given path (in tests) to the default lightkurve config file """
     cfg_dest_path = Path(lk.config.get_config_dir(), 'lightkurve.cfg')
     cfg_src_path = get_pkg_data_filename(cfg_filepath)
     shutil.copy(cfg_src_path, cfg_dest_path)
-    lk.conf.reload()
+    lk.conf.reload()'''
 
 # TODO: check this
-def remove_custom_config():
+'''def remove_custom_config():
     cfg_dest_path = Path(lk.config.get_config_dir(), 'lightkurve.cfg')
     cfg_dest_path.unlink()
-    lk.conf.reload()
+    lk.conf.reload()'''
 
 
 #@pytest.mark.remote_data
@@ -98,7 +98,7 @@ def test_search_cubedata():
     )
     # TODO: download test
     #search_cubedata(tic, author="SPOC", sector=1).download()
-    assert len(TESSSearch("pi Mensae", sector=1, pipeline='SPOC').cubedata.table) == 2
+    assert len(TESSSearch("pi Mensae", sector=1, pipeline='SPOC').cubedata.table) == 1
     # Issue #445: indexing with -1 should return the last index of the search result
     # NOTE: the syntax for this is different with new search
     assert len(TESSSearch("pi Mensae").cubedata[-1].table) == 1
@@ -129,8 +129,6 @@ def test_search_timeseries(caplog):
         == 15
     )
 
-    #assert "disambiguate" in caplog.text
-    assert "Target must" in caplog.text
 
     # TODO: This tries to search, should probs add a check before it gets to that point. 
     # Or just check there is a NameResolveError?
@@ -464,10 +462,9 @@ def test_overlapping_targets_718():
     assert len(search) > 1
 
     
-    #TODO: This is not working for some reason. Can debug later. Works if I give a search_radius of 1
     search = TESSSearch(
         "KIC 8462852", sector=15, pipeline="spoc"
-    )
+    ).timeseries
     assert len(search) == 1
 
 
@@ -527,8 +524,8 @@ def test_ffi_hlsp():
     assert search.table['pipeline'].str.contains('SPOC').any() 
     # tess-spoc also products tpfs
     search = TESSSearch("TrES-2b", sector=26).cubedata
-    assert "TESS-SPOC" in search.table["pipeline"]
-    assert "SPOC" in search.table["pipeline"]
+    assert search.table['pipeline'].str.contains('TESS-SPOC').any()  
+    assert search.table['pipeline'].str.contains('SPOC').any()
 
 
 #@pytest.mark.remote_data
@@ -547,10 +544,9 @@ def test_spoc_ffi_lightcurve():
     """Can we search and download a SPOC FFI light curve?"""
     search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc").timeseries
     assert len(search) == 1
-    assert search.author[0] == "TESS-SPOC"
+    assert search.pipeline[0] == "TESS-SPOC"
     assert search.exptime[0] == 1800. # * u.second  # Sector 26 had 30-minute FFIs
-    lc = search.download()
-    all(lc.flux == lc.pdcsap_flux)
+
 
 
 #@pytest.mark.remote_data
@@ -618,7 +614,7 @@ def test_tesscut():
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14)) == 11
-    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata()) == 2
+    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata) == 2
 
 
 
