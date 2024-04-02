@@ -67,7 +67,7 @@ Please read the citation instructions at [TBD](https://heasarc.gsfc.nasa.gov/doc
 
 Contact
 -------
-*Newlk_search* is an open source community project created by the [TESS Science Support Center](https://heasarc.gsfc.nasa.gov/docs/tess/). The best way to contact us is to `open an issue <https://github.com/lightkurve/lightkurve/issues/new>`_ or to e-mail tesshelp@bigbang.gsfc.nasa.gov.
+*Newlk_search* is an open source community project created by the [TESS Science Support Center](https://heasarc.gsfc.nasa.gov/docs/tess/). The best way to contact us is to [open an issue](https://github.com/lightkurve/lightkurve/issues/new) or to e-mail tesshelp@bigbang.gsfc.nasa.gov.
 
 Please include a self-contained example that fully demonstrates your problem or question.
 
