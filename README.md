@@ -47,11 +47,10 @@ Usage
 -----
   from newlk_search import MASTSearch, TESSSearch, KeplerSearch, K2Search
   ### Get long-cadence target pixel files for Kepler 
-  result = search.KeplerSearch("KIC 11904151", exptime="long").cubedata
+    result = search.KeplerSearch("KIC 11904151", exptime="long").cubedata
   ### Get TESScut cutouts for a particular target and sector
-  result = TESSSearch("TOI 2257").tesscut
-  
-  result.download()
+    result = TESSSearch("TOI 2257").tesscut
+    result.download()
 
 Contributing
 ------------
