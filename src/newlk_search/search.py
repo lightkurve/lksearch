@@ -126,7 +126,7 @@ class MASTSearch(object):
         else:
             self._target_from_table(table, obs_table, prod_table)
 
-    @cached
+    #@cached
     def _target_from_name(self, target):
         self._parse_input(target)
         self.table = self._search(
@@ -1057,7 +1057,8 @@ class TESSSearch(MASTSearch):
         #new_table.table = new_table._update_table(new_table.table)
 
         return ffi_products.to_pandas()
-
+    
+    # TODO: what's going on with all of these prefer_clouds?
     def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = "~/.", 
                  TESScut_product="SPOC",
                  TESScut_size = 10):
