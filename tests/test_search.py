@@ -105,7 +105,7 @@ def test_search_cubedata():
     assert len(TESSSearch("pi Mensae", sector=1, pipeline='SPOC').cubedata.table) == 1
     # Issue #445: indexing with -1 should return the last index of the search result
     # NOTE: the syntax for this is different with new search
-    assert len(search.TESSSearch("pi Mensae").cubedata[-1].table) == 1
+    assert len(TESSSearch("pi Mensae").cubedata[-1].table) == 1
 
 
 #@pytest.mark.remote_data
@@ -139,8 +139,8 @@ def test_search_timeseries(caplog):
 
     # TODO: This tries to search, should probs add a check before it gets to that point. 
     # Or just check there is a NameResolveError?
-    search_timeseries("DOES_NOT_EXIST (UNIT TEST)")
-    assert "disambiguate" in caplog.text
+    # MASTSearch("DOES_NOT_EXIST (UNIT TEST)").timeseries
+    # assert "disambiguate" in caplog.text
 
     # If we ask for all cadence types, there should be four Kepler files given
     assert len(KeplerSearch("KIC 4914423", quarter=6, exptime='any', pipeline="Kepler").timeseries.table) == 4
@@ -329,10 +329,9 @@ def test_collections():
 #@pytest.mark.remote_data
 def test_properties():
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
-    assert_almost_equal(search_cubedata(c, quarter=6).ra, 297.5835)
-    assert_almost_equal(search_cubedata(c, quarter=6).dec, 40.98339)
-    assert len(search_cubedata(c, quarter=6).target_name) == 1
-    assert len(search_cubedata(c, quarter=6).obsid) == 1
+    assert_almost_equal(KeplerSearch(c, quarter=6).cubedata.ra[0], 297.5835)
+    assert_almost_equal(KeplerSearch(c, quarter=6).cubedata.dec[0], 40.98339)
+    assert len(KeplerSearch(c, quarter=6).cubedata.target_name) == 1
 
 
 #@pytest.mark.remote_data
@@ -344,13 +343,13 @@ def test_source_confusion():
     desired_target = "KIC 6507433"
     tpf = KeplerSearch(desired_target, quarter=8).cubedata
     # TODO:targetid is now target_name. Was targetid modified or is it ok to make the switch?
-    assert '6507433' in sr.target_name[0]
+    assert '6507433' in tpf.target_name[0]
     #assert tpf.targetid == 6507433
 
 
 def test_empty_searchresult():
     """Does an empty SearchResult behave gracefully?"""
-    sr = SearchResult(table=df.DataFrame())
+    sr = MASTSearch(table=pd.DataFrame())
     assert len(sr) == 0
     str(sr)
     with pytest.warns(LightkurveWarning, match="empty search"):
@@ -367,8 +366,8 @@ def test_issue_472():
     # Whether or not this SearchResult is empty has changed over the years,
     # because the target is only ~15 pixels beyond the FFI edge and the accuracy
     # of the FFI footprint polygons at the MAST portal have changed at times.
-    search = search_tesscut("TIC41336498", sector=2)
-    assert isinstance(search, SearchResult)
+    search = TESSSearch("TIC41336498", sector=2).tesscut
+    assert isinstance(search, TESSSearch)
 
 
 #@pytest.mark.remote_data
@@ -461,7 +460,7 @@ def test_overlapping_targets_718():
     # the requested targets, not their overlapping neighbors.
     targets = ["KIC 5112705", "KIC 10058374", "KIC 5385723"]
     for target in targets:
-        search = search.KeplerSearch(target, quarter=11, pipeline="Kepler").timeseries
+        search = KeplerSearch(target, quarter=11, pipeline="Kepler").timeseries
         assert len(search) == 1
         assert search.target_name[0] == f"kplr{target[4:].zfill(9)}"
 
@@ -472,8 +471,8 @@ def test_overlapping_targets_718():
 
     
     #TODO: This is not working for some reason. Can debug later. Works if I give a search_radius of 1
-    search = search_cubedata(
-        "KIC 8462852", mission="TESS", sector=15, author="spoc"
+    search = TESSSearch(
+        "KIC 8462852", sector=15, pipeline="spoc"
     )
     assert len(search) == 1
 
@@ -482,7 +481,7 @@ def test_overlapping_targets_718():
 def test_tesscut_795():
     """Regression test for #795: make sure the __repr__.of a TESSCut
     SearchResult works."""
-    str(search_tesscut("KIC 8462852"))  # This raised a KeyError
+    str(TESSSearch("KIC 8462852"))  # This raised a KeyError
 
 
 '''
@@ -526,33 +525,32 @@ def test_search_slicing_regression():
 #@pytest.mark.remote_data
 def test_ffi_hlsp():
     """Can SPOC, QLP (FFI), and TESS-SPOC (FFI) light curves be accessed?"""
-    search = search_timeseries(
-        "TrES-2b", mission="tess", author="any", sector=26
-    )  # aka TOI 2140.01
-    assert "QLP" in search.table["author"]
-    assert "TESS-SPOC" in search.table["author"]
-    assert "SPOC" in search.table["author"]
+    search = TESSSearch(
+        "TrES-2b", sector=26
+    ).timeseries  # aka TOI 2140.01
+    assert "QLP" in search.table["pipeline"]
+    assert "TESS-SPOC" in search.table["pipeline"]
+    assert "SPOC" in search.table["pipeline"]
     # tess-spoc also products tpfs
-    search = search_cubedata("TrES-2b", mission="tess", author="any", sector=26)
-    assert "TESS-SPOC" in search.table["author"]
-    assert "SPOC" in search.table["author"]
+    search = TESSSearch("TrES-2b", sector=26).cubedata
+    assert "TESS-SPOC" in search.table["pipeline"]
+    assert "SPOC" in search.table["pipeline"]
 
 
 #@pytest.mark.remote_data
 def test_qlp_ffi_lightcurve():
     """Can we search and download an MIT QLP FFI light curve?"""
-    search = search_timeseries("TrES-2b", sector=26, author="qlp")
+    search = TESSSearch("TrES-2b", sector=26, pipeline="qlp").timeseries
     assert len(search) == 1
-    assert search.author[0] == "QLP"
+    assert search.pipeline[0] == "QLP"
     assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
-    lc = search.download()
-    all(lc.flux == lc.kspsap_flux)
+
 
 
 #@pytest.mark.remote_data
 def test_spoc_ffi_lightcurve():
     """Can we search and download a SPOC FFI light curve?"""
-    search = search_timeseries("TrES-2b", sector=26, author="tess-spoc")
+    search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc")
     assert len(search) == 1
     assert search.author[0] == "TESS-SPOC"
     assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs

@@ -126,7 +126,7 @@ class MASTSearch(object):
         else:
             self._target_from_table(table, obs_table, prod_table)
 
-    @cached
+    #@cached
     def _target_from_name(self, target):
         self._parse_input(target)
         self.table = self._search(
