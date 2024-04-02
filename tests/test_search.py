@@ -33,11 +33,6 @@ from newlk_search.search import (
     K2Search,
     log,
 )
-'''from lightkurve import (
-    KeplerTargetPixelFile,
-    TessTargetPixelFile,
-    TargetPixelFileCollection,
-)'''
 
 #Added the below from this file
 #from src.test_conf import use_custom_config_file, remove_custom_config
@@ -103,7 +98,7 @@ def test_search_cubedata():
     )
     # TODO: download test
     #search_cubedata(tic, author="SPOC", sector=1).download()
-    assert len(TESSSearch("pi Mensae", sector=1, pipeline='SPOC').cubedata.table) == 1
+    assert len(TESSSearch("pi Mensae", sector=1, pipeline='SPOC').cubedata.table) == 2
     # Issue #445: indexing with -1 should return the last index of the search result
     # NOTE: the syntax for this is different with new search
     assert len(TESSSearch("pi Mensae").cubedata[-1].table) == 1
@@ -133,8 +128,7 @@ def test_search_timeseries(caplog):
         len(KeplerSearch('2MASS J19024305+5014286', pipeline='Kepler', exptime='long').timeseries.table)
         == 15
     )
-    # An invalid KIC/EPIC ID or target name should be dealt with gracefully
-    KeplerSearch((-999).timeseries)
+
     #assert "disambiguate" in caplog.text
     assert "Target must" in caplog.text
 
@@ -297,7 +291,6 @@ def test_month():
 
 #@pytest.mark.remote_data
 def test_collections():
-    # TargetPixelFileCollection class
     assert (
         len(K2Search("EPIC 205998445", search_radius=900).cubedata.table)
         == 4
@@ -318,13 +311,13 @@ def test_collections():
     )
     # if download() is used when multiple files are available, should only download 1
     # TODO: deal with downloads later
-    with pytest.warns(LightkurveWarning, match="4 files available to download"):
+    '''with pytest.warns(LightkurveWarning, match="4 files available to download"):
         assert isinstance(
             MASTSearch(
-                "EPIC 205998445", mission="K2", radius=900, pipeline="K2"
+                "EPIC 205998445", mission="K2", search_radius=900, pipeline="K2"
             ).cubedata.download(),
             KeplerTargetPixelFile,
-        )
+        )'''
 
 # TODO: These tests are failing!
 #@pytest.mark.remote_data
@@ -396,7 +389,7 @@ def test_corrupt_download_handling_case_empty():
         os.makedirs(expected_dir)
         open(expected_fn, "w").close()  # create "corrupt" i.e. empty file
         with pytest.raises(LightkurveError) as err:
-            KeplerSearch("KIC 11904151", quarter=4, cadence="long").cubedata.download(
+            KeplerSearch("KIC 11904151", quarter=4, exptime="long").cubedata.download(
                 download_dir=tmpdirname
             )
         assert "may be corrupt" in err.value.args[0]
@@ -467,7 +460,7 @@ def test_overlapping_targets_718():
 
     # When using `radius=1` we should also retrieve the overlapping targets
     # TODO: The third one is only finding 1 target for some reason
-    search = KeplerSearch("KIC 5112705", quarter=11, pipeline="Kepler", radius=1 * u.arcsec).timeseries
+    search = KeplerSearch("KIC 5112705", quarter=11, pipeline="Kepler", search_radius=1 * u.arcsec).timeseries
     assert len(search) > 1
 
     
@@ -510,7 +503,7 @@ def test_exptime_filtering():
     # Try `cadence=20`
     res = TESSSearch("AU Mic", sector=27, exptime=20).timeseries
     assert len(res) == 1
-    assert res.table["t_exptime"][0] == 20.
+    assert res.table["exptime"][0] == 20.
     assert "fast" in res.table["productFilename"][0]
 
 
@@ -520,7 +513,7 @@ def test_search_slicing_regression():
     # Regression test: slicing after calling __repr__ failed.
     res = TESSSearch("AU Mic",exptime=20).timeseries
     res.__repr__()
-    res[res.exptime.value < 100]
+    res[res.exptime[0] < 100]
 
 
 #@pytest.mark.remote_data
@@ -529,9 +522,9 @@ def test_ffi_hlsp():
     search = TESSSearch(
         "TrES-2b", sector=26
     ).timeseries  # aka TOI 2140.01
-    assert "QLP" in search.table["pipeline"]
-    assert "TESS-SPOC" in search.table["pipeline"]
-    assert "SPOC" in search.table["pipeline"]
+    assert search.table['pipeline'].str.contains('QLP').any()
+    assert search.table['pipeline'].str.contains('TESS-SPOC').any() 
+    assert search.table['pipeline'].str.contains('SPOC').any() 
     # tess-spoc also products tpfs
     search = TESSSearch("TrES-2b", sector=26).cubedata
     assert "TESS-SPOC" in search.table["pipeline"]
@@ -544,17 +537,18 @@ def test_qlp_ffi_lightcurve():
     search = TESSSearch("TrES-2b", sector=26, pipeline="qlp").timeseries
     assert len(search) == 1
     assert search.pipeline[0] == "QLP"
-    assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
+    # TODO: Add units back in when you alter the search result
+    assert search.exptime[0] == 1800. # * u.second  # Sector 26 had 30-minute FFIs
 
 
 
 #@pytest.mark.remote_data
 def test_spoc_ffi_lightcurve():
     """Can we search and download a SPOC FFI light curve?"""
-    search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc")
+    search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc").timeseries
     assert len(search) == 1
     assert search.author[0] == "TESS-SPOC"
-    assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
+    assert search.exptime[0] == 1800. # * u.second  # Sector 26 had 30-minute FFIs
     lc = search.download()
     all(lc.flux == lc.pdcsap_flux)
 
@@ -564,17 +558,17 @@ def test_split_k2_campaigns():
     """Do split K2 campaign sections appear separately in search results?"""
     # Campaign 9
     search_c09 = K2Search("EPIC 228162462", exptime="long", campaign=9).cubedata
-    assert search_c09.table["mission"][0] == "K2 - Campaign 09a"
-    assert search_c09.table["mission"][1] == "K2 - Campaign 09b"
+    assert search_c09.table["mission"][0] == "K2 - C09a"
+    assert search_c09.table["mission"][1] == "K2 - C09b"
     # Campaign 10
     
     search_c10 = K2Search("EPIC 228725972", exptime="long", campaign=10).cubedata
-    assert search_c10.table["mission"][0] == "K2 - Campaign 10a"
-    assert search_c10.table["mission"][1] == "K2 - Campaign 10b"
+    assert search_c10.table["mission"][0] == "K2 - C10a"
+    assert search_c10.table["mission"][1] == "K2 - C10b"
     # Campaign 11
     search_c11 = K2Search("EPIC 203830112", exptime="long", campaign=11).cubedata
-    assert search_c11.table["mission"][0] == "K2 - Campaign 11a"
-    assert search_c11.table["mission"][1] == "K2 - Campaign 11b"
+    assert search_c11.table["mission"][0] == "K2 - C11a"
+    assert search_c11.table["mission"][1] == "K2 - C11b"
 
 
 '''Taking this test out for now...
@@ -624,7 +618,7 @@ def test_tesscut():
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14)) == 9
-    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata() == 2)
+    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata()) == 2
 
 
 

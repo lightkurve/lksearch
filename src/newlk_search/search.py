@@ -1109,7 +1109,7 @@ class KeplerSearch(MASTSearch):
 
         # Update 'mission' with the sequence number
         self.table["mission"] = [
-            f" {proj} - Q{seq}"
+            f"{proj} - Q{seq}"
             if seq !=  '<NA>' else f"{proj}" for proj, seq in zip(self.table["mission"].values.astype(str), seq_num)  
         ]
 
@@ -1244,7 +1244,7 @@ class K2Search(MASTSearch):
                     seq_num[index] = f"{int(row['sequence_number']):02d}{letter}"
 
         self.table["mission"] = [
-            f" {proj} - C{seq}"
+            f"{proj} - C{seq}"
             for proj, seq in zip(self.table["mission"].values.astype(str), seq_num)
         ]
 
