@@ -83,7 +83,7 @@ class MASTSearch(object):
         "mission",
         "exptime",
         "distance",
-        #"year",
+        "year",
         "description",
     ]
 
@@ -934,7 +934,7 @@ class TESSSearch(MASTSearch):
                         if wcs.footprint_contains(self.SkyCoord):
                             AddSector = True
                             sector_camera = sector_camera.append(camera)
-                            sector_ccd = sector_ccd.append(camera)
+                            sector_ccd = sector_ccd.append(ccd)
 
                 if AddSector:
                     log.debug(
