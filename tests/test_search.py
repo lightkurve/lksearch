@@ -614,3 +614,14 @@ def test_customize_search_result_display():
     search.display_extra_columns = ['sequence_number', 'proposal_id']  # also support multiple columns
     assert 'proposal_id' in search.__repr__()
     assert 'sequence_number' in search.__repr__()'''
+
+#@pytest.mark.remote_data
+def test_tesscut():
+    """Can we find TESS tesscut tpfs"""
+    target = "Kepler 16b"
+    assert len(TESSSearch("Kepler 16b").search_ffi(58682,58710, sector=14)) == 1281
+
+#@pytest.mark.remote_data
+def test_tesscut():
+    """Can we find and download TESS tesscut tpfs"""
+

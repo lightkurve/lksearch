@@ -83,7 +83,7 @@ class MASTSearch(object):
         "mission",
         "exptime",
         "distance",
-        "year",
+        #"year",
         "description",
     ]
 
@@ -122,6 +122,7 @@ class MASTSearch(object):
         if isinstance(table, type(None)):
             self._target_from_name(target)
             self.table = self._update_table(self.table)
+            self.table = self._fix_table_times(self.table)
         else:
             self._target_from_table(table, obs_table, prod_table)
 
@@ -285,6 +286,25 @@ class MASTSearch(object):
         )
         joint_table = joint_table.reset_index()
 
+        #year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
+        ## `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
+        #for idx, row in joint_table.iterrows():
+        #    if (row['pipeline'] == "Kepler") & ("Data Validation" not in row['description']):
+        #        year[idx] = re.findall(
+        #            r"\d+.(\d{4})\d+", row["productFilename"]
+        #        )[0]
+        #joint_table["year"] = year.astype(int)
+       # 
+        ## TODO: make sure the time for TESS/Kepler/K2 all add 2400000.5
+        #joint_table["start_time"] = Time(
+        #    self.table["t_min"].values + 2400000.5, format="jd"
+        #).iso
+        #joint_table["end_time"] = Time(
+        #    self.table["t_max"].values + 2400000.5, format="jd"
+        #).iso
+        return joint_table
+    
+    def _fix_table_times(self, joint_table):
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
         # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
         for idx, row in joint_table.iterrows():
@@ -293,6 +313,7 @@ class MASTSearch(object):
                     r"\d+.(\d{4})\d+", row["productFilename"]
                 )[0]
         joint_table["year"] = year.astype(int)
+        
         # TODO: make sure the time for TESS/Kepler/K2 all add 2400000.5
         joint_table["start_time"] = Time(
             self.table["t_min"].values + 2400000.5, format="jd"
@@ -301,6 +322,7 @@ class MASTSearch(object):
             self.table["t_max"].values + 2400000.5, format="jd"
         ).iso
 
+        return joint_table
 
         """
         Full list of features
@@ -324,7 +346,6 @@ class MASTSearch(object):
         # self._add_s3_url_column()
         # self._sort_by_priority()
 
-        return joint_table
 
     def _search(
         self,
@@ -797,6 +818,38 @@ class MASTSearch(object):
 
 
 class TESSSearch(MASTSearch):
+    """
+    Search Class that queries mast for observations performed by the TESS
+    Mission, and returns the results in a convenient table with options to download.
+    By default mission products and HLSPs are returned.
+
+    Parameters
+    ----------
+    target: Optional[Union[str, tuple[float], SkyCoord]] = None
+        The target to search for observations of. Can be provided as a name (string),
+        coordinates in decimal degrees (tuple), or Astropy `~astropy.coordinates.SkyCoord` Object.
+    obs_table:Optional[pd.DataFrame] = None
+        Optionally, can provice a Astropy `~astropy.table.Table` Object from
+        AstroQuery `astroquery.mast.Observations.query_criteria' which will be used to construct the observations table
+    prod_table:Optional[pd.DataFrame] = None
+        Optionally, if you provide an obs_table, you may also provide a products table of assosciated products.  These
+        two tables will be concatenated to become the primary joint table of data products.
+    table:Optional[pd.DataFrame] = None
+        Optionally, may provide an stropy `~astropy.table.Table` Object  that is the already merged joint table of obs_table
+        and prod_table.
+    search_radius:Optional[Union[float,u.Quantity]] = None
+        The radius around the target name/location to search for observations.  Can be provided in arcsonds (float) or as an
+        AstroPy `~astropy.units.u.Quantity` Object
+    exptime:Optional[Union[str, int, tuple]] = (0,9999)
+        Exposure time to filter observation results on.  Can be provided as a mission-specific string,
+        an int which forces an exact match to the time in seconds, or a tuple, which provides a range to filter on.
+    mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"]
+        Mission(s) for which to search for data on
+    pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
+        Pipeline(s) which have produced the observed data
+    sectpr: Optional[int] = None,
+        TESS Observing Sector for which to search for data 
+    """
     def __init__(
         self,
         target: Optional[Union[str, tuple[float], SkyCoord]] = None,
@@ -807,7 +860,11 @@ class TESSSearch(MASTSearch):
         exptime: Optional[Union[str, int, tuple]] = (0, 9999),
         pipeline: Optional[Union[str, list[str]]] = None,
         sector: Optional[int] = None,
-    ):
+        hlsp: bool = True
+    ):  
+        if hlsp is False:
+            pipeline = ["SPOC"]
+
         super().__init__(
             target=target,
             mission=["TESS"],
@@ -820,12 +877,20 @@ class TESSSearch(MASTSearch):
             sequence=sector,
         )
         if table is None:
-            self._add_ffi_products()
+            self._add_ffi_products(sector)
             self.sort_TESS()
 
-    def _add_ffi_products(self):
+    @property
+    def cubedata(self):
+        """return a MASTSearch object with self.table only containing products that are image cubes"""
+        mask = self._filter_product_endswith("target pixel") | (self.table["pipeline"] == "TESScut" )
+
+        # return self._cubedata()
+        return self._mask(mask)                     
+
+    def _add_ffi_products(self, sector_list):
         # get the ffi info for the targets
-        ffi_info = self._get_ffi_info()
+        ffi_info = self._get_ffi_info(sector_list)
         # add the ffi info to the table
         self.table = pd.concat([self.table, ffi_info])
 
@@ -833,7 +898,7 @@ class TESSSearch(MASTSearch):
     # Use TESS WCS to just return a table of sectors and dates?
     # Then download_ffi requires a sector and time range?
 
-    def _get_ffi_info(self):
+    def _get_ffi_info(self, sector_list):
         from tesswcs import pointings
         from tesswcs import WCS
 
@@ -847,42 +912,44 @@ class TESSSearch(MASTSearch):
 
         # Check each sector / camera / ccd for observability
         # Submit a tesswcs PR for to convert table to pandas
-
-        for _, row in pointings.to_pandas().iterrows():
+        pointings = pointings.to_pandas()
+        if(sector_list is None):
+            sector_list = pointings["Sector"].values
+        for _, row in pointings.iterrows():
             tess_ra = row["RA"]
             tess_dec = row["Dec"]
             tess_roll = row["Roll"]
             sector = row["Sector"].astype(int)
+            if(sector in np.atleast_1d(sector_list)):
+                AddSector = False
+                sector_camera = []
+                sector_ccd = []
+                for camera in np.arange(1, 5):
+                    for ccd in np.arange(1, 5):
+                        # predict the WCS
+                        wcs = WCS.predict(
+                            tess_ra, tess_dec, tess_roll, camera=camera, ccd=ccd
+                        )
+                        # check if the target falls inside the CCD
+                        if wcs.footprint_contains(self.SkyCoord):
+                            AddSector = True
+                            sector_camera = sector_camera.append(camera)
+                            sector_ccd = sector_ccd.append(camera)
 
-            AddSector = False
-            sector_camera = []
-            sector_ccd = []
-            for camera in np.arange(1, 5):
-                for ccd in np.arange(1, 5):
-                    # predict the WCS
-                    wcs = WCS.predict(
-                        tess_ra, tess_dec, tess_roll, camera=camera, ccd=ccd
+                if AddSector:
+                    log.debug(
+                        f"Target Observable in Sector {sector}, Camera {sector_camera}, CCD {sector_ccd}"
                     )
-                    # check if the target falls inside the CCD
-                    if wcs.footprint_contains(self.SkyCoord):
-                        AddSector = True
-                        sector_camera = sector_camera.append(camera)
-                        sector_ccd = sector_ccd.append(camera)
-
-            if AddSector:
-                log.debug(
-                    f"Target Observable in Sector {sector}, Camera {sector_camera}, CCD {sector_ccd}"
-                )
-                tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
-                tesscut_mission.append(f"TESS Sector {sector:02d}")
-                tesscut_tmin.append(
-                    row["Start"] - 2400000.5
-                )  # Time(row[5], format="jd").iso)
-                tesscut_tmax.append(
-                    row["End"] - 2400000.5
-                )  # Time(row[6], format="jd").iso)
-                tesscut_exptime.append(self._sector2ffiexptime(sector))
-                tesscut_seqnum.append(sector)
+                    tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
+                    tesscut_mission.append(f"TESS Sector {sector:02d}")
+                    tesscut_tmin.append(
+                        row["Start"] - 2400000.5
+                    )  # Time(row[5], format="jd").iso)
+                    tesscut_tmax.append(
+                        row["End"] - 2400000.5
+                    )  # Time(row[6], format="jd").iso)
+                    tesscut_exptime.append(self._sector2ffiexptime(sector))
+                    tesscut_seqnum.append(sector)
 
         # Build the ffi dataframe from the observability
         n_results = len(tesscut_seqnum)
@@ -935,8 +1002,92 @@ class TESSSearch(MASTSearch):
         )
         self.table = df
 
-    def download_ffi():
-        raise NotImplementedError
+    def search_individual_ffi(self,
+                   tmin: Union[float,Time],
+                   tmax: Union[float,Time],
+                   search_radius: Union[float, u.Quantity] = 0.0001 * u.arcsec,
+                   exptime: Union[str, int, tuple] = (0, 9999),
+                   sector: Union[int, type(None)] = None,
+                   **extra_query_criteria):
+        
+        "given a time range, return the product list of FFIs for that this target and time range"
+        
+        query_criteria = {"project": "TESS", **extra_query_criteria}
+        query_criteria["provenance_name"] = "SPOC"
+        query_criteria["dataproduct_type"] = "image"
+        #query_criteria["calib_level"] = 2
+        
+        if type(tmin) == type(Time):
+            tmin = tmin.mjd
+ 
+        if type(tmax) == type(Time):
+            tmax = tmax.mjd
+
+        query_criteria["t_min"] = (tmin, tmax)
+        query_criteria["t_max"] = (tmin, tmax)
+
+        if not isinstance(search_radius, u.quantity.Quantity):
+            log.warning(
+                f"Search radius {search_radius} units not specified, assuming arcsec"
+                )
+            search_radius = search_radius * u.arcsec
+        
+        if sector is not None:
+            query_criteria["sequence_number"] = sector
+
+        if exptime is not None:
+            query_criteria["t_exptime"] = exptime
+        
+        query_criteria["radius"] = str(search_radius.to(u.deg))
+
+        ffi_obs = Observations.query_criteria(objectname=self.target_search_string,
+                                              **query_criteria,
+                                            )
+        
+        ffi_products = Observations.get_product_list(ffi_obs)
+        #filter out uncalibrated ffi's & theoretical potential HLSP
+        prod_mask = ffi_products['calib_level'] == 2
+        ffi_products = ffi_products[prod_mask] 
+        print(ffi_products)
+
+        new_table = deepcopy(self)
+        
+        new_table._target_from_table(None, 
+                                     ffi_obs.to_pandas(), 
+                                     ffi_products.to_pandas())
+        print(new_table.table)
+       #new_table.table = new_table._update_table(new_table.table)
+
+        return new_table
+
+    def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = "~/.", 
+                 TESScut_product="SPOC",
+                 TESScut_size = 10):
+        mf1 = []
+        mf2 = []
+        if("TESScut"  not in self.table.provenance_name.unique()):
+            mf2  = super().download(cloud, cache, cloud_only, download_dir)
+        if("TESScut" in self.table.provenance_name.unique()):
+            mask = self.table["provenance_name"] == "TESScut"
+            self._mask(~mask).download()
+            from astroquery.mast import TesscutClass
+            mf1 = TesscutClass.download_cutouts(coordinates=self.SkyCoord, 
+                                          size=TESScut_size, 
+                                          sector=self.table['sequence_number'].values[mask], 
+                                          product=TESScut_product, 
+                                          path=PACKAGEDIR, 
+                                          inflate=True, 
+                                          moving_target=False, #this could be added
+                                          mt_type=None, verbose=False)
+        manifest = mf1.append(mf2)
+        return manifest
+
+
+
+
+#Download should work here    
+#    def download_ffi(self):
+#        raise NotImplementedError
 
     # This was in Christina's PR to search. Is this a way we want to handle HLSPs?
     # def _mask_bad_authors(authors):
