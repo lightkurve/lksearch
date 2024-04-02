@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "newlk-search"
+version = "0.1.0"
+description = "Helpful package to search for TESS/Kepler/K2 data"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
