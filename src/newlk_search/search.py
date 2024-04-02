@@ -828,6 +828,7 @@ class TESSSearch(MASTSearch):
         tesscut_tmax = []
         tesscut_exptime = []
         tesscut_seqnum = []
+        tesscut_year = []
 
         # Check each sector / camera / ccd for observability
         # Submit a tesswcs PR for to convert table to pandas
@@ -868,6 +869,7 @@ class TESSSearch(MASTSearch):
                     )  # Time(row[6], format="jd").iso)
                     tesscut_exptime.append(self._sector2ffiexptime(sector))
                     tesscut_seqnum.append(sector)
+                    tesscut_year.append(int(np.floor(Time(row["Start"], format='jd').decimalyear)))
 
         # Build the ffi dataframe from the observability
         n_results = len(tesscut_seqnum)
@@ -887,6 +889,7 @@ class TESSSearch(MASTSearch):
                 "sequence_number": tesscut_seqnum,
                 "project": ["TESS"] * n_results,
                 "obs_collection": ["TESS"] * n_results,
+                "year": tesscut_year
             }
         )
 
