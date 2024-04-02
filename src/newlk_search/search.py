@@ -336,23 +336,11 @@ class MASTSearch(object):
             self.target_search_string = search_input
             self.SkyCoord = SkyCoord.from_name(search_input, frame="icrs")
 
+
             target_lower = str(search_input).lower()
-            # Was a Kepler target ID passed?
-            kplr_match = re.match(r"^(kplr|kic) ?(\d+)$", target_lower)
-            if kplr_match:
-                self.exact_target_name = f"kplr{kplr_match.group(2).zfill(9)}"
-                self.exact_target = True
-
-            # Was a K2 target ID passed?
-            ktwo_match = re.match(r"^(ktwo|epic) ?(\d+)$", target_lower)
-            if ktwo_match:
-                self.exact_target_name = f"ktwo{ktwo_match.group(2).zfill(9)}"
-                self.exact_target = True
-
-            # Was a TESS target ID passed?
-            tess_match = re.match(r"^(tess|tic) ?(\d+)$", target_lower)
-            if tess_match:
-                self.exact_target_name = f"{tess_match.group(2).zfill(9)}"
+            target_str = self._check_exact(target_lower)
+            if target_str:
+                self.exact_target_name = self._target_to_exact_name(target_str)
                 self.exact_target = True
 
         else:
@@ -360,6 +348,16 @@ class MASTSearch(object):
                 "Target must be a target name string or astropy coordinate object"
             )
 
+    def _check_exact(self,target):
+        """We dont check exact target name for mast search - 
+        TESS/Kepler/K2 have different exact names for identical objects"""
+        return False
+    
+    def _target_to_exact_name(self, target):
+        """We dont check exact target name for mast search - 
+        TESS/Kepler/K2 have different exact names for identical objects"""
+        return NotImplementedError("Use mission appropriate search for exact targets")
+    
     def _add_s3_url_column(self, joint_table):
         """ self.table will updated to have an extra column of s3 URLS if possible """
         Observations.enable_cloud_dataset()
@@ -776,7 +774,7 @@ class TESSSearch(MASTSearch):
         hlsp: bool = True
     ):  
         if hlsp is False:
-            pipeline = ["SPOC"]
+            pipeline = ["SPOC", "TESS-SPOC", "TESScut"]
 
         super().__init__(
             target=target,
@@ -790,9 +788,18 @@ class TESSSearch(MASTSearch):
             sequence=sector,
         )
         if table is None:
-            self._add_ffi_products(sector)
+            if(("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None))):
+                self._add_ffi_products(sector)
             self.sort_TESS()
 
+    def _check_exact(self,target):
+        """ Was a TESS target ID passed? """
+        return re.match(r"^(tess|tic) ?(\d+)$", target)
+
+    def _target_to_exact_name(self, target):
+        "parse TESS TIC to exact target name"
+        return f"{target.group(2).zfill(9)}"
+  
     @property 
     def tesscut(self):
         """return the TESScut only data"""
@@ -1050,7 +1057,14 @@ class KeplerSearch(MASTSearch):
             # Can't search mast with quarter/month directly, so filter on that after the fact.
             self.table = self.table[self._filter_kepler(quarter, month)]
 
+    def _check_exact(self,target):
+        """ Was a Kepler target ID passed? """
+        return re.match(r"^(kplr|kic) ?(\d+)$", target)
 
+    def _target_to_exact_name(self, target):
+        "parse Kepler TIC to exact target name"
+        return f"kplr{kplr_match.group(2).zfill(9)}"
+#
     def _handle_kbonus(self):
         # KBONUS times are masked as they are invalid for the quarter data
         # kbonus_mask = self.table["pipeline"] == "KBONUS-BKG"
@@ -1202,6 +1216,15 @@ class K2Search(MASTSearch):
             self._fix_K2_sequence()
             self.sort_K2()
 
+    def _check_exact(self,target):
+        """ Was a K2 target ID passed? """
+        return re.match(r"^(ktwo|epic) ?(\d+)$", target)
+
+    def _target_to_exact_name(self, target):
+        "parse K2 TIC to exact target name"
+        return f"ktwo{ktwo_match.group(2).zfill(9)}"
+
+#
     def _add_K2_mission_product(self):
         # Some products are HLSPs and some are mission products
         mission_product = np.zeros(len(self.table), dtype=bool)
