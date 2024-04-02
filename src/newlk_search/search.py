@@ -24,6 +24,7 @@ from copy import deepcopy
 # from .config import conf, config
 from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
+default_download_dir = config.get_cache_dir()
 
 from memoization import cached
 
@@ -787,7 +788,7 @@ class MASTSearch(object):
         cloud: bool = True,
         cache: bool = True,
         cloud_only: bool = False,
-        download_dir: str = "~/.",
+        download_dir: str = default_download_dir,
     ):
         # TODO magic caching
         """
@@ -811,10 +812,7 @@ class MASTSearch(object):
         ]
         return manifest
 
-    def _default_download_dir(self):
-        # TODO: again, I can't inport config so hard code it for now
-        # return config.get_cache_dir()
-        return "~/."
+
 
 
 class TESSSearch(MASTSearch):
@@ -1077,7 +1075,7 @@ class TESSSearch(MASTSearch):
         
         return new_table 
 
-    def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = "~/.", 
+    def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = default_download_dir, 
                  TESScut_product="SPOC",
                  TESScut_size = 10):
         mf1 = []
