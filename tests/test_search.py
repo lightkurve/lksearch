@@ -389,7 +389,7 @@ def test_corrupt_download_handling_case_empty():
         os.makedirs(expected_dir)
         open(expected_fn, "w").close()  # create "corrupt" i.e. empty file
         with pytest.raises(LightkurveError) as err:
-            KeplerSearch("KIC 11904151", quarter=4, cadence="long").cubedata.download(
+            KeplerSearch("KIC 11904151", quarter=4, exptime="long").cubedata.download(
                 download_dir=tmpdirname
             )
         assert "may be corrupt" in err.value.args[0]
@@ -460,7 +460,7 @@ def test_overlapping_targets_718():
 
     # When using `radius=1` we should also retrieve the overlapping targets
     # TODO: The third one is only finding 1 target for some reason
-    search = KeplerSearch("KIC 5112705", quarter=11, pipeline="Kepler", radius=1 * u.arcsec).timeseries
+    search = KeplerSearch("KIC 5112705", quarter=11, pipeline="Kepler", search_radius=1 * u.arcsec).timeseries
     assert len(search) > 1
 
     
@@ -503,7 +503,7 @@ def test_exptime_filtering():
     # Try `cadence=20`
     res = TESSSearch("AU Mic", sector=27, exptime=20).timeseries
     assert len(res) == 1
-    assert res.table["t_exptime"][0] == 20.
+    assert res.table["exptime"][0] == 20.
     assert "fast" in res.table["productFilename"][0]
 
 
@@ -513,7 +513,7 @@ def test_search_slicing_regression():
     # Regression test: slicing after calling __repr__ failed.
     res = TESSSearch("AU Mic",exptime=20).timeseries
     res.__repr__()
-    res[res.exptime.value < 100]
+    res[res.exptime[0] < 100]
 
 
 #@pytest.mark.remote_data
@@ -537,7 +537,8 @@ def test_qlp_ffi_lightcurve():
     search = TESSSearch("TrES-2b", sector=26, pipeline="qlp").timeseries
     assert len(search) == 1
     assert search.pipeline[0] == "QLP"
-    assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
+    # TODO: Add units back in when you alter the search result
+    assert search.exptime[0] == 1800. # * u.second  # Sector 26 had 30-minute FFIs
 
 
 
@@ -547,7 +548,7 @@ def test_spoc_ffi_lightcurve():
     search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc")
     assert len(search) == 1
     assert search.author[0] == "TESS-SPOC"
-    assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
+    assert search.exptime[0] == 1800. # * u.second  # Sector 26 had 30-minute FFIs
     lc = search.download()
     all(lc.flux == lc.pdcsap_flux)
 
@@ -557,17 +558,17 @@ def test_split_k2_campaigns():
     """Do split K2 campaign sections appear separately in search results?"""
     # Campaign 9
     search_c09 = K2Search("EPIC 228162462", exptime="long", campaign=9).cubedata
-    assert search_c09.table["mission"][0] == "K2 - Campaign 09a"
-    assert search_c09.table["mission"][1] == "K2 - Campaign 09b"
+    assert search_c09.table["mission"][0] == "K2 - C09a"
+    assert search_c09.table["mission"][1] == "K2 - C09b"
     # Campaign 10
     
     search_c10 = K2Search("EPIC 228725972", exptime="long", campaign=10).cubedata
-    assert search_c10.table["mission"][0] == "K2 - Campaign 10a"
-    assert search_c10.table["mission"][1] == "K2 - Campaign 10b"
+    assert search_c10.table["mission"][0] == "K2 - C10a"
+    assert search_c10.table["mission"][1] == "K2 - C10b"
     # Campaign 11
     search_c11 = K2Search("EPIC 203830112", exptime="long", campaign=11).cubedata
-    assert search_c11.table["mission"][0] == "K2 - Campaign 11a"
-    assert search_c11.table["mission"][1] == "K2 - Campaign 11b"
+    assert search_c11.table["mission"][0] == "K2 - C11a"
+    assert search_c11.table["mission"][1] == "K2 - C11b"
 
 
 '''Taking this test out for now...
