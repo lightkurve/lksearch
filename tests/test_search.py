@@ -522,9 +522,9 @@ def test_ffi_hlsp():
     search = TESSSearch(
         "TrES-2b", sector=26
     ).timeseries  # aka TOI 2140.01
-    assert "QLP" in search.table["pipeline"]
-    assert "TESS-SPOC" in search.table["pipeline"]
-    assert "SPOC" in search.table["pipeline"]
+    assert search.table['pipeline'].str.contains('QLP').any()
+    assert search.table['pipeline'].str.contains('TESS-SPOC').any() 
+    assert search.table['pipeline'].str.contains('SPOC').any() 
     # tess-spoc also products tpfs
     search = TESSSearch("TrES-2b", sector=26).cubedata
     assert "TESS-SPOC" in search.table["pipeline"]
@@ -545,7 +545,7 @@ def test_qlp_ffi_lightcurve():
 #@pytest.mark.remote_data
 def test_spoc_ffi_lightcurve():
     """Can we search and download a SPOC FFI light curve?"""
-    search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc")
+    search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc").timeseries
     assert len(search) == 1
     assert search.author[0] == "TESS-SPOC"
     assert search.exptime[0] == 1800. # * u.second  # Sector 26 had 30-minute FFIs
@@ -618,7 +618,7 @@ def test_tesscut():
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14)) == 9
-    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata() == 2)
+    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata()) == 2
 
 
 
