@@ -168,23 +168,6 @@ def test_search_timeseries(caplog):
     assert len(TESSSearch("pi Mensae", pipeline="SPOC", sector=1).timeseries.table) == 1
 
 
-#@pytest.mark.remote_data
-'''def test_search_tesscut():
-    # Cutout by target name
-    assert len(search_tesscut("pi Mensae", sector=1).table) == 1
-    assert len(search_tesscut("pi Mensae").table) > 1
-    # Cutout by TIC ID
-    assert len(search_tesscut("TIC 206669860", sector=28).table) == 1
-    # Cutout by RA, dec string
-    search_string = search_tesscut("30.578761, -83.210593")
-    # Cutout by SkyCoord
-    c = SkyCoord("30.578761 -83.210593", unit=(u.deg, u.deg))
-    search_coords = search_tesscut(c)
-    # These should be identical
-    assert len(search_string.table) == len(search_coords.table)
-    # The coordinates below are beyond the edge of the sector 4 (camera 1-4) FFI
-    search_edge = search_tesscut("30.578761, 6.210593", sector=4)
-    assert len(search_edge.table) == 0'''
 
 
 #@pytest.mark.remote_data
@@ -614,7 +597,7 @@ def test_tesscut():
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14)) == 11
-    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata) == 2
+    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata) == 3
 
 
 

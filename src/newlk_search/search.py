@@ -749,7 +749,7 @@ class TESSSearch(MASTSearch):
         Optionally, may provide an stropy `~astropy.table.Table` Object  that is the already merged joint table of obs_table
         and prod_table.
     search_radius:Optional[Union[float,u.Quantity]] = None
-        The radius around the target name/location to search for observations.  Can be provided in arcsonds (float) or as an
+        The radius around the target name/location to search for observations.  Can be provided in arcseconds (float) or as an
         AstroPy `~astropy.units.u.Quantity` Object
     exptime:Optional[Union[str, int, tuple]] = (0,9999)
         Exposure time to filter observation results on.  Can be provided as a mission-specific string,
@@ -758,7 +758,7 @@ class TESSSearch(MASTSearch):
         Mission(s) for which to search for data on
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
-    sectpr: Optional[int] = None,
+    sector: Optional[int] = None,
         TESS Observing Sector for which to search for data 
     """
     def __init__(
@@ -908,6 +908,7 @@ class TESSSearch(MASTSearch):
         return ffi_result
 
     def _sector2ffiexptime(self, sector):
+        # Determine what the FFI cadence was based on sector
         if sector < 27:
             return 1800
         elif (sector >= 27) & (sector <= 55):
@@ -916,7 +917,7 @@ class TESSSearch(MASTSearch):
             return 200
 
     def sort_TESS(self):
-        # base sort + TESS HLSP handling?
+        # Sort TESS results so that SPOC products appear at the top
         sort_priority = {
             "SPOC": 1,
             "TESS-SPOC": 2,
@@ -1027,6 +1028,40 @@ class TESSSearch(MASTSearch):
         return manifest
 
 class KeplerSearch(MASTSearch):
+    """
+    Search Class that queries mast for observations performed by the Kepler
+    Mission, and returns the results in a convenient table with options to download.
+    By default both mission products and HLSPs are returned.
+
+    Parameters
+    ----------
+    target: Optional[Union[str, tuple[float], SkyCoord]] = None
+        The target to search for observations of. Can be provided as a name (string),
+        coordinates in decimal degrees (tuple), or Astropy `~astropy.coordinates.SkyCoord` Object.
+    obs_table:Optional[pd.DataFrame] = None
+        Optionally, can provice a Astropy `~astropy.table.Table` Object from
+        AstroQuery `astroquery.mast.Observations.query_criteria' which will be used to construct the observations table
+    prod_table:Optional[pd.DataFrame] = None
+        Optionally, if you provide an obs_table, you may also provide a products table of assosciated products.  These
+        two tables will be concatenated to become the primary joint table of data products.
+    table:Optional[pd.DataFrame] = None
+        Optionally, may provide an stropy `~astropy.table.Table` Object  that is the already merged joint table of obs_table
+        and prod_table.
+    search_radius:Optional[Union[float,u.Quantity]] = None
+        The radius around the target name/location to search for observations.  Can be provided in arcseconds (float) or as an
+        AstroPy `~astropy.units.u.Quantity` Object
+    exptime:Optional[Union[str, int, tuple]] = (0,9999)
+        Exposure time to filter observation results on.  Can be provided as a mission-specific string,
+        an int which forces an exact match to the time in seconds, or a tuple, which provides a range to filter on.
+    mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"]
+        Mission(s) for which to search for data on
+    pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
+        Pipeline(s) which have produced the observed data
+    quarter: Optional[int] = None,
+        Kepler Observing Quarter for which to search for data 
+    month: Optional[int] = None,
+        Observation month for Kepler
+    """
     def __init__(
         self,
         target: [Union[str, tuple[float], SkyCoord]],
@@ -1188,6 +1223,38 @@ class KeplerSearch(MASTSearch):
 
 
 class K2Search(MASTSearch):
+    """
+    Search Class that queries mast for observations performed by the K2
+    Mission, and returns the results in a convenient table with options to download.
+    By default both mission products and HLSPs are returned.
+
+    Parameters
+    ----------
+    target: Optional[Union[str, tuple[float], SkyCoord]] = None
+        The target to search for observations of. Can be provided as a name (string),
+        coordinates in decimal degrees (tuple), or Astropy `~astropy.coordinates.SkyCoord` Object.
+    obs_table:Optional[pd.DataFrame] = None
+        Optionally, can provice a Astropy `~astropy.table.Table` Object from
+        AstroQuery `astroquery.mast.Observations.query_criteria' which will be used to construct the observations table
+    prod_table:Optional[pd.DataFrame] = None
+        Optionally, if you provide an obs_table, you may also provide a products table of assosciated products.  These
+        two tables will be concatenated to become the primary joint table of data products.
+    table:Optional[pd.DataFrame] = None
+        Optionally, may provide an stropy `~astropy.table.Table` Object  that is the already merged joint table of obs_table
+        and prod_table.
+    search_radius:Optional[Union[float,u.Quantity]] = None
+        The radius around the target name/location to search for observations.  Can be provided in arcseconds (float) or as an
+        AstroPy `~astropy.units.u.Quantity` Object
+    exptime:Optional[Union[str, int, tuple]] = (0,9999)
+        Exposure time to filter observation results on.  Can be provided as a mission-specific string,
+        an int which forces an exact match to the time in seconds, or a tuple, which provides a range to filter on.
+    mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"]
+        Mission(s) for which to search for data on
+    pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
+        Pipeline(s) which have produced the observed data
+    qcampaign: Optional[int] = None,
+        K2 Observing Campaign for which to search for data 
+    """
     def __init__(
         self,
         target: [Union[str, tuple[float], SkyCoord]],
