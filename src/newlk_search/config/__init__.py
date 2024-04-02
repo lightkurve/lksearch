@@ -4,7 +4,7 @@ import warnings
 import astropy.config as astropyconfig
 
 
-ROOTNAME = 'lightkurve'
+ROOTNAME = 'newlk_search'
 
 class ConfigNamespace(astropyconfig.ConfigNamespace):
     rootname = ROOTNAME

@@ -28,7 +28,7 @@ class Conf(_config.ConfigNamespace):
         List of extra columns to be included when displaying a SearchResult object.
 
     cache_dir
-        Default cache directory for data files downloaded, etc. Defaults to ``~/.lightkurve/cache`` if not specified.
+        Default cache directory for data files downloaded, etc. Defaults to ``~/.newlk_search/cache`` if not specified.
 
     """
     # Note: when using list or string_list datatype,
@@ -41,14 +41,14 @@ class Conf(_config.ConfigNamespace):
         [],
         "List of extra columns to be included when displaying a SearchResult object.",
         cfgtype="string_list",
-        module="lightkurve.search"
+        module="newlk_search.search"
     )
 
     cache_dir = _config.ConfigItem(
         None,
         "Default cache directory for data files downloaded, etc.",
         cfgtype="string",
-        module="lightkurve.config"
+        module="newlk_search.config"
     )
 
 

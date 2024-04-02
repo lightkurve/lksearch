@@ -25,18 +25,19 @@ from astropy.utils.data import get_pkg_data_filename
 import shutil
 
 from lightkurve.utils import LightkurveWarning, LightkurveError
-from src.newlk_search.search import (
+
+from newlk_search.search import (
     MASTSearch,
     KeplerSearch,
     TESSSearch,
     K2Search,
     log,
 )
-from lightkurve import (
+'''from lightkurve import (
     KeplerTargetPixelFile,
     TessTargetPixelFile,
     TargetPixelFileCollection,
-)
+)'''
 
 #Added the below from this file
 #from src.test_conf import use_custom_config_file, remove_custom_config
