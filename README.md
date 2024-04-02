@@ -14,7 +14,7 @@ This package is a stand-alone implementation of the lightkurve search functional
 ## Usage
   from newlk_search import search
   ### Get long-cadence target pixel files for Kepler 
-  result = search.KeplerSearch("KIC 11904151", cadence="long").cubedata
+  result = search.KeplerSearch("KIC 11904151", exptime="long").cubedata
   ### Search for TESS TPFs by coordinate
   result = search.search_timeseries("297.5835, 40.98339", quarter=6, author="Kepler")
   

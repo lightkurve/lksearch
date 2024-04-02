@@ -617,7 +617,7 @@ def test_tesscut():
 #@pytest.mark.remote_data
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
-    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14)) == 9
+    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14)) == 11
     assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata()) == 2
 
 
