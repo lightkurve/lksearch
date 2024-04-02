@@ -550,7 +550,7 @@ def test_qlp_ffi_lightcurve():
 #@pytest.mark.remote_data
 def test_spoc_ffi_lightcurve():
     """Can we search and download a SPOC FFI light curve?"""
-    search = search_timeseries("TrES-2b", sector=26, author="tess-spoc")
+    search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc")
     assert len(search) == 1
     assert search.author[0] == "TESS-SPOC"
     assert search.exptime[0] == 1800 * u.second  # Sector 26 had 30-minute FFIs
