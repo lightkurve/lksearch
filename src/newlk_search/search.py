@@ -1055,14 +1055,27 @@ class TESSSearch(MASTSearch):
         ffi_products = ffi_products[prod_mask] 
 
         new_table = deepcopy(self)
-        new_table.table = pd.concat([new_table.table, ffi_products.to_pandas()],
-                                    join='outer')
-        #new_table._target_from_table(ffi_products.to_pandas(), 
-        #                             ffi_obs.to_pandas(), 
-        #                             ffi_products.to_pandas())
-        #new_table.table = new_table._update_table(new_table.table)
 
-        return new_table#ffi_products.to_pandas()
+        new_table.obs_table = ffi_products.to_pandas()
+        new_table.obs_table['year'] = np.nan
+        
+        new_table.prod_table = ffi_obs.to_pandas()
+        new_table.table = None
+        
+        test_table = new_table._join_tables()
+        test_table.reset_index()
+        new_table.table = new_table._update_table(test_table)
+    
+        new_table.table["target_name"] = new_table.obs_table["obs_id"]
+        new_table.table["obs_collection"] = ["TESS"] * len(new_table.table)
+        
+        new_table.table["pipeline"] =  [new_table.prod_table["provenance_name"].values[0]] * len(new_table.table)
+        new_table.table["exptime"] =  new_table.table["obs_id"].apply(
+            (lambda x: self._sector2ffiexptime(int(x.split("-")[1][1:]))))
+        new_table.table["year"] = new_table.table["obs_id"].apply(
+            (lambda x: int(x.split("-")[0][4:8])))
+        
+        return new_table 
 
     def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = "~/.", 
                  TESScut_product="SPOC",
