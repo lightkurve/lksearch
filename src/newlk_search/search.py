@@ -378,11 +378,15 @@ class MASTSearch(object):
         ~pandas.DataFrame
             the input table with updated values and additional columns
         """
-
+        if (isinstance, joint_table.index, pd.MultiIndex):
+            #Multi-Index leading to issues, re-index?
+            joint_table = joint_table.reset_index()
+            
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
         # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
         for idx, row in joint_table.iterrows():
             if (row['pipeline'] == "Kepler") & ("Data Validation" not in row['description']):
+
                 year[idx] = re.findall(
                     r"\d+.(\d{4})\d+", row["productFilename"]
                 )[0]
