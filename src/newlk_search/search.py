@@ -110,6 +110,12 @@ class MASTSearch(object):
             self._target_from_name(target)
             self.table = self._update_table(self.table)
             self.table = self._fix_table_times(self.table)
+
+            self.table["mission"] = [
+                f"{proj} - C{seq}"
+                for proj, seq in zip(self.table["mission"].values.astype(str), self.table['sequence_number'])
+            ]
+
         # If MAST search tables are provided, another MAST search is not necessary
         else:
             self._target_from_table(table, obs_table, prod_table)
@@ -299,7 +305,7 @@ class MASTSearch(object):
             },
             inplace=True,
         )
-        joint_table = joint_table.reset_index()
+
 
         return joint_table
     
