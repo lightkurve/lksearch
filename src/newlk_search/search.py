@@ -13,15 +13,11 @@ from astropy.time import Time
 
 from copy import deepcopy
 
-# from .config import conf, config
 from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
 default_download_dir = config.get_cache_dir()
 
-from memoization import cached
-# import cache
-# from src.newlk_search.cache import cache
-
+# from memoization import cached
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +84,7 @@ class MASTSearch(object):
         prod_table: Optional[pd.DataFrame] = None,
         table: Optional[pd.DataFrame] = None,
         search_radius: Optional[Union[float, u.Quantity]] = None,
-        exptime: Optional[Union[str, int, tuple]] = (0, 9999),  # None,
+        exptime: Optional[Union[str, int, tuple]] = (0, 9999), 
         mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
         pipeline: Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"],
         sequence: Optional[int] = None,
@@ -109,10 +105,18 @@ class MASTSearch(object):
             )
 
         self.target = target
+
         if isinstance(table, type(None)):
             self._searchtable_from_target(target)
             self.table = self._update_table(self.table)
             self.table = self._fix_table_times(self.table)
+
+            self.table["mission"] = [
+                f"{proj} - C{seq}"
+                for proj, seq in zip(self.table["mission"].values.astype(str), self.table['sequence_number'])
+            ]
+
+        # If MAST search tables are provided, another MAST search is not necessary
         else:
             self._searchtable_from_table(table, obs_table, prod_table)
 
@@ -144,7 +148,7 @@ class MASTSearch(object):
         )
         mask = self._filter(
             exptime=self.search_exptime,
-            project=self.search_mission,
+            mission=self.search_mission,
             pipeline=self.search_pipeline,
         )  # setting provenance_name=None will return HLSPs
 
@@ -192,7 +196,36 @@ class MASTSearch(object):
     def __len__(self):
         """Returns the number of products in the SearchResult table."""
         return len(self.table)
+    def __repr__(self):
+        if isinstance(self.table, pd.DataFrame):
+            if len(self.table) > 0:
+                return self.table[self._REPR_COLUMNS].__repr__()
+            else:
+                return "No results found"
+        else:
+            return "I am an uninitialized MASTSearch result"
 
+    # Used to call the pandas table html output which is nicer
+    def _repr_html_(self):
+
+        if isinstance(self.table, pd.DataFrame):
+            if len(self.table) > 0:
+                return self.table[self._REPR_COLUMNS]._repr_html_()
+            else:
+                return "No results found"
+        else:
+            return "I am an uninitialized MASTSearch result"
+
+    def __getitem__(self, key):
+        if isinstance(key, (slice, int)):
+            mask = np.in1d(np.arange(len(self.table)), np.arange(len(self.table))[key])
+            return self._mask(mask)
+        if isinstance(key, (str, list)):
+            return self.table.iloc[key]
+        if hasattr(key, "__iter__"):
+            if len(key) == len(self.table):
+                return self._mask(key)
+            
     @property
     def ra(self):
         """Right Ascension coordinate for each data product found."""
@@ -252,6 +285,29 @@ class MASTSearch(object):
         return np.asarray(
             Observations.get_cloud_uris(Table.from_pandas(self.table), full_url=True)
         )
+    
+    @property
+    def timeseries(self):
+        """return a MASTSearch object with self.table only containing products that are a time-series measurement"""
+        # mask = self.table.productFilename.str.endswith("lc.fits")
+        # Not sure about the call below. Will exptime already have been handled in the mast search?
+        mask = self._mask_product_type("lightcurve")
+        return self._mask(mask)
+
+    @property
+    def cubedata(self):
+        """return a MASTSearch object with self.table only containing products that are image cubes"""
+        mask = self._mask_product_type("target pixel")
+
+        # return self._cubedata()
+        return self._mask(mask)
+
+    @property
+    def dvreports(self):
+        """return a MASTSearch object with self.table only containing products that are data validation pdf files"""
+        # mask = self.table.productFilename.str.endswith(".pdf")
+        mask = self._mask_product_type(filetype="dvreport")
+        return self._mask(mask)
 
     # def __getattr__(self, attr):
     #    try:
@@ -259,39 +315,15 @@ class MASTSearch(object):
     #    except AttributeError:
     #        raise AttributeError(f"'Result' object has no attribute '{attr}'")
 
-    def __repr__(self):
-        if isinstance(self.table, pd.DataFrame):
-            if len(self.table) > 0:
-                return self.table[self._REPR_COLUMNS].__repr__()
-            else:
-                return "No results found"
-        else:
-            return "I am an uninitialized MASTSearch result"
 
-    # Used to call the pandas table html output which is nicer
-    def _repr_html_(self):
-        if isinstance(self.table, pd.DataFrame):
-            return self.table[self._REPR_COLUMNS]._repr_html_()
-        else:
-            return "I am an uninitialized MASTSearch result"
-
-    def __getitem__(self, key):
-        if isinstance(key, (slice, int)):
-            mask = np.in1d(np.arange(len(self.table)), np.arange(len(self.table))[key])
-            return self._mask(mask)
-        if isinstance(key, (str, list)):
-            return self.table.iloc[key]
-        if hasattr(key, "__iter__"):
-            if len(key) == len(self.table):
-                return self._mask(key)
 
     def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then returns them as a new Search object.
         deepcopy is used to preserve the class metadata stored in class variables"""
-        new_table = deepcopy(self)
-        new_table.table = self.table[mask].reset_index()
+        new_MASTSearch = deepcopy(self)
+        new_MASTSearch.table = self.table[mask].reset_index()
 
-        return new_table
+        return new_MASTSearch
 
     def _update_table(self, joint_table: pd.DataFrame):
         """updates self.table for a handfull of convenient column renames and streamlining choices
@@ -306,10 +338,14 @@ class MASTSearch(object):
         joint_table : ~pandas.DataFrame
             the updated & re-formatted data-frame
         """
-        #copy columns
-        joint_table = joint_table.rename(columns={"t_exptime": "exptime"})
-        joint_table["pipeline"] = joint_table["provenance_name"].copy()
-        joint_table["mission"] = joint_table["obs_collection_obs"].copy()
+
+        # Modifies a MAST table with user-friendly columns
+        if "t_exptime" in joint_table.columns:
+            joint_table = joint_table.rename(columns={"t_exptime": "exptime"})
+        if "provenance_name" in joint_table.columns:
+            joint_table["pipeline"] = joint_table["provenance_name"].copy()
+        if "obs_collection_obs" in joint_table.columns:
+            joint_table["mission"] = joint_table["obs_collection_obs"].copy()
 
         # rename identical columns
         joint_table.rename(
@@ -322,12 +358,15 @@ class MASTSearch(object):
             },
             inplace=True,
         )
-        joint_table = joint_table.reset_index()
+
 
         return joint_table
     
     def _fix_table_times(self, joint_table: pd.DataFrame):
         """fixes incorrect times and adds convenient columns to the search table
+        MAST returns the min and max time for each observation in the table. 
+        Turn this value into the standard JD format
+        Also extract the observation year for sorting purposes
 
         Parameters
         ----------
@@ -339,6 +378,7 @@ class MASTSearch(object):
         ~pandas.DataFrame
             the input table with updated values and additional columns
         """
+
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
         # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
         for idx, row in joint_table.iterrows():
@@ -348,12 +388,11 @@ class MASTSearch(object):
                 )[0]
         joint_table["year"] = year.astype(int)
         
-        # TODO: make sure the time for TESS/Kepler/K2 all add 2400000.5
         joint_table["start_time"] = Time(
-            self.table["t_min"].values + 2400000.5, format="jd"
+            self.table["t_min"], format="mjd"
         ).iso
         joint_table["end_time"] = Time(
-            self.table["t_max"].values + 2400000.5, format="jd"
+            self.table["t_max"], format="mjd"
         ).iso
 
         return joint_table
@@ -394,9 +433,9 @@ class MASTSearch(object):
             search_radius=search_radius,
             exptime=exptime,
             mission=mission,
-            filetype=["lightcurve", "target pixel", "dv"],
             pipeline=pipeline,
             sequence=sequence,
+            filetype=["lightcurve", "target pixel", "dv"],
         )
         self.prod_table = self._search_prod()
         joint_table = self._join_tables()
@@ -452,12 +491,12 @@ class MASTSearch(object):
             )
 
     def _check_exact(self,target):
-        """We dont check exact target name for mast search - 
+        """We dont check exact target name for the generic MAST search - 
         TESS/Kepler/K2 have different exact names for identical objects"""
         return False
     
     def _target_to_exact_name(self, target):
-        """We dont check exact target name for mast search - 
+        """We dont check exact target name for the generic MAST search - 
         TESS/Kepler/K2 have different exact names for identical objects"""
         return NotImplementedError("Use mission appropriate search for exact targets")
     
@@ -512,6 +551,7 @@ class MASTSearch(object):
             If no data is found
         """
         # Is this what we want to do/ where we want the error thrown for an ffi search in MASTsearch?
+
         if filetype == "ffi":
             raise SearchError(
                 f"FFI search not implemented in MASTSearch. Please use TESSSearch."
@@ -538,7 +578,6 @@ class MASTSearch(object):
             if (file.lower() in filetype_query_criteria.keys())
         ]
 
-        # from astroquery.mast import Observations
         observations = self._query_mast(
             search_radius=search_radius,
             project=mission,
@@ -562,6 +601,7 @@ class MASTSearch(object):
         project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
         pipeline: Union[str, list[str], None] = None,
         exptime: Union[int, float, tuple, type(None)] = (0, 9999),  # None,
+
         sequence_number: Union[int, list[int], None] = None,
         **extra_query_criteria,
     ):
@@ -691,33 +731,23 @@ class MASTSearch(object):
         log.debug(f"MAST found {len(joint_table)} matching data products.")
         return joint_table
 
-    @property
-    def timeseries(self):
-        """return a MASTSearch object with self.table only containing products that are a time-series measurement"""
-        # mask = self.table.productFilename.str.endswith("lc.fits")
-        # Not sure about the call below. Will exptime already have been handled in the mast search?
-        mask = self._filter_product_endswith("lightcurve")
-        return self._mask(mask)
 
-    @property
-    def cubedata(self):
-        """return a MASTSearch object with self.table only containing products that are image cubes"""
-        mask = self._filter_product_endswith("target pixel")
-
-        # return self._cubedata()
-        return self._mask(mask)
-
-    def limit_results(self, limit: int):
-        """return only a subset of the table"""
+    def filter_table(self, 
+            # Filter the table by keywords
+            limit: int = None, 
+            exptime: Union[int, float, tuple, type(None)] = None,  
+            pipeline: Union[str, list[str]] = None,
+            ):
         mask = np.ones(len(self.table), dtype=bool)
-        mask[limit:] = False
-        return self._mask(mask)
 
-    @property
-    def dvreports(self):
-        """return a MASTSearch object with self.table only containing products that are data validation pdf files"""
-        # mask = self.table.productFilename.str.endswith(".pdf")
-        mask = self._filter_product_endswith(filetype="dvreport")
+        if exptime is not None:
+            mask = mask & self._mask_by_exptime(exptime) 
+        if pipeline is not None:
+            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+        if limit is not None:
+            cusu = np.cumsum(mask)
+            if max(cusu) > limit:
+                mask = mask & (cusu < limit)
         return self._mask(mask)
 
     def _add_kepler_sequence_num(self):
@@ -737,7 +767,7 @@ class MASTSearch(object):
             for item in self.table.loc[mask, ["description"]].str.values
         ]
 
-    def _filter_product_endswith(
+    def _mask_product_type(
         self,
         filetype: str,
     ):
@@ -770,13 +800,13 @@ class MASTSearch(object):
     def _filter(
         self,
         exptime: Union[str, int, tuple[int], type(None)] = (0, 9999),
-        project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
+        mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
         pipeline: Union[str, list[str]] = ["kepler", "k2", "spoc"],
         filetype: Union[str, list[str]] = [
             "target pixel",
             "lightcurve",
             "dvreport",
-        ],  # lightcurve, target pixel, report
+        ],  
     ) -> pd.DataFrame:
         """filter self.table based on your product search preferences
 
@@ -826,15 +856,15 @@ class MASTSearch(object):
 
         file_mask = mask.copy()
         for ftype in filter_ftype:
-            file_mask |= self._filter_product_endswith(ftype)
+            file_mask |= self._mask_product_type(ftype)
 
-        # Next Filter on project
-        project_mask = mask.copy()
-        if not isinstance(project_mask, type(None)):
-            for proj in project:
-                project_mask |= self.table.project_obs.values == proj
+        # Next Filter on mission
+        mission_mask = mask.copy()
+        if not isinstance(mission_mask, type(None)):
+            for m in mission:
+                mission_mask |= self.table.project_obs.values == m
         else:
-            project_mask = np.logical_not(project_mask)
+            mission_mask = np.logical_not(mission_mask)
 
         # Next Filter on pipeline (provenance_name in mast table)
         provenance_mask = mask.copy()
@@ -850,32 +880,36 @@ class MASTSearch(object):
         else:
             exptime_mask = not mask
 
-        mask = file_mask & project_mask & provenance_mask & exptime_mask
+        mask = file_mask & mission_mask & provenance_mask & exptime_mask
         return mask
 
     def _mask_by_exptime(self, exptime: Union[int, tuple[float]]):
         """Helper function to filter by exposure time.
         Returns a boolean array"""
+        if "t_exptime" in self.table.columns:
+            exposures = self.table['t_exptime']
+        else:
+            exposures = self.table['exptime']
         if isinstance(exptime, (int, float)):
-            mask = self.table.t_exptime == exptime
+            mask = exposures == exptime
         elif isinstance(exptime, tuple):
-            mask = self.table.t_exptime >= min(exptime) & (
-                self.table.t_exptime <= max(exptime)
+            mask = exposures >= min(exptime) & (
+                exposures <= max(exptime)
             )
         elif isinstance(exptime, str):
             exptime = exptime.lower()
             if exptime in ["fast"]:
-                mask = self.table.t_exptime < 60
+                mask = exposures < 60
             elif exptime in ["short"]:
-                mask = (self.table.t_exptime >= 60) & (self.table.t_exptime <= 120)
+                mask = (exposures >= 60) & (exposures <= 120)
             elif exptime in ["long", "ffi"]:
-                mask = self.table.t_exptime > 120
+                mask = exposures > 120
             elif exptime in ["shortest"]:
-                mask = self.table.t_exptime == min(self.table.t_exptime)
+                mask = exposures == min(exposures)
             elif exptime in ["longest"]:
-                mask = self.table.t_exptime == max(self.table.t_exptime)
+                mask = exposures == max(exposures)
             else:
-                mask = np.ones(len(self.table.t_exptime), dtype=bool)
+                mask = np.ones(len(exposures), dtype=bool)
                 log.debug("invalid string input. No exptime filter applied")
         return mask
 
@@ -1011,6 +1045,7 @@ class TESSSearch(MASTSearch):
         if table is None:
             if(("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None))):
                 self._add_tesscut_products(sector)
+            self._add_TESS_mission_product()
             self.sort_TESS()
 
     def _check_exact(self,target):
@@ -1020,6 +1055,24 @@ class TESSSearch(MASTSearch):
     def _target_to_exact_name(self, target):
         "parse TESS TIC to exact target name"
         return f"{target.group(2).zfill(9)}"
+    
+    def _add_TESS_mission_product(self):
+        # Some products are HLSPs and some are mission products
+        mission_product = np.zeros(len(self.table), dtype=bool)
+        mission_product[self.table["pipeline"] == "SPOC"] = True
+        self.table["mission_product"] = mission_product
+
+    @property
+    def HLSPs(self):
+        """return a MASTSearch object with self.table only containing High Level Science Products"""
+        mask = self.table["mission_product"]
+        return self._mask(~mask)
+
+    @property
+    def mission_products(self):
+        """return a MASTSearch object with self.table only containing Mission Products"""
+        mask = self.table["mission_product"]
+        return self._mask(mask)
   
     @property 
     def tesscut(self):
@@ -1030,7 +1083,7 @@ class TESSSearch(MASTSearch):
     @property
     def cubedata(self):
         """return a MASTSearch object with self.table only containing products that are image cubes"""
-        mask = self._filter_product_endswith("target pixel") | (self.table["pipeline"] == "TESScut" )
+        mask = self._mask_product_type("target pixel") | (self.table["pipeline"] == "TESScut" )
 
         # return self._cubedata()
         return self._mask(mask)                     
@@ -1183,7 +1236,7 @@ class TESSSearch(MASTSearch):
         df = self.table
         df["sort_order"] = df["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order", "start_time", "exptime"], ignore_index=True
+            by=["distance", "sort_order", "exptime", "pipeline", "year", "start_time"], ignore_index=True
         )
         self.table = df
 
@@ -1302,6 +1355,44 @@ class TESSSearch(MASTSearch):
                                           mt_type=None, verbose=False)
         manifest = mf1.append(mf2)
         return manifest
+    
+    def filter_table(self, 
+            limit: int = None, 
+            exptime: Union[int, float, tuple, type(None)] = None,  
+            pipeline: Union[str, list[str]] = None,
+            sector: Union[int, list[int]] = None,
+            ):
+        """
+        Filters the search result table by specified parameters
+
+        Parameters
+        ----------
+        limit : int, optional
+            limit to the number of results, by default None
+        exptime : Union[int, float, tuple, type, optional
+            exposure times to filter by, by default None
+        pipeline : Union[str, list[str]], optional
+            pipeline used for data reduction, by default None
+        sector : Optional[int], optional
+            TESS observing sector(s), by default None
+
+        Returns
+        -------
+        TESSSearch object with updated table
+        """
+        mask = np.ones(len(self.table), dtype=bool)
+
+        if exptime is not None:
+            mask = mask & self._mask_by_exptime(exptime) 
+        if pipeline is not None:
+            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+        if sector is not None:
+            mask = mask & self.table['sequence_number'].isin(np.atleast_1d(sector))
+        if limit is not None:
+            cusu = np.cumsum(mask)
+            if max(cusu) > limit:
+                mask = mask & (cusu < limit)
+        return self._mask(mask)
 
 class KeplerSearch(MASTSearch):
     """
@@ -1363,7 +1454,7 @@ class KeplerSearch(MASTSearch):
         )
         if table is None:
             self._add_kepler_mission_product()
-            self.get_sequence_number()
+            self._get_sequence_number()
             self.sort_Kepler()
             # Can't search mast with quarter/month directly, so filter on that after the fact.
             self.table = self.table[self._filter_kepler(quarter, month)]
@@ -1401,7 +1492,7 @@ class KeplerSearch(MASTSearch):
         mask = self.table["mission_product"]
         return self._mask(mask)
 
-    def get_sequence_number(self):
+    def _get_sequence_number(self):
         # Kepler sequence_number values were not populated at the time of
         # writing this code, so we parse them from the description field.
 
@@ -1493,9 +1584,50 @@ class KeplerSearch(MASTSearch):
         df = self.table
         df["sort_order"] = self.table["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order", "start_time", "exptime"], ignore_index=True
+            by=["distance", "sort_order", "exptime", "year", "start_time"], ignore_index=True
         )
         self.table = df
+
+    def filter_table(self, 
+            limit: int = None, 
+            exptime: Union[int, float, tuple, type(None)] = None,  
+            pipeline: Union[str, list[str]] = None,
+            quarter: Optional[int] = None,
+            month: Optional[int] = None,
+            ):
+        """
+        Filters the search result table by specified parameters
+
+        Parameters
+        ----------
+        limit : int, optional
+            limit to the number of results, by default None
+        exptime : Union[int, float, tuple, type, optional
+            exposure times to filter by, by default None
+        pipeline : Union[str, list[str]], optional
+            pipeline used for data reduction, by default None
+        quarter : Optional[int], optional
+            Kepler observing quarter, by default None
+        month : Optional[int], optional
+            Kepler observing month, by default None
+
+        Returns
+        -------
+        KeplerSearch object with updated. 
+        """
+        mask = np.ones(len(self.table), dtype=bool)
+
+        if exptime is not None:
+            mask = mask & self._mask_by_exptime(exptime) 
+        if pipeline is not None:
+            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+        if (quarter is not None) | (month is not None):
+            mask = mask & self._filter_kepler(quarter=quarter, month=month)
+        if limit is not None:
+            cusu = np.cumsum(mask)
+            if max(cusu) > limit:
+                mask = mask & (cusu < limit)
+        return self._mask(mask)
 
 
 class K2Search(MASTSearch):
@@ -1574,6 +1706,18 @@ class K2Search(MASTSearch):
         mission_product[self.table["pipeline"] == "K2"] = True
         self.table["mission_product"] = mission_product
 
+    @property
+    def HLSPs(self):
+        """return a MASTSearch object with self.table only containing High Level Science Products"""
+        mask = self.table["mission_product"]
+        return self._mask(~mask)
+
+    @property
+    def mission_products(self):
+        """return a MASTSearch object with self.table only containing Mission Products"""
+        mask = self.table["mission_product"]
+        return self._mask(mask)
+
     def _fix_K2_sequence(self):
         # K2 campaigns 9, 10, and 11 were split into two sections
         # list these separately in the table with suffixes "a" and "b"
@@ -1599,6 +1743,44 @@ class K2Search(MASTSearch):
         df = self.table
         df["sort_order"] = self.table["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order", "start_time", "exptime"], ignore_index=True
+            by=["distance", "sort_order", "exptime", "year", "start_time"], ignore_index=True
         )
         self.table = df
+
+    def filter_table(self, 
+            limit: int = None, 
+            exptime: Union[int, float, tuple, type(None)] = None,  
+            pipeline: Union[str, list[str]] = None,
+            campaign: Union[int, list] = None,
+            ):
+        """
+        Filters the search result table by specified parameters
+
+        Parameters
+        ----------
+        limit : int, optional
+            limit to the number of results, by default None
+        exptime : Union[int, float, tuple, type, optional
+            exposure times to filter by, by default None
+        pipeline : Union[str, list[str]], optional
+            pipeline used for data reduction, by default None
+        campaign : Optional[int], optional
+            K2 observing campaign(s), by default None
+
+        Returns
+        -------
+        K2Search object with updated table. 
+        """
+        mask = np.ones(len(self.table), dtype=bool)
+
+        if exptime is not None:
+            mask = mask & self._mask_by_exptime(exptime) 
+        if pipeline is not None:
+            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+        if campaign is not None:
+            mask = mask & self.table['sequence_number'].isin(np.atleast_1d(campaign))
+        if limit is not None:
+            cusu = np.cumsum(mask)
+            if max(cusu) > limit:
+                mask = mask & (cusu < limit)
+        return self._mask(mask)
