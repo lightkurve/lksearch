@@ -890,12 +890,12 @@ class MASTSearch(object):
             exposures = self.table['t_exptime']
         else:
             exposures = self.table['exptime']
+
         if isinstance(exptime, (int, float)):
             mask = exposures == exptime
         elif isinstance(exptime, tuple):
-            mask = exposures >= min(exptime) & (
-                exposures <= max(exptime)
-            )
+            mask = (exposures >= min(exptime)) & (
+                exposures <= max(exptime))
         elif isinstance(exptime, str):
             exptime = exptime.lower()
             if exptime in ["fast"]:
