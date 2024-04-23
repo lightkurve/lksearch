@@ -111,10 +111,6 @@ class MASTSearch(object):
             self.table = self._update_table(self.table)
             self.table = self._fix_table_times(self.table)
 
-            self.table["mission"] = [
-                f"{proj} - C{seq}"
-                for proj, seq in zip(self.table["mission"].values.astype(str), self.table['sequence_number'])
-            ]
 
         # If MAST search tables are provided, another MAST search is not necessary
         else:
@@ -765,7 +761,7 @@ class MASTSearch(object):
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
-                mask = mask & (cusu < limit)
+                mask = mask & (cusu <= limit)
         return self._mask(mask)
 
     def _add_kepler_sequence_num(self):
@@ -908,12 +904,12 @@ class MASTSearch(object):
             exposures = self.table['t_exptime']
         else:
             exposures = self.table['exptime']
+
         if isinstance(exptime, (int, float)):
             mask = exposures == exptime
         elif isinstance(exptime, tuple):
-            mask = exposures >= min(exptime) & (
-                exposures <= max(exptime)
-            )
+            mask = (exposures >= min(exptime)) & (
+                exposures <= max(exptime))
         elif isinstance(exptime, str):
             exptime = exptime.lower()
             if exptime in ["fast"]:
@@ -1034,6 +1030,17 @@ class TESSSearch(MASTSearch):
     sector: Optional[int] = None,
         TESS Observing Sector for which to search for data 
     """
+    _REPR_COLUMNS = [
+        "target_name",
+        "pipeline",
+        "mission",
+        "sector",
+        "exptime",
+        "distance",
+        "year",
+        "description",
+    ]
+
     def __init__(
         self,
         target: Optional[Union[str, tuple[float], SkyCoord]] = None,
@@ -1063,8 +1070,8 @@ class TESSSearch(MASTSearch):
         if table is None:
             if(("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None))):
                 self._add_tesscut_products(sector)
-            self._add_TESS_mission_product()
-            self.sort_TESS()
+                self._add_TESS_mission_product()
+                self.sort_TESS()
 
     def _check_exact(self,target):
         """ Was a TESS target ID passed? """
@@ -1079,6 +1086,7 @@ class TESSSearch(MASTSearch):
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "SPOC"] = True
         self.table["mission_product"] = mission_product
+        self.table['sector'] = self.table['sequence_number']
 
     @property
     def HLSPs(self):
@@ -1254,7 +1262,7 @@ class TESSSearch(MASTSearch):
         df = self.table
         df["sort_order"] = df["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order", "exptime", "pipeline", "year", "start_time"], ignore_index=True
+            by=["distance", "sort_order", "sector", "pipeline", "exptime"], ignore_index=True
         )
         self.table = df
 
@@ -1409,7 +1417,7 @@ class TESSSearch(MASTSearch):
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
-                mask = mask & (cusu < limit)
+                mask = mask & (cusu <= limit)
         return self._mask(mask)
 
 class KeplerSearch(MASTSearch):
@@ -1447,6 +1455,17 @@ class KeplerSearch(MASTSearch):
     month: Optional[int] = None,
         Observation month for Kepler
     """
+    _REPR_COLUMNS = [
+        "target_name",
+        "pipeline",
+        "mission",
+        "quarter",
+        "exptime",
+        "distance",
+        "year",
+        "description",
+    ]
+
     def __init__(
         self,
         target: [Union[str, tuple[float], SkyCoord]],
@@ -1527,11 +1546,13 @@ class KeplerSearch(MASTSearch):
 
         self.table["sequence_number"] = seq_num
 
-        # Update 'mission' with the sequence number
-        self.table["mission"] = [
+        # Create a 'Quarter' column
+        self.table["quarter"] = seq_num 
+
+        '''self.table["mission"] = [
             f"{proj} - Q{seq}"
             if seq !=  '<NA>' else f"{proj}" for proj, seq in zip(self.table["mission"].values.astype(str), seq_num)  
-        ]
+        ]'''
 
     def _filter_kepler(
         self,
@@ -1602,7 +1623,7 @@ class KeplerSearch(MASTSearch):
         df = self.table
         df["sort_order"] = self.table["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order", "exptime", "year", "start_time"], ignore_index=True
+            by=["distance", "sort_order","quarter", "pipeline", "exptime"], ignore_index=True
         )
         self.table = df
 
@@ -1644,7 +1665,7 @@ class KeplerSearch(MASTSearch):
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
-                mask = mask & (cusu < limit)
+                mask = mask & (cusu <= limit)
         return self._mask(mask)
 
 
@@ -1678,9 +1699,20 @@ class K2Search(MASTSearch):
         Mission(s) for which to search for data on
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
-    qcampaign: Optional[int] = None,
+    campaign: Optional[int] = None,
         K2 Observing Campaign for which to search for data 
     """
+    _REPR_COLUMNS = [
+        "target_name",
+        "pipeline",
+        "mission",
+        "campaign",
+        "exptime",
+        "distance",
+        "year",
+        "description",
+    ]
+
     def __init__(
         self,
         target: [Union[str, tuple[float], SkyCoord]],
@@ -1748,10 +1780,7 @@ class K2Search(MASTSearch):
                 if f"c{row['sequence_number']}{half}" in row["productFilename"]:
                     seq_num[index] = f"{int(row['sequence_number']):02d}{letter}"
 
-        self.table["mission"] = [
-            f"{proj} - C{seq}"
-            for proj, seq in zip(self.table["mission"].values.astype(str), seq_num)
-        ]
+        self.table["campaign"] = seq_num
 
     def sort_K2(self):
         # No specific preference for K2 HLSPs
@@ -1761,7 +1790,7 @@ class K2Search(MASTSearch):
         df = self.table
         df["sort_order"] = self.table["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order", "exptime", "year", "start_time"], ignore_index=True
+            by=["distance", "sort_order", "campaign", "pipeline","exptime"], ignore_index=True
         )
         self.table = df
 
@@ -1800,5 +1829,5 @@ class K2Search(MASTSearch):
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
-                mask = mask & (cusu < limit)
+                mask = mask & (cusu <= limit)
         return self._mask(mask)
