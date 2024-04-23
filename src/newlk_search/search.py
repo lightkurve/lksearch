@@ -1520,7 +1520,7 @@ class KeplerSearch(MASTSearch):
 
     def _target_to_exact_name(self, target):
         "parse Kepler TIC to exact target name"
-        return f"kplr{target.group(2)}"
+        return f"kplr{target.group(2).zfill(9)}"
 #
     def _handle_kbonus(self):
         # KBONUS times are masked as they are invalid for the quarter data
@@ -1766,7 +1766,7 @@ class K2Search(MASTSearch):
 
     def _target_to_exact_name(self, target):
         "parse K2 TIC to exact target name"
-        return f"ktwo{target.group(2)}"
+        return f"ktwo{target.group(2).zfill(9)}"
 
 #
     def _add_K2_mission_product(self):
