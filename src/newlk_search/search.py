@@ -504,8 +504,22 @@ class MASTSearch(object):
         TESS/Kepler/K2 have different exact names for identical objects"""
         return NotImplementedError("Use mission appropriate search for exact targets")
     
-    def _add_s3_url_column(self, joint_table):
-        """ self.table will updated to have an extra column of s3 URLS if possible """
+    def _add_s3_url_column(self, 
+                           joint_table: pd.DataFrame) -> pd.DataFrame:
+        """ 
+            self.table will updated to have an extra column of s3 URLS if possible 
+
+        Parameters
+        ----------
+        joint_table : ~pandas.DataFrame
+            Dataframe of merged ~astroquery.mast.Observations observations table and product table
+
+        Returns
+        -------
+        ~pandas.DataFrame
+            input dataframe with a column added which countaings the cloud uris of assosciated producs
+        """
+
         Observations.enable_cloud_dataset()
         cloud_uris = Observations.get_cloud_uris(
             Table.from_pandas(joint_table), full_url=True
