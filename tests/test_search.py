@@ -281,13 +281,13 @@ def test_collections():
     # TODO: get download working
     assert (
         len(
-            MASTSearch("EPIC 205998445", mission="K2", search_radius=900, pipeline="K2").limit_results(3).download()
+            MASTSearch("EPIC 205998445", mission="K2", search_radius=900, pipeline="K2").filter_table(limit=3)
         )
         == 3
     )
     # if fewer targets are found than targetlimit, should still download all available
     assert (
-        len(K2Search("EPIC 205998445", search_radius=900, pipeline="K2").cubedata.limit_results(6).table)
+        len(K2Search("EPIC 205998445", search_radius=900, pipeline="K2").cubedata.filter_table(limit=6).table)
         == 4
     )
     # if download() is used when multiple files are available, should only download 1
@@ -300,7 +300,6 @@ def test_collections():
             KeplerTargetPixelFile,
         )'''
 
-# TODO: These tests are failing!
 #@pytest.mark.remote_data
 def test_properties():
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
@@ -537,17 +536,17 @@ def test_split_k2_campaigns():
     """Do split K2 campaign sections appear separately in search results?"""
     # Campaign 9
     search_c09 = K2Search("EPIC 228162462", exptime="long", campaign=9).cubedata
-    assert search_c09.table["mission"][0] == "K2 - C09a"
-    assert search_c09.table["mission"][1] == "K2 - C09b"
+    assert search_c09.table["campaign"][0] == "09a"
+    assert search_c09.table["campaign"][1] == "09b"
     # Campaign 10
     
     search_c10 = K2Search("EPIC 228725972", exptime="long", campaign=10).cubedata
-    assert search_c10.table["mission"][0] == "K2 - C10a"
-    assert search_c10.table["mission"][1] == "K2 - C10b"
+    assert search_c10.table["campaign"][0] == "10a"
+    assert search_c10.table["campaign"][1] == "10b"
     # Campaign 11
     search_c11 = K2Search("EPIC 203830112", exptime="long", campaign=11).cubedata
-    assert search_c11.table["mission"][0] == "K2 - C11a"
-    assert search_c11.table["mission"][1] == "K2 - C11b"
+    assert search_c11.table["campaign"][0] == "11a"
+    assert search_c11.table["campaign"][1] == "11b"
 
 
 '''Taking this test out for now...
