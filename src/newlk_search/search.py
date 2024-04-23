@@ -747,7 +747,7 @@ class MASTSearch(object):
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
-                mask = mask & (cusu < limit)
+                mask = mask & (cusu <= limit)
         return self._mask(mask)
 
     def _add_kepler_sequence_num(self):
@@ -1403,7 +1403,7 @@ class TESSSearch(MASTSearch):
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
-                mask = mask & (cusu < limit)
+                mask = mask & (cusu <= limit)
         return self._mask(mask)
 
 class KeplerSearch(MASTSearch):
@@ -1651,7 +1651,7 @@ class KeplerSearch(MASTSearch):
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
-                mask = mask & (cusu < limit)
+                mask = mask & (cusu <= limit)
         return self._mask(mask)
 
 
@@ -1815,5 +1815,5 @@ class K2Search(MASTSearch):
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
-                mask = mask & (cusu < limit)
+                mask = mask & (cusu <= limit)
         return self._mask(mask)
