@@ -4,6 +4,7 @@ from typing import Union, Optional
 import re
 import logging
 import warnings
+import os
 
 import numpy as np
 from astropy import units as u
@@ -13,6 +14,8 @@ from astropy.time import Time
 
 from copy import deepcopy
 
+from .utils import SearchError, SearchWarning, suppress_stdout
+
 from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
 default_download_dir = config.get_cache_dir()
@@ -20,13 +23,6 @@ default_download_dir = config.get_cache_dir()
 # from memoization import cached
 
 log = logging.getLogger(__name__)
-
-
-class SearchError(Exception):
-    pass
-
-class SearchWarning(Warning):
-    pass
 
 class MASTSearch(object):
     """
@@ -907,8 +903,7 @@ class MASTSearch(object):
                 log.debug("invalid string input. No exptime filter applied")
         return mask
 
-    # TODO: How to suppress the output??? This decorator is defined in lk utils
-    #@suppress_stdout
+    @suppress_stdout
     def _download_one(
         self, 
         row: pd.Series, 
@@ -922,6 +917,7 @@ class MASTSearch(object):
         """
         
         # Make sure astroquery uses the same level of verbosity
+        print(log.getEffectiveLevel())
         logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
         logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
 
@@ -952,13 +948,13 @@ class MASTSearch(object):
                 mask = mask & (cusu <= limit)
         return self._mask(mask)
 
-    #@suppress_stdout
     def download(
         self,
         cloud: bool = True,
         cache: bool = True,
         cloud_only: bool = False,
         download_dir: str = default_download_dir,
+        remove_incomplete: str = True,
     ) ->pd.DataFrame:
         """downloads products in self.table to the local hard-drive
 
@@ -974,7 +970,8 @@ class MASTSearch(object):
         download_dir : str, optional
             directory where the products should be downloaded to,
              by default default_download_dir
-
+        remove_incomplete: str, optional
+            remove files with a status not "COMPLETE" in the manifest, by default True
         Returns
         -------
         ~pandas.DataFrame
@@ -996,7 +993,28 @@ class MASTSearch(object):
             self._download_one(row, cloud_only, cache, download_dir)
             for _, row in self.table.iterrows()
         ]
-        return pd.concat(manifest)
+
+        manifest = pd.concat(manifest)
+        status = manifest["Status"] != "COMPLETE"
+        if(np.any(status)):
+            warnings.warn(
+                "Not All Files Downloaded Successfully, Check Returned Manifest.", SearchWarning
+            )
+            if(remove_incomplete):
+                for file in manifest.loc[status]["Local Path"].values:
+                    if (os.path.isfile(file)):
+                        os.remove(file)
+                        warnings.warn(
+                        f"Removed {file}", SearchWarning
+                        )
+                    else:
+                        warnings.warn(
+                            f"Not a file: {file}", SearchWarning
+                        )
+                        
+
+                
+        return manifest
 
 class TESSSearch(MASTSearch):
     """
