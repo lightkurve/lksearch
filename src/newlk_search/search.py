@@ -1071,8 +1071,8 @@ class TESSSearch(MASTSearch):
         if table is None:
             if(("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None))):
                 self._add_tesscut_products(sector)
-                self._add_TESS_mission_product()
-                self._sort_TESS()
+            self._add_TESS_mission_product()
+            self._sort_TESS()
 
     @property
     def HLSPs(self):
