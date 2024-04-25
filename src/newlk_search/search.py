@@ -18,6 +18,8 @@ from .utils import SearchError, SearchWarning, suppress_stdout
 
 from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
+pd.options.display.max_rows = 10
+
 default_download_dir = config.get_cache_dir()
 
 # from memoization import cached
@@ -1570,7 +1572,7 @@ class KeplerSearch(MASTSearch):
         ]
 
         self.table["sequence_number"] = seq_num
-
+        seq_num = [int(x) if x != '<NA>' else 99 for x in seq_num]
         # Create a 'Quarter' column
         self.table["quarter"] = seq_num 
 
