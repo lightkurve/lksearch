@@ -36,8 +36,8 @@ extensions = [
     "sphinx_automodapi.automodapi",
     "numpydoc",
     "sphinx.ext.intersphinx",
-    "nbsphinx",
-    "pandoc",
+    #"nbsphinx",
+    #"pandoc",
 ]
 
 templates_path = ['_templates']
@@ -55,10 +55,10 @@ html_static_path = ['_static']
 html_sidebars = {
     '**': [
         'about.html',
-        #'navigation.html',
+        'localtoc.html',
+        'navigation.html',
         #'relations.html',
         #'searchbox.html',
-        'localtoc.html',
     ]
 }
 
