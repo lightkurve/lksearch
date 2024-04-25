@@ -1,5 +1,7 @@
 import os
 import warnings
+import glob
+import shutil
 
 import astropy.config as astropyconfig
 
@@ -81,3 +83,15 @@ def _ensure_cache_dir_exists(cache_dir):
             cache_dir = "."
         return cache_dir
 
+def clearcache(test=True):
+    #Check to see if default download dir//mastDownload exists
+    mastdir = f"{get_cache_dir()}/mastDownload"
+    if(os.path.isdir(mastdir)):
+        files = glob.glob(f"{mastdir}/*")
+        if(test):
+            print("Running in test mode, rerun with test=False to clear cache")
+        for f in files:
+            if(test):
+                print(f"removing {f}")
+            else:
+                shutil.rmtree(f)
