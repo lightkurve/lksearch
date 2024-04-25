@@ -22,8 +22,6 @@ pd.options.display.max_rows = 10
 
 default_download_dir = config.get_cache_dir()
 
-# from memoization import cached
-
 log = logging.getLogger(__name__)
 
 class MASTSearch(object):
@@ -1430,9 +1428,9 @@ class TESSSearch(MASTSearch):
         if("TESScut" in self.table.provenance_name.unique()):
             mask = self.table["provenance_name"] == "TESScut"
             self._mask(~mask).download()
-            from astroquery.mast import Tesscut
-            if cloud:
-                Tesscut.enable_cloud_dataset()
+            from astroquery.mast import TesscutClass as Tesscut
+            #if cloud:
+            #    Tesscut.enable_cloud_dataset()
             mf1 = Tesscut.download_cutouts(coordinates=self.SkyCoord, 
                                           size=TESScut_size, 
                                           sector=self.table['sequence_number'].values[mask], 
