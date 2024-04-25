@@ -1421,33 +1421,47 @@ class TESSSearch(MASTSearch):
     def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = default_download_dir, 
                  #TESScut_product="SPOC",
                  TESScut_size = 10):
-        mf1 = []
-        mf2 = []
-        if("TESScut"  not in self.table.provenance_name.unique()):
-            mf2  = super().download(cloud, cache, cloud_only, download_dir)
-        if("TESScut" in self.table.provenance_name.unique()):
+        mast_mf = []
+        tesscut_mf = []
+        manifest = []
+        if ("TESScut"  not in self.table.provenance_name.unique()):
+            mast_mf  = super().download(cloud, cache, cloud_only, download_dir)
+
+        elif ("TESScut" in self.table.provenance_name.unique()):
+            TESSCut_dir = f"{default_download_dir}/mastDownload/TESSCut"
+            if (not os.path.isdir(TESSCut_dir)):
+                os.makedirs(TESSCut_dir)
             mask = self.table["provenance_name"] == "TESScut"
-            self._mask(~mask).download()
-            from astroquery.mast import TesscutClass as Tesscut
+            sector_list = self.table.loc[mask]['sequence_number'].values
+            mast_mf = self._mask(~mask).download()
+            from astroquery.mast import Tesscut
             #if cloud:
             #    Tesscut.enable_cloud_dataset()
-            mf1 = Tesscut.download_cutouts(coordinates=self.SkyCoord, 
+            tesscut_mf= [Tesscut.download_cutouts(coordinates=self.SkyCoord, 
                                           size=TESScut_size, 
-                                          sector=self.table['sequence_number'].values[mask],
+                                          sector=sector,
                                           # Uncomment when astroquery 0.4.8 is released to enable TICA support
                                           # product=TESScut_product,  
                                           # verbose=False
-                                          path=PACKAGEDIR, 
+                                          path=f"{default_download_dir}/mastDownload/TESSCut", 
                                           inflate=True, 
                                           moving_target=False, #this could be added
                                           mt_type=None, 
-                                          )
-        print(mf1)
-        print(mf2)
-        if mf1 != []:
-            manifest = mf1.append(mf2)
-            return manifest
-        return mf2
+                                          ).to_pandas() for sector in sector_list]
+        if len(mast_mf) != 0:
+            manifest = mast_mf
+        
+        if len(tesscut_mf) != 0:
+            tesscut_mf = pd.concat(tesscut_mf,ignore_index=True)
+            #Check to see if files exist, is so mark complete
+            tesscut_mf['Status'] = tesscut_mf["Local Path"].apply(lambda x: "COMPLETE" if os.path.isfile(x)  else "504")
+
+            if len(manifest) != 0:
+                manifest = pd.concat([manifest, tesscut_mf], ignore_index=True)
+            else:
+                manifest = tesscut_mf
+
+        return manifest
     
 
 
