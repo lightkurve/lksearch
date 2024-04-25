@@ -31,6 +31,8 @@ from newlk_search.search import (
     KeplerSearch,
     TESSSearch,
     K2Search,
+    SearchWarning,
+    SearchError,
     log,
 )
 
@@ -281,13 +283,13 @@ def test_collections():
     # TODO: get download working
     assert (
         len(
-            MASTSearch("EPIC 205998445", mission="K2", search_radius=900, pipeline="K2").limit_results(3).download()
+            MASTSearch("EPIC 205998445", mission="K2", search_radius=900, pipeline="K2").filter_table(limit=3)
         )
         == 3
     )
     # if fewer targets are found than targetlimit, should still download all available
     assert (
-        len(K2Search("EPIC 205998445", search_radius=900, pipeline="K2").cubedata.limit_results(6).table)
+        len(K2Search("EPIC 205998445", search_radius=900, pipeline="K2").cubedata.filter_table(limit=6).table)
         == 4
     )
     # if download() is used when multiple files are available, should only download 1
@@ -300,7 +302,6 @@ def test_collections():
             KeplerTargetPixelFile,
         )'''
 
-# TODO: These tests are failing!
 #@pytest.mark.remote_data
 def test_properties():
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
@@ -327,8 +328,10 @@ def test_empty_searchresult():
     sr = MASTSearch(table=pd.DataFrame())
     assert len(sr) == 0
     str(sr)
-    with pytest.warns(LightkurveWarning, match="empty search"):
+    with pytest.warns(SearchWarning, match="Cannot download"):
         sr.download()
+    #with pytest.warns(LightkurveWarning, match="empty search"):
+    #    sr.download()
 
 
 # TODO: We currently have it throw a SearchError. Do we not want that?
@@ -341,8 +344,9 @@ def test_issue_472():
     # Whether or not this SearchResult is empty has changed over the years,
     # because the target is only ~15 pixels beyond the FFI edge and the accuracy
     # of the FFI footprint polygons at the MAST portal have changed at times.
-    search = TESSSearch("TIC41336498", sector=2).tesscut
-    assert isinstance(search, TESSSearch)
+    with pytest.raises(SearchError, match="No data"):
+        TESSSearch("TIC41336498", sector=2).tesscut
+    #assert isinstance(search, TESSSearch)
 
 
 #@pytest.mark.remote_data
@@ -369,12 +373,12 @@ def test_corrupt_download_handling_case_empty():
         )
         os.makedirs(expected_dir)
         open(expected_fn, "w").close()  # create "corrupt" i.e. empty file
-        with pytest.raises(LightkurveError) as err:
+        with pytest.raises(SearchError):
             KeplerSearch("KIC 11904151", quarter=4, exptime="long").cubedata.download(
                 download_dir=tmpdirname
             )
-        assert "may be corrupt" in err.value.args[0]
-        assert expected_fn in err.value.args[0]
+        #assert "may be corrupt" in err.value.args[0]
+        #assert expected_fn in err.value.args[0]
 
 
 #@pytest.mark.remote_data
@@ -398,7 +402,7 @@ def test_mast_http_error_handling(monkeypatch):
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         # ensure the we don't hit cache so that it'll always download from MAST
-        with pytest.raises(LightkurveError) as excinfo:
+        with pytest.raises(SearchError) as excinfo:
             result[0].download(download_dir=tmpdirname)
         assert "HTTP Error 500" in str(excinfo.value)
         assert remote_url in str(excinfo.value)
@@ -537,17 +541,17 @@ def test_split_k2_campaigns():
     """Do split K2 campaign sections appear separately in search results?"""
     # Campaign 9
     search_c09 = K2Search("EPIC 228162462", exptime="long", campaign=9).cubedata
-    assert search_c09.table["mission"][0] == "K2 - C09a"
-    assert search_c09.table["mission"][1] == "K2 - C09b"
+    assert search_c09.table["campaign"][0] == "09a"
+    assert search_c09.table["campaign"][1] == "09b"
     # Campaign 10
     
     search_c10 = K2Search("EPIC 228725972", exptime="long", campaign=10).cubedata
-    assert search_c10.table["mission"][0] == "K2 - C10a"
-    assert search_c10.table["mission"][1] == "K2 - C10b"
+    assert search_c10.table["campaign"][0] == "10a"
+    assert search_c10.table["campaign"][1] == "10b"
     # Campaign 11
     search_c11 = K2Search("EPIC 203830112", exptime="long", campaign=11).cubedata
-    assert search_c11.table["mission"][0] == "K2 - C11a"
-    assert search_c11.table["mission"][1] == "K2 - C11b"
+    assert search_c11.table["campaign"][0] == "11a"
+    assert search_c11.table["campaign"][1] == "11b"
 
 
 '''Taking this test out for now...

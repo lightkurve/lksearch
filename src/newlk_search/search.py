@@ -116,78 +116,7 @@ class MASTSearch(object):
         else:
             self._searchtable_from_table(table, obs_table, prod_table)
 
-    #@cached
-    def _searchtable_from_target(self, 
-                                 target: Union[str, tuple[float], SkyCoord]):
-        """
-        takes a target to search
-         - parses that target to search
-         - searches mast to create a table from merged Obs/Prod Tables
-         - filters the joint table
 
-        Parameters
-        ----------
-        target : Union[str, tuple[float], SkyCoord]
-            the target to search for, either a name (str) or coordinate - (tupe[float]/SkyCoord)
-
-        Returns
-        -------
-        None - sets self.table equal to the masked/filtered joint table
-        """
-        self._parse_input(target)
-        self.table = self._search(
-            search_radius=self.search_radius,
-            exptime=self.search_exptime,
-            mission=self.search_mission,
-            pipeline=self.search_pipeline,
-            sequence=self.search_sequence,
-        )
-        mask = self._filter(
-            exptime=self.search_exptime,
-            mission=self.search_mission,
-            pipeline=self.search_pipeline,
-        )  # setting provenance_name=None will return HLSPs
-
-        self.table = self.table[mask]
-
-    def _searchtable_from_table(self, 
-                                table: Optional[pd.DataFrame] = None, 
-                                obs_table: Optional[pd.DataFrame] = None, 
-                                prod_table: Optional[pd.DataFrame] = None):
-        """creates a unified table from either:
-            - a passed joint-table 
-                - this is just passed through
-            - an obs_table from astroquery.mast.query_critera.to_pandas()
-                - this uses obs_table to create a prod_table and merges tables
-            - an obs_table AND a prod_table from from astroquery.mast.get_products.to_pandas()
-                - this meges obs_table and prod_table
-            
-            self.table is then set from this table
-        Parameters
-        ----------
-        table : Optional[pd.DataFrame], optional
-            pre-merged obs_table, prod_table by default None
-        obs_table : Optional[pd.DataFrame], optional
-            table from astroquery.mast.query_critera.to_pandas(), by default None
-        prod_table : Optional[pd.DataFrame], optional
-            table from astroquery.mast.get_products.to_pandas(), by default None
-        """
-        # see if function was passed a joint table
-        if isinstance(table, pd.DataFrame):
-            self.table = table
-
-        # If we don't have a name or a joint table,
-        # check to see if tables were passed
-        elif isinstance(obs_table, pd.DataFrame):
-            # If we have an obs table and no name, use it
-            self.obs_table = obs_table
-            if isinstance(prod_table, type(None)):
-                # get the prod table if we don't have it
-                prod_table = self._search_products(self)
-            self.prod_table = prod_table
-            self.table = self._join_tables()
-        else:
-            raise (ValueError("No Target or object table supplied"))
 
     def __len__(self):
         """Returns the number of products in the SearchResult table."""
@@ -195,7 +124,8 @@ class MASTSearch(object):
     def __repr__(self):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
-                return self.table[self._REPR_COLUMNS].__repr__()
+                out = f"{self.__class__.__name__} object containing {len(self.table)} data products"
+                return  out + self.table[self._REPR_COLUMNS].__repr__()
             else:
                 return "No results found"
         else:
@@ -206,7 +136,8 @@ class MASTSearch(object):
 
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
-                return self.table[self._REPR_COLUMNS]._repr_html_()
+                out = f"{self.__class__.__name__} object containing {len(self.table)} data products"
+                return out + self.table[self._REPR_COLUMNS]._repr_html_()
             else:
                 return "No results found"
         else:
@@ -305,13 +236,79 @@ class MASTSearch(object):
         mask = self._mask_product_type(filetype="dvreport")
         return self._mask(mask)
 
-    # def __getattr__(self, attr):
-    #    try:
-    #        return getattr(self.table, attr)
-    #    except AttributeError:
-    #        raise AttributeError(f"'Result' object has no attribute '{attr}'")
 
+    #@cached
+    def _searchtable_from_target(self, 
+                                 target: Union[str, tuple[float], SkyCoord]):
+        """
+        takes a target to search
+         - parses that target to search
+         - searches mast to create a table from merged Obs/Prod Tables
+         - filters the joint table
 
+        Parameters
+        ----------
+        target : Union[str, tuple[float], SkyCoord]
+            the target to search for, either a name (str) or coordinate - (tupe[float]/SkyCoord)
+
+        Returns
+        -------
+        None - sets self.table equal to the masked/filtered joint table
+        """
+        self._parse_input(target)
+        self.table = self._search(
+            search_radius=self.search_radius,
+            exptime=self.search_exptime,
+            mission=self.search_mission,
+            pipeline=self.search_pipeline,
+            sequence=self.search_sequence,
+        )
+        mask = self._filter(
+            exptime=self.search_exptime,
+            mission=self.search_mission,
+            pipeline=self.search_pipeline,
+        )  # setting provenance_name=None will return HLSPs
+
+        self.table = self.table[mask]
+
+    def _searchtable_from_table(self, 
+                                table: Optional[pd.DataFrame] = None, 
+                                obs_table: Optional[pd.DataFrame] = None, 
+                                prod_table: Optional[pd.DataFrame] = None):
+        """creates a unified table from either:
+            - a passed joint-table 
+                - this is just passed through
+            - an obs_table from astroquery.mast.query_critera.to_pandas()
+                - this uses obs_table to create a prod_table and merges tables
+            - an obs_table AND a prod_table from from astroquery.mast.get_products.to_pandas()
+                - this meges obs_table and prod_table
+            
+            self.table is then set from this table
+        Parameters
+        ----------
+        table : Optional[pd.DataFrame], optional
+            pre-merged obs_table, prod_table by default None
+        obs_table : Optional[pd.DataFrame], optional
+            table from astroquery.mast.query_critera.to_pandas(), by default None
+        prod_table : Optional[pd.DataFrame], optional
+            table from astroquery.mast.get_products.to_pandas(), by default None
+        """
+        # see if function was passed a joint table
+        if isinstance(table, pd.DataFrame):
+            self.table = table
+
+        # If we don't have a name or a joint table,
+        # check to see if tables were passed
+        elif isinstance(obs_table, pd.DataFrame):
+            # If we have an obs table and no name, use it
+            self.obs_table = obs_table
+            if isinstance(prod_table, type(None)):
+                # get the prod table if we don't have it
+                prod_table = self._search_products(self)
+            self.prod_table = prod_table
+            self.table = self._join_tables()
+        else:
+            raise (ValueError("No Target or object table supplied"))
 
     def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then returns them as a new Search object.
@@ -746,23 +743,6 @@ class MASTSearch(object):
         return joint_table
 
 
-    def filter_table(self, 
-            # Filter the table by keywords
-            limit: int = None, 
-            exptime: Union[int, float, tuple, type(None)] = None,  
-            pipeline: Union[str, list[str]] = None,
-            ):
-        mask = np.ones(len(self.table), dtype=bool)
-
-        if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime) 
-        if pipeline is not None:
-            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
-        if limit is not None:
-            cusu = np.cumsum(mask)
-            if max(cusu) > limit:
-                mask = mask & (cusu <= limit)
-        return self._mask(mask)
 
     def _add_kepler_sequence_num(self):
         """adds sequence number to kepler data in the self.table["sequence_number"]
@@ -927,7 +907,8 @@ class MASTSearch(object):
                 log.debug("invalid string input. No exptime filter applied")
         return mask
 
-    # @cache
+    # TODO: How to suppress the output??? This decorator is defined in lk utils
+    #@suppress_stdout
     def _download_one(
         self, 
         row: pd.Series, 
@@ -944,6 +925,7 @@ class MASTSearch(object):
         logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
         logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
 
+        
         manifest = Observations.download_products(
             Table().from_pandas(row.to_frame(name=" ").transpose()),
             download_dir=download_dir,
@@ -951,7 +933,26 @@ class MASTSearch(object):
             cloud_only=cloud_only,
         )
         return manifest.to_pandas()
+    
+    def filter_table(self, 
+            # Filter the table by keywords
+            limit: int = None, 
+            exptime: Union[int, float, tuple, type(None)] = None,  
+            pipeline: Union[str, list[str]] = None,
+            ):
+        mask = np.ones(len(self.table), dtype=bool)
 
+        if exptime is not None:
+            mask = mask & self._mask_by_exptime(exptime) 
+        if pipeline is not None:
+            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+        if limit is not None:
+            cusu = np.cumsum(mask)
+            if max(cusu) > limit:
+                mask = mask & (cusu <= limit)
+        return self._mask(mask)
+
+    #@suppress_stdout
     def download(
         self,
         cloud: bool = True,
@@ -1070,23 +1071,8 @@ class TESSSearch(MASTSearch):
         if table is None:
             if(("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None))):
                 self._add_tesscut_products(sector)
-                self._add_TESS_mission_product()
-                self.sort_TESS()
-
-    def _check_exact(self,target):
-        """ Was a TESS target ID passed? """
-        return re.match(r"^(tess|tic) ?(\d+)$", target)
-
-    def _target_to_exact_name(self, target):
-        "parse TESS TIC to exact target name"
-        return f"{target.group(2).zfill(9)}"
-    
-    def _add_TESS_mission_product(self):
-        # Some products are HLSPs and some are mission products
-        mission_product = np.zeros(len(self.table), dtype=bool)
-        mission_product[self.table["pipeline"] == "SPOC"] = True
-        self.table["mission_product"] = mission_product
-        self.table['sector'] = self.table['sequence_number']
+            self._add_TESS_mission_product()
+            self._sort_TESS()
 
     @property
     def HLSPs(self):
@@ -1112,7 +1098,24 @@ class TESSSearch(MASTSearch):
         mask = self._mask_product_type("target pixel") | (self.table["pipeline"] == "TESScut" )
 
         # return self._cubedata()
-        return self._mask(mask)                     
+        return self._mask(mask)  
+
+    def _check_exact(self,target):
+        """ Was a TESS target ID passed? """
+        return re.match(r"^(tess|tic) ?(\d+)$", target)
+
+    def _target_to_exact_name(self, target):
+        "parse TESS TIC to exact target name"
+        return f"{target.group(2)}"
+    
+    def _add_TESS_mission_product(self):
+        # Some products are HLSPs and some are mission products
+        mission_product = np.zeros(len(self.table), dtype=bool)
+        mission_product[self.table["pipeline"] == "SPOC"] = True
+        self.table["mission_product"] = mission_product
+        self.table['sector'] = self.table['sequence_number']
+
+                   
 
     def _add_tesscut_products(self, sector_list: Union[int, list[int]]):
         """Add tesscut product information to the search table
@@ -1250,7 +1253,7 @@ class TESSSearch(MASTSearch):
         elif sector >= 56:
             return 200
 
-    def sort_TESS(self):
+    def _sort_TESS(self):
         """Sort Priority for TESS Observations"""
         # Sort TESS results so that SPOC products appear at the top
         sort_priority = {
@@ -1358,30 +1361,6 @@ class TESSSearch(MASTSearch):
         
         return new_table 
 
-    def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = default_download_dir, 
-                 TESScut_product="SPOC",
-                 TESScut_size = 10):
-        mf1 = []
-        mf2 = []
-        if("TESScut"  not in self.table.provenance_name.unique()):
-            mf2  = super().download(cloud, cache, cloud_only, download_dir)
-        if("TESScut" in self.table.provenance_name.unique()):
-            mask = self.table["provenance_name"] == "TESScut"
-            self._mask(~mask).download()
-            from astroquery.mast import Tesscut
-            if cloud:
-                Tesscut.enable_cloud_dataset()
-            mf1 = Tesscut.download_cutouts(coordinates=self.SkyCoord, 
-                                          size=TESScut_size, 
-                                          sector=self.table['sequence_number'].values[mask], 
-                                          product=TESScut_product, 
-                                          path=PACKAGEDIR, 
-                                          inflate=True, 
-                                          moving_target=False, #this could be added
-                                          mt_type=None, verbose=False)
-        manifest = mf1.append(mf2)
-        return manifest
-    
     def filter_table(self, 
             limit: int = None, 
             exptime: Union[int, float, tuple, type(None)] = None,  
@@ -1419,6 +1398,33 @@ class TESSSearch(MASTSearch):
             if max(cusu) > limit:
                 mask = mask & (cusu <= limit)
         return self._mask(mask)
+    
+
+    def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = default_download_dir, 
+                 TESScut_product="SPOC",
+                 TESScut_size = 10):
+        mf1 = []
+        mf2 = []
+        if("TESScut"  not in self.table.provenance_name.unique()):
+            mf2  = super().download(cloud, cache, cloud_only, download_dir)
+        if("TESScut" in self.table.provenance_name.unique()):
+            mask = self.table["provenance_name"] == "TESScut"
+            self._mask(~mask).download()
+            from astroquery.mast import Tesscut
+            if cloud:
+                Tesscut.enable_cloud_dataset()
+            mf1 = Tesscut.download_cutouts(coordinates=self.SkyCoord, 
+                                          size=TESScut_size, 
+                                          sector=self.table['sequence_number'].values[mask], 
+                                          product=TESScut_product, 
+                                          path=PACKAGEDIR, 
+                                          inflate=True, 
+                                          moving_target=False, #this could be added
+                                          mt_type=None, verbose=False)
+        manifest = mf1.append(mf2)
+        return manifest
+    
+
 
 class KeplerSearch(MASTSearch):
     """
@@ -1492,10 +1498,22 @@ class KeplerSearch(MASTSearch):
         if table is None:
             self._add_kepler_mission_product()
             self._get_sequence_number()
-            self.sort_Kepler()
+            self._sort_Kepler()
             # Can't search mast with quarter/month directly, so filter on that after the fact.
             self.table = self.table[self._filter_kepler(quarter, month)]
 
+    @property
+    def HLSPs(self):
+        """return a MASTSearch object with self.table only containing High Level Science Products"""
+        mask = self.table["mission_product"]
+        return self._mask(~mask)
+
+    @property
+    def mission_products(self):
+        """return a MASTSearch object with self.table only containing Mission Products"""
+        mask = self.table["mission_product"]
+        return self._mask(mask)
+    
     def _check_exact(self,target):
         """ Was a Kepler target ID passed? """
         return re.match(r"^(kplr|kic) ?(\d+)$", target)
@@ -1517,17 +1535,6 @@ class KeplerSearch(MASTSearch):
         mission_product[self.table["pipeline"] == "Kepler"] = True
         self.table["mission_product"] = mission_product
 
-    @property
-    def HLSPs(self):
-        """return a MASTSearch object with self.table only containing High Level Science Products"""
-        mask = self.table["mission_product"]
-        return self._mask(~mask)
-
-    @property
-    def mission_products(self):
-        """return a MASTSearch object with self.table only containing Mission Products"""
-        mask = self.table["mission_product"]
-        return self._mask(mask)
 
     def _get_sequence_number(self):
         # Kepler sequence_number values were not populated at the time of
@@ -1615,7 +1622,7 @@ class KeplerSearch(MASTSearch):
                     mask[idx] = False
         return mask
 
-    def sort_Kepler(self):
+    def _sort_Kepler(self):
         sort_priority = {
             "Kepler": 1,
             "KBONUS-BKG": 2,
@@ -1739,7 +1746,19 @@ class K2Search(MASTSearch):
         if table is None:
             self._add_K2_mission_product()
             self._fix_K2_sequence()
-            self.sort_K2()
+            self._sort_K2()
+
+    @property
+    def HLSPs(self):
+        """return a MASTSearch object with self.table only containing High Level Science Products"""
+        mask = self.table["mission_product"]
+        return self._mask(~mask)
+
+    @property
+    def mission_products(self):
+        """return a MASTSearch object with self.table only containing Mission Products"""
+        mask = self.table["mission_product"]
+        return self._mask(mask)
 
     def _check_exact(self,target):
         """ Was a K2 target ID passed? """
@@ -1756,18 +1775,6 @@ class K2Search(MASTSearch):
         mission_product[self.table["pipeline"] == "K2"] = True
         self.table["mission_product"] = mission_product
 
-    @property
-    def HLSPs(self):
-        """return a MASTSearch object with self.table only containing High Level Science Products"""
-        mask = self.table["mission_product"]
-        return self._mask(~mask)
-
-    @property
-    def mission_products(self):
-        """return a MASTSearch object with self.table only containing Mission Products"""
-        mask = self.table["mission_product"]
-        return self._mask(mask)
-
     def _fix_K2_sequence(self):
         # K2 campaigns 9, 10, and 11 were split into two sections
         # list these separately in the table with suffixes "a" and "b"
@@ -1782,7 +1789,7 @@ class K2Search(MASTSearch):
 
         self.table["campaign"] = seq_num
 
-    def sort_K2(self):
+    def _sort_K2(self):
         # No specific preference for K2 HLSPs
         sort_priority = {
             "K2": 1,
