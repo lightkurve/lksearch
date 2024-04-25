@@ -1,9 +1,6 @@
-"""Test features of lightkurve that interact with the data archive at MAST.
+"""Test features of search that interact with the data archive at MAST.
 
-Note: if you have the `pytest-remotedata` package installed, then tests flagged
-with the `@pytest.mark.remote_data` decorator below will only run if the
-`--remote-data` argument is passed to py.test.  This allows tests to pass
-if no internet connection is available.
+
 """
 import os
 import pytest
@@ -24,8 +21,9 @@ from astropy.utils.data import get_pkg_data_filename
 
 import shutil
 
-from lightkurve.utils import LightkurveWarning, LightkurveError
+#from lightkurve.utils import LightkurveWarning, LightkurveError
 
+from newlk_search.utils import SearchError, SearchWarning
 from newlk_search.search import (
     MASTSearch,
     KeplerSearch,
@@ -36,24 +34,7 @@ from newlk_search.search import (
     log,
 )
 
-#Added the below from this file
-#from src.test_conf import use_custom_config_file, remove_custom_config
-# TODO: check this
-'''def use_custom_config_file(cfg_filepath):
-    """Copy the config file in the given path (in tests) to the default lightkurve config file """
-    cfg_dest_path = Path(lk.config.get_config_dir(), 'lightkurve.cfg')
-    cfg_src_path = get_pkg_data_filename(cfg_filepath)
-    shutil.copy(cfg_src_path, cfg_dest_path)
-    lk.conf.reload()'''
 
-# TODO: check this
-'''def remove_custom_config():
-    cfg_dest_path = Path(lk.config.get_config_dir(), 'lightkurve.cfg')
-    cfg_dest_path.unlink()
-    lk.conf.reload()'''
-
-
-#@pytest.mark.remote_data
 def test_search_cubedata():
     # EPIC 210634047 was observed twice in long cadence
     #assert len(search_cubedata("EPIC 210634047", mission="K2").table) == 2
@@ -98,15 +79,15 @@ def test_search_cubedata():
         len(TESSSearch(tic, pipeline='SPOC', sector=1, search_radius=100).timeseries.table)
         == 2
     )
-    # TODO: download test
-    #search_cubedata(tic, author="SPOC", sector=1).download()
+    # TODO: download test?
+    manifest = TESSSearch(tic, pipeline="SPOC", sector=1).download()
+    assert len(manifest) == len(TESSSearch(tic, pipeline="SPOC", sector=1))
     assert len(TESSSearch("pi Mensae", sector=1, pipeline='SPOC').cubedata.table) == 1
     # Issue #445: indexing with -1 should return the last index of the search result
     # NOTE: the syntax for this is different with new search
     assert len(TESSSearch("pi Mensae").cubedata[-1].table) == 1
 
 
-#@pytest.mark.remote_data
 def test_search_split_campaigns():
     """Searches should should work for split campaigns.
 
@@ -121,7 +102,6 @@ def test_search_split_campaigns():
         assert len(sr) == 2
 
 
-#@pytest.mark.remote_data
 def test_search_timeseries(caplog):
     # We should also be able to resolve it by its name instead of KIC ID
     # The name Kepler-10 somehow no longer works on MAST. So we use 2MASS instead:
@@ -171,56 +151,6 @@ def test_search_timeseries(caplog):
 
 
 
-
-#@pytest.mark.remote_data
-'''def test_search_tesscut_download(caplog):
-    """Can we download TESS cutouts via `search_cutout().download()?"""
-    try:
-        ra, dec = 30.578761, -83.210593
-        search_string = search_tesscut("{}, {}".format(ra, dec), sector=[1, 12])
-        # Make sure they can be downloaded with default size
-        tpf = search_string[1].download()
-        # Ensure the correct object has been returned
-        assert isinstance(tpf, TessTargetPixelFile)
-        # Ensure default size is 5x5
-        assert tpf.flux[0].shape == (5, 5)
-        assert len(tpf.targetid) > 0  # Regression test #473
-        assert tpf.sector == 12  # Regression test #696
-        # Ensure the WCS is valid (#434 regression test)
-        center_ra, center_dec = tpf.wcs.all_pix2world([[2.5, 2.5]], 1)[0]
-        assert_almost_equal(ra, center_ra, decimal=1)
-        assert_almost_equal(dec, center_dec, decimal=1)
-        # Download with different dimensions
-        tpfc = search_string.download_all(cutout_size=4, quality_bitmask="hard")
-        assert isinstance(tpfc, TargetPixelFileCollection)
-        assert tpfc[0].quality_bitmask == "hard"  # Regression test for #494
-        assert tpfc[0].sector == 1  # Regression test #696
-        assert tpfc[1].sector == 12  # Regression test #696
-        # Ensure correct dimensions
-        assert tpfc[0].flux[0].shape == (4, 4)
-        # Download with rectangular dimennsions?
-        rect_tpf = search_string[0].download(cutout_size=(3, 5))
-        assert rect_tpf.flux[0].shape == (3, 5)
-        # If we ask for the exact same cutout, do we get it from cache?
-        caplog.clear()
-        log.setLevel("DEBUG")
-        tpf_cached = search_string[0].download(cutout_size=(3, 5))
-        assert "Cached file found." in caplog.text
-        # test #1063 - ensure when download_dir is specified, there is no error
-        from tempfile import TemporaryDirectory
-        with TemporaryDirectory(dir=".", prefix="temp_lk_cache_4test_") as download_dir:
-            # ensure relative path works, the bug in #1063
-            tpf_w_download_dir = search_string[0].download(cutout_size=(3, 5), download_dir=download_dir)
-            assert tpf_w_download_dir.flux[0].shape == (3, 5)
-            tpf_w_download_dir = None  # remove the tpf reference so that the underlying file can be deleted on Windows
-    except HTTPError as exc:
-        # TESSCut will occasionally return a "504 Gateway Timeout error" when
-        # it is overloaded.  We don't want this to trigger a test failure.
-        if "504" not in str(exc):
-            raise exc'''
-
-
-#@pytest.mark.remote_data
 def test_search_with_skycoord():
     """Can we pass both names, SkyCoord objects, and coordinate strings?"""
     sr_name = KeplerSearch("KIC 11904151", exptime='long').cubedata
@@ -253,7 +183,7 @@ def test_search_with_skycoord():
     )
 
 
-#@pytest.mark.remote_data
+
 def test_searchresult():
     sr = KeplerSearch("KIC 11904151").timeseries
     assert len(sr) == len(sr.table)  # Tests SearchResult.__len__
@@ -263,7 +193,7 @@ def test_searchresult():
     # TODO: we don't have repr_html at the moment, do we want/need it? assert "kplr" in sr._repr_html_()
 
 
-#@pytest.mark.remote_data
+
 def test_month():
     # In short cadence, if we specify both quarter and month
     sr = KeplerSearch("KIC 11904151", quarter=11, month=1, exptime='short').cubedata
@@ -272,7 +202,7 @@ def test_month():
     assert len(sr) == 2
 
 
-#@pytest.mark.remote_data
+
 def test_collections():
     assert (
         len(K2Search("EPIC 205998445", search_radius=900).cubedata.table)
@@ -302,7 +232,6 @@ def test_collections():
             KeplerTargetPixelFile,
         )'''
 
-#@pytest.mark.remote_data
 def test_properties():
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
     assert_almost_equal(KeplerSearch(c, quarter=6).cubedata.ra[0], 297.5835)
@@ -310,7 +239,6 @@ def test_properties():
     assert len(KeplerSearch(c, quarter=6).cubedata.target_name) == 1
 
 
-#@pytest.mark.remote_data
 def test_source_confusion():
     # Regression test for issue #148.
     # When obtaining the TPF for target 6507433, @benmontet noticed that
@@ -334,8 +262,6 @@ def test_empty_searchresult():
     #    sr.download()
 
 
-# TODO: We currently have it throw a SearchError. Do we not want that?
-#@pytest.mark.remote_data
 def test_issue_472():
     """Regression test for https://github.com/lightkurve/lightkurve/issues/472"""
     # The line below previously threw an exception because the target was not
@@ -349,7 +275,6 @@ def test_issue_472():
     #assert isinstance(search, TESSSearch)
 
 
-#@pytest.mark.remote_data
 def test_corrupt_download_handling_case_empty():
     """When a corrupt file exists in the cache, make sure the user receives
     a helpful error message.
@@ -381,7 +306,6 @@ def test_corrupt_download_handling_case_empty():
         #assert expected_fn in err.value.args[0]
 
 
-#@pytest.mark.remote_data
 def test_mast_http_error_handling(monkeypatch):
     """Regression test for #1211; ensure downloads yields an error when MAST download result in an error."""
     from astroquery.mast import Observations
@@ -408,7 +332,6 @@ def test_mast_http_error_handling(monkeypatch):
         assert remote_url in str(excinfo.value)
 
 
-#@pytest.mark.remote_data
 def test_indexerror_631():
     """Regression test for #631; avoid IndexError."""
     # This previously triggered an exception:
@@ -416,23 +339,7 @@ def test_indexerror_631():
     assert len(result) == 1
 
 
-@pytest.mark.skip(
-    reason="TODO: issue re-appeared on 2020-01-11; needs to be revisited."
-)
-#@pytest.mark.remote_data
-def test_name_resolving_regression_764():
-    """Due to a bug, MAST resolved "EPIC250105131" to a different position than
-    "EPIC 250105131". This regression test helps us verify that the bug does
-    not re-appear. Details: https://github.com/lightkurve/lightkurve/issues/764
-    """
-    from astroquery.mast import MastClass
 
-    c1 = MastClass().resolve_object(objectname="EPIC250105131")
-    c2 = MastClass().resolve_object(objectname="EPIC 250105131")
-    assert c1.separation(c2).to("arcsec").value < 0.1
-
-
-#@pytest.mark.remote_data
 def test_overlapping_targets_718():
     """Regression test for #718."""
     # Searching for the following targets without radius should only return
@@ -455,25 +362,14 @@ def test_overlapping_targets_718():
     assert len(search) == 1
 
 
-#@pytest.mark.remote_data
 def test_tesscut_795():
     """Regression test for #795: make sure the __repr__.of a TESSCut
     SearchResult works."""
     str(TESSSearch("KIC 8462852"))  # This raised a KeyError
 
 
-'''
-#Test no longer applicable - download does not return a lc object
-#@pytest.mark.remote_data
-def test_download_flux_column():
-    """Can we pass reader keyword arguments to the download method?"""
-    lc = search_timeseries("Pi Men", author="SPOC", sector=12).download(
-        flux_column="sap_flux"
-    )
-    assert_array_equal(lc.flux, lc.sap_flux)'''
 
 
-#@pytest.mark.remote_data
 def test_exptime_filtering():
     """Can we pass "fast", "short", exposure time to the cadence argument?"""
     # Try `cadence="fast"`
@@ -492,7 +388,6 @@ def test_exptime_filtering():
 
 
 
-#@pytest.mark.remote_data
 def test_search_slicing_regression():
     # Regression test: slicing after calling __repr__ failed.
     res = TESSSearch("AU Mic",exptime=20).timeseries
@@ -500,7 +395,6 @@ def test_search_slicing_regression():
     res[res.exptime[0] < 100]
 
 
-#@pytest.mark.remote_data
 def test_ffi_hlsp():
     """Can SPOC, QLP (FFI), and TESS-SPOC (FFI) light curves be accessed?"""
     search = TESSSearch(
@@ -515,7 +409,6 @@ def test_ffi_hlsp():
     assert search.table['pipeline'].str.contains('SPOC').any()
 
 
-#@pytest.mark.remote_data
 def test_qlp_ffi_lightcurve():
     """Can we search and download an MIT QLP FFI light curve?"""
     search = TESSSearch("TrES-2b", sector=26, pipeline="qlp").timeseries
@@ -526,7 +419,6 @@ def test_qlp_ffi_lightcurve():
 
 
 
-#@pytest.mark.remote_data
 def test_spoc_ffi_lightcurve():
     """Can we search and download a SPOC FFI light curve?"""
     search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc").timeseries
@@ -536,7 +428,6 @@ def test_spoc_ffi_lightcurve():
 
 
 
-#@pytest.mark.remote_data
 def test_split_k2_campaigns():
     """Do split K2 campaign sections appear separately in search results?"""
     # Campaign 9
@@ -554,54 +445,18 @@ def test_split_k2_campaigns():
     assert search_c11.table["campaign"][1] == "11b"
 
 
-'''Taking this test out for now...
-    @pytest.mark.remote_data
-def test_customize_search_result_display():
-    search = MASTSearch("TIC390021728")
-    # default display does not have proposal id
-    assert 'proposal_id' not in search.__repr__()
 
-    # custom config: has proposal_id in display
-    try:
-        use_custom_config_file("data/lightkurve_sr_cols_added.cfg")
-        # Note: here a *different* TIC is used for search to avoid the complication
-        # of caching.
-        # if the same TIC is used, the cached result would be returned, without
-        # consiering the customization specified.
-        # the TIC used is in multiple sectors, with some rows having proposal_id and some rows
-        # have none. So it's also a sanity test the for the actual proposal_id display logic.
-        search = search_timeseries("TIC298734307")
-        assert 'proposal_id' in search.__repr__()
-    finally:
-        remove_custom_config()  # restore default to avoid side effects
-
-    # test changing config at runtime
-    try:
-        lk.conf.search_result_display_extra_columns = ['sequence_number']
-
-        search = search_timeseries("TIC169175503")  # again use a different TIC to avoid caching complication
-        assert 'sequence_number' in search.__repr__()
-    finally:
-        lk.conf.search_result_display_extra_columns = []  # restore default to avoid side effects
-
-    # Test per-object customization
-    search.display_extra_columns = []
-    assert 'proposal_id' not in search.__repr__()
-    search.display_extra_columns = ['sequence_number', 'proposal_id']  # also support multiple columns
-    assert 'proposal_id' in search.__repr__()
-    assert 'sequence_number' in search.__repr__()'''
-
-#@pytest.mark.remote_data
 def test_tesscut():
     """Can we find TESS tesscut tpfs"""
     target = "Kepler 16b"
     assert len(TESSSearch("Kepler 16b").search_individual_ffi(58682,58710, sector=14)) == 1281
 
-#@pytest.mark.remote_data
+
+
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
-    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14)) == 11
-    assert len(TESSSearch("Kepler 16b", hlsp=False, sector=14).cubedata) == 3
-
-
-
+    results = TESSSearch("Kepler 16b", hlsp=False, sector=14)
+    assert len(results) == 11
+    assert len(results.cubedata) == 3
+    manifest = results[0].cubedata.download()
+    assert len(manifest) == 1

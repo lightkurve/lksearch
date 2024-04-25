@@ -1421,7 +1421,7 @@ class TESSSearch(MASTSearch):
     
 
     def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = default_download_dir, 
-                 TESScut_product="SPOC",
+                 #TESScut_product="SPOC",
                  TESScut_size = 10):
         mf1 = []
         mf2 = []
@@ -1435,14 +1435,21 @@ class TESSSearch(MASTSearch):
                 Tesscut.enable_cloud_dataset()
             mf1 = Tesscut.download_cutouts(coordinates=self.SkyCoord, 
                                           size=TESScut_size, 
-                                          sector=self.table['sequence_number'].values[mask], 
-                                          product=TESScut_product, 
+                                          sector=self.table['sequence_number'].values[mask],
+                                          # Uncomment when astroquery 0.4.8 is released to enable TICA support
+                                          # product=TESScut_product,  
+                                          # verbose=False
                                           path=PACKAGEDIR, 
                                           inflate=True, 
                                           moving_target=False, #this could be added
-                                          mt_type=None, verbose=False)
-        manifest = mf1.append(mf2)
-        return manifest
+                                          mt_type=None, 
+                                          )
+        print(mf1)
+        print(mf2)
+        if mf1 != []:
+            manifest = mf1.append(mf2)
+            return manifest
+        return mf2
     
 
 
