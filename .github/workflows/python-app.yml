@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: chartboost/ruff-action@v1
         with:
-          args: 'format --fix'
+          args: 'format --check'
   build:
 
     runs-on: ubuntu-latest
@@ -33,7 +33,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip 
-        pip install poetry --with dev
+        pip install poetry 
         poetry install
     - name: Test with pytest
       run: poetry run pytest
