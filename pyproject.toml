@@ -20,6 +20,11 @@ rich = "^13.7.1"
 sphinx_astropy = "^1.9.1"
 tesswcs = "^1.1.2"
 boto3 = "^1.34.25"
+sphinx = "^7.3.7"
+sphinx_rtd_theme = "^2.0.0"
+myst_parser = "^3.0.0-"
+sphinx_astropy = "^1.9.1"
+sphinx_automodapi = "^0.17.0"
 
 [build-system]
 requires = ["poetry-core"]
