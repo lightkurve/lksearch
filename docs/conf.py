@@ -13,6 +13,7 @@ except ImportError:
     print("sphinx_astropy not found, default configuration will be used.")
 import os
 import sys
+import tssc
 
 # Add the modules source to the path
 sys.path.insert(0, os.path.abspath("../../src"))
