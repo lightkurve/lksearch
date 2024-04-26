@@ -55,4 +55,7 @@ class Conf(_config.ConfigNamespace):
 
 conf = Conf()
 
-from .search import *
+from .MASTSearch import MASTSearch
+from .TESSSearch import TESSSearch
+from .KeplerSearch import KeplerSearch
+from .K2Search import K2Search
