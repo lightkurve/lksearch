@@ -21,9 +21,9 @@ import shutil
 
 # from lightkurve.utils import LightkurveWarning, LightkurveError
 
-from newlk_search.utils import SearchError, SearchWarning
+from TSSC.utils import SearchError, SearchWarning
 
-from newlk_search import MASTSearch, TESSSearch, KeplerSearch, K2Search
+from TSSC import MASTSearch, TESSSearch, KeplerSearch, K2Search
 
 
 def test_search_cubedata():
