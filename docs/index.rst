@@ -3,27 +3,27 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to newlk_search's documentation!
-========================================
+Welcome to Timeseries Simple Search Combo (TSSC) documentation!
+===============================================================
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-.. automodule:: newlk_search
+.. autoclass:: TSSC.MASTSearch
    :members:
 
-.. autoclass:: MASTSearch
+.. autoclass:: TSSC.KeplerSearch
    :members:
 
-.. autoclass:: KeplerSearch
-   :members:
-
-.. autoclass:: K2Search
+.. autoclass:: TSSC.K2Search
    :members:
    
-.. autoclass:: TESSSearch
+.. autoclass:: TSSC.TESSSearch
+   :members:
+
+.. automodule:: TSSC
    :members:
 
 Indices and tables

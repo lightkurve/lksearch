@@ -38,12 +38,12 @@ class K2Search(MASTSearch):
         coordinates in decimal degrees (tuple), or Astropy `~astropy.coordinates.SkyCoord` Object.
     obs_table:Optional[pd.DataFrame] = None
         Optionally, can provice a Astropy `~astropy.table.Table` Object from
-        AstroQuery `astroquery.mast.Observations.query_criteria' which will be used to construct the observations table
+        AstroQuery `~astroquery.mast.Observations.query_criteria` which will be used to construct the observations table
     prod_table:Optional[pd.DataFrame] = None
         Optionally, if you provide an obs_table, you may also provide a products table of assosciated products.  These
         two tables will be concatenated to become the primary joint table of data products.
     table:Optional[pd.DataFrame] = None
-        Optionally, may provide an stropy `~astropy.table.Table` Object  that is the already merged joint table of obs_table
+        Optionally, may provide an astropy `~astropy.table.Table` Object  that is the already merged joint table of obs_table
         and prod_table.
     search_radius:Optional[Union[float,u.Quantity]] = None
         The radius around the target name/location to search for observations.  Can be provided in arcseconds (float) or as an

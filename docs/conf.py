@@ -18,10 +18,10 @@ import sys
 sys.path.insert(0, os.path.abspath("../../src"))
 
 
-project = "newlk_search"
+project = "Timeseries Simple Search Combo (TSSC)"
 copyright = "2024, TESS Science Support Center"
 author = "TESS Science Support Center"
-release = "0.01a"
+release = "0.1.dev"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -98,4 +98,6 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "astropy": ("https://docs.astropy.org/en/latest/", None),
+    "astroquery": ("https://astroquery.readthedocs.io/en/latest/", None),
+    "pandas": ("https://pandas.pydata.org/docs/", None),
 }

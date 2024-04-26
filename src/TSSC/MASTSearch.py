@@ -27,10 +27,7 @@ log = logging.getLogger(__name__)
 
 class MASTSearch(object):
     """
-    Generic Search Class for data exploration that queries mast for observations performed by the:
-        Kepler
-        K2
-        TESS
+    Generic Search Class for data exploration that queries mast for observations performed by the: Kepler, K2, TESS
     Missions, and returns the results in a convenient table with options to download.
     By default only mission products are returned.
 
@@ -38,10 +35,10 @@ class MASTSearch(object):
     ----------
     target: Optional[Union[str, tuple[float], SkyCoord]] = None
         The target to search for observations of. Can be provided as a name (string),
-        coordinates in decimal degrees (tuple), or Astropy `~astropy.coordinates.SkyCoord` Object.
+        coordinates in decimal degrees (tuple), or astropy `~astropy.coordinates.SkyCoord` Object.
     obs_table:Optional[pd.DataFrame] = None
         Optionally, can provice a Astropy `~astropy.table.Table` Object from
-        AstroQuery `astroquery.mast.Observations.query_criteria' which will be used to construct the observations table
+        AstroQuery `~astroquery.mast.Observations.query_criteria` which will be used to construct the observations table
     prod_table:Optional[pd.DataFrame] = None
         Optionally, if you provide an obs_table, you may also provide a products table of assosciated products.  These
         two tables will be concatenated to become the primary joint table of data products.

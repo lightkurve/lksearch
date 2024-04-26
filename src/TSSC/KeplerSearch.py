@@ -38,7 +38,7 @@ class KeplerSearch(MASTSearch):
         coordinates in decimal degrees (tuple), or Astropy `~astropy.coordinates.SkyCoord` Object.
     obs_table:Optional[pd.DataFrame] = None
         Optionally, can provice a Astropy `~astropy.table.Table` Object from
-        AstroQuery `astroquery.mast.Observations.query_criteria' which will be used to construct the observations table
+        AstroQuery `astroquery.mast.Observations.query_criteria` which will be used to construct the observations table
     prod_table:Optional[pd.DataFrame] = None
         Optionally, if you provide an obs_table, you may also provide a products table of assosciated products.  These
         two tables will be concatenated to become the primary joint table of data products.
@@ -47,7 +47,7 @@ class KeplerSearch(MASTSearch):
         and prod_table.
     search_radius:Optional[Union[float,u.Quantity]] = None
         The radius around the target name/location to search for observations.  Can be provided in arcseconds (float) or as an
-        AstroPy `~astropy.units.u.Quantity` Object
+        AstroPy `~astropy.units.Quantity` Object
     exptime:Optional[Union[str, int, tuple]] = (0,9999)
         Exposure time to filter observation results on.  Can be provided as a mission-specific string,
         an int which forces an exact match to the time in seconds, or a tuple, which provides a range to filter on.

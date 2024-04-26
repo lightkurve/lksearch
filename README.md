@@ -1,4 +1,5 @@
 Timeseries Simple Search Combo (TSSC)
+# *PRE-RELEASE*
 ==========
 **Helpful package to search for TESS/Kepler/K2 data**
 
@@ -6,8 +7,8 @@ Timeseries Simple Search Combo (TSSC)
 
 Documentation
 -------------
-
-Read the documentation at [TBD](https://heasarc.gsfc.nasa.gov/docs/tess/).
+Read the documentation [here](https://heasarc.gsfc.nasa.gov/docs/tess/https://tylerapritchard.github.io/TSSC/).
+Check out the tutorial notebook [here](docs/tutorials/Example_searches.ipynb)
 
 
 Quickstart and Installation
@@ -72,6 +73,6 @@ Contact
 Please include a self-contained example that fully demonstrates your problem or question.
 
 alternative name pitches:
-Search Package for TESS Kepler and K2 Surveys (SPEKKS)
-(Search)SpaceCubes
-The Terrible Secret of Space
+  - Search Package for TESS Kepler and K2 Surveys (SPEKKS)
+  - (Search)SpaceCubes
+  - The Terrible Secret of Space
