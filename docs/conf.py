@@ -20,9 +20,12 @@ sys.path.insert(0, os.path.abspath("../../src"))
 for x in os.walk("../../src"):
     sys.path.insert(0, x[0])
 print(sys.path)
-
-import tssc as tssc
-from tssc import MASTSearch, TESSSearch, K2Search, KeplerSearch
+sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../src/'))
+sys.path.insert(0, os.path.abspath('../src/tssc'))
+sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../src/'))
+sys.path.insert(0, os.path.abspath('../../src/tssc'))
 
 project = "Timeseries Simple Search Combo (tssc)"
 copyright = "2024, TESS Science Support Center"
