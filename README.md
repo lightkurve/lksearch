@@ -3,7 +3,7 @@ Timeseries Simple Search Combo (TSSC)
 ==========
 **Helpful package to search for TESS/Kepler/K2 data**
 
-**TSSC** is a community developed, open source Python package that offers a user-friendly approach to searching the [Barbara A. Mikulski Archive for Space Telescopes (MAST)](https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html) web portal for scientific data and mission products from **NASA's TESS, K2, and Kepler missions**.  This package aims to lower the barrier for students, astronomers, and citizen scientists interested in analyzing time-series data from these NASA missions. It does this by providing a set of streamlined classes with simplified inputs and outputs that wraps [Astroquery's](https://astroquery.readthedocs.io/en/latest/#) [MAST.Observations](https://astroquery.readthedocs.io/en/latest/mast/mast_obsquery.html) class with user-friendly post-processing of observation tables and convenient bundled download methods.  .  
+**TSSC** is a community developed, open source Python package that offers a user-friendly approach to searching the [Barbara A. Mikulski Archive for Space Telescopes (MAST)](https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html) web portal for scientific data and mission products from **NASA's TESS, K2, and Kepler missions**.  This package aims to lower the barrier for students, astronomers, and citizen scientists interested in analyzing time-series data from these NASA missions. It does this by providing a set of streamlined classes with simplified inputs and outputs that wraps [Astroquery's](https://astroquery.readthedocs.io/en/latest/#) [MAST.Observations](https://astroquery.readthedocs.io/en/latest/mast/mast_obsquery.html) class with user-friendly post-processing of observation tables and convenient bundled download methods.
 
 Documentation
 -------------
@@ -31,7 +31,7 @@ with the correct Python interpreter, e.g., ``python3``.
 
 
 # Search package for finding and retrieving TESS/Kepler/K2 mission data
-This package is a stand-alone implementation of the lightkurve search functionalty  
+This package is a stand-alone implementation of the lightkurve search functionalty. While this package shares many common features to the lightkurve.search module, it has many major changes, as described below. 
 
 ## Changes Include:
   - The class structure has been modified. The base class is MASTSearch. Users are intended to use mission-specific classes (KeplerSearch/K2Search/TESSSearch) to obtain mission-specific results.
@@ -39,7 +39,7 @@ This package is a stand-alone implementation of the lightkurve search functional
   - The TESScut search functionality now uses tesswcs to identify observed sectors
   - Data products are now generalized (timeseries contains lightcurve products, cubedata contains target pixel files and TESSCut, and dvreports contains pdfs contining data validation reports) 
   - 'download' now defaults to the AWS cloud storage. 
-  - 'download' downloads files to disk. It no longer returns a lightkurve object. 
+  - 'download' only downloads files to disk. It no longer returns a lightkurve object. 
  
 
 
@@ -60,7 +60,7 @@ Please read the  guidelines at [TBD](https://heasarc.gsfc.nasa.gov/docs/tess/).
 Citing
 ------
 
-If you find *newlk_seach* useful in your research, please cite it and give us a GitHub star!
+If you find *TSSC* useful in your research, please cite it and give us a GitHub star!
 Please read the citation instructions at [TBD](https://heasarc.gsfc.nasa.gov/docs/tess/)
 
 

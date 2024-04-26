@@ -56,7 +56,7 @@ class KeplerSearch(MASTSearch):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     quarter: Optional[int] = None,
-        Kepler Observing Quarter for which to search for data
+        Kepler Observing Quarter for which to search for data. In the initial search, only a single quarter can be used. However, you can later use search_result.filter_table(quarter=[1,2]) to access a specific subset of quarters.
     month: Optional[int] = None,
         Observation month for Kepler
     """
@@ -131,7 +131,7 @@ class KeplerSearch(MASTSearch):
         raise NotImplementedError
 
     def _add_kepler_mission_product(self):
-        # Some products are HLSPs and some are mission products
+        """Determine whick products are HLSPs and which are mission products"""
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "Kepler"] = True
         self.table["mission_product"] = mission_product
@@ -139,7 +139,6 @@ class KeplerSearch(MASTSearch):
     def _get_sequence_number(self):
         # Kepler sequence_number values were not populated at the time of
         # writing this code, so we parse them from the description field.
-
         seq_num = self.table["sequence_number"].values.astype(str)
 
         mask = (
@@ -168,10 +167,10 @@ class KeplerSearch(MASTSearch):
         quarter: Union[int, list[int]] = None,
         month: Union[int, list[int]] = None,
     ) -> pd.DataFrame:
+        """Filter Kepler product by month/quarter
+        Returns a boolean mask"""
         import os
 
-        # Filter Kepler product by month/quarter
-        # TODO: should this return the mask or replace self.table directly? I'm leaning toward replace directly
         products = self.table
 
         mask = np.ones(len(products), dtype=bool)
@@ -263,7 +262,7 @@ class KeplerSearch(MASTSearch):
 
         Returns
         -------
-        KeplerSearch object with updated.
+        KeplerSearch object with updated table.
         """
         mask = np.ones(len(self.table), dtype=bool)
 

@@ -6,7 +6,7 @@ import os
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 PREFER_CLOUD = True  # Do you prefer URIs pointing to the Amazon bucket when available?
-DOWNLOAD_CLOUD = True  # TODO: Ask Tyler if this only downloads if there is cloud data?
+DOWNLOAD_CLOUD = True
 
 from .version import __version__
 

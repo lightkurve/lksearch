@@ -56,7 +56,7 @@ class TESSSearch(MASTSearch):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     sector: Optional[int] = None,
-        TESS Observing Sector for which to search for data
+        TESS Observing Sector for which to search for data. In the initial search, only a single sector can be used. However, you can later use search_result.filter_table(sector=[1,2]) to access a specific subset of sectors.
     """
 
     _REPR_COLUMNS = [
@@ -139,7 +139,7 @@ class TESSSearch(MASTSearch):
         return f"{target.group(2)}"
 
     def _add_TESS_mission_product(self):
-        # Some products are HLSPs and some are mission products
+        """Determine whick products are HLSPs and which are mission products"""
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "SPOC"] = True
         self.table["mission_product"] = mission_product
@@ -174,8 +174,8 @@ class TESSSearch(MASTSearch):
 
         Returns
         -------
-        _type_
-            _description_
+        tesscut_results: pd.DataFrame
+            table containing information on sectors in which TESS FFI data is available
         """
         from tesswcs import pointings
         from tesswcs import WCS
@@ -232,7 +232,7 @@ class TESSSearch(MASTSearch):
                         int(np.floor(Time(row["Start"], format="jd").decimalyear))
                     )
 
-        # Build the ffi dataframe from the observability
+        # Build the FFI dataframe from the observability
         n_results = len(tesscut_seqnum)
         tesscut_result = pd.DataFrame(
             {
@@ -335,7 +335,6 @@ class TESSSearch(MASTSearch):
         query_criteria = {"project": "TESS", **extra_query_criteria}
         query_criteria["provenance_name"] = "SPOC"
         query_criteria["dataproduct_type"] = "image"
-        # query_criteria["calib_level"] = 2
 
         if type(tmin) == type(Time):
             tmin = tmin.mjd
@@ -366,13 +365,13 @@ class TESSSearch(MASTSearch):
         )
 
         ffi_products = Observations.get_product_list(ffi_obs)
-        # filter out uncalibrated ffi's & theoretical potential HLSP
+        # filter out uncalibrated FFIs & theoretical potential HLSP
         prod_mask = ffi_products["calib_level"] == 2
         ffi_products = ffi_products[prod_mask]
 
         new_table = deepcopy(self)
 
-        # Unlike the other products, ffis don't map cleanly bia obs_id as advertised, so we invert and add specific column info
+        # Unlike the other products, ffis don't map cleanly via obs_id as advertised, so we invert and add specific column info
         new_table.obs_table = ffi_products.to_pandas()
         new_table.obs_table["year"] = np.nan
 

@@ -56,7 +56,7 @@ class K2Search(MASTSearch):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     campaign: Optional[int] = None,
-        K2 Observing Campaign for which to search for data
+        K2 Observing Campaign for which to search for data. In the initial search, only a single campaign can be used. However, you can later use search_result.filter_table(campaign=[1,2]) to access a specific subset of campains.
     """
 
     _REPR_COLUMNS = [
@@ -120,14 +120,14 @@ class K2Search(MASTSearch):
 
     #
     def _add_K2_mission_product(self):
-        # Some products are HLSPs and some are mission products
+        """Determine whick products are HLSPs and which are mission products"""
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "K2"] = True
         self.table["mission_product"] = mission_product
 
     def _fix_K2_sequence(self):
-        # K2 campaigns 9, 10, and 11 were split into two sections
-        # list these separately in the table with suffixes "a" and "b"
+        """K2 campaigns 9, 10, and 11 were split into two sections
+        # list these separately in the table with suffixes 'a' and 'b'"""
         seq_num = self.table["sequence_number"].values.astype(str)
 
         mask = self.table["sequence_number"].isin([9, 10, 11])

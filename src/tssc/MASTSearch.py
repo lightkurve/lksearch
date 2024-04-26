@@ -56,7 +56,7 @@ class MASTSearch(object):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     sequence: Optional[int] = None,
-        Mission Specific Survey value that corresponds to Sector (TESS), Campaign (K2), or Quarter (Kepler)
+        Mission Specific Survey value that corresponds to Sector (TESS), Campaign (K2), or Quarter (Kepler). Only 1 value permitted, will assume the same sequence number for all missions.
     """
 
     _REPR_COLUMNS = [
@@ -207,8 +207,6 @@ class MASTSearch(object):
     @property
     def timeseries(self):
         """return a MASTSearch object with self.table only containing products that are a time-series measurement"""
-        # mask = self.table.productFilename.str.endswith("lc.fits")
-        # Not sure about the call below. Will exptime already have been handled in the mast search?
         mask = self._mask_product_type("lightcurve")
         return self._mask(mask)
 
@@ -223,14 +221,13 @@ class MASTSearch(object):
     @property
     def dvreports(self):
         """return a MASTSearch object with self.table only containing products that are data validation pdf files"""
-        # mask = self.table.productFilename.str.endswith(".pdf")
         mask = self._mask_product_type(filetype="dvreport")
         return self._mask(mask)
 
     # @cached
     def _searchtable_from_target(self, target: Union[str, tuple[float], SkyCoord]):
         """
-        takes a target to search
+        takes a target to search and
          - parses that target to search
          - searches mast to create a table from merged Obs/Prod Tables
          - filters the joint table
@@ -443,7 +440,6 @@ class MASTSearch(object):
         TypeError
             Raise an error if we don't recognise what type of data was passed in
         """
-        # We used to allow an int to be sent and do some educated-guess parsing
         # If passed a SkyCoord, convert it to an "ra, dec" string for MAST
         self.exact_target = False
 
@@ -543,7 +539,6 @@ class MASTSearch(object):
         SearchError
             If no data is found
         """
-        # Is this what we want to do/ where we want the error thrown for an ffi search in MASTsearch?
 
         if filetype == "ffi":
             raise SearchError(
@@ -597,7 +592,7 @@ class MASTSearch(object):
         sequence_number: Union[int, list[int], None] = None,
         **extra_query_criteria,
     ):
-        """attempts to find mast observations using ~astroquery.mast.Observations.query_criteria
+        """Attempts to find mast observations using ~astroquery.mast.Observations.query_criteria
 
         Parameters
         ----------
