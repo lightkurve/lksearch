@@ -45,7 +45,9 @@ def test_search_cubedata():
     assert len(MASTSearch(tic, mission="TESS").table) > 1
     assert (
         len(
-            TESSSearch(tic, pipeline="SPOC", sector=1, search_radius=100).timeseries.table
+            TESSSearch(
+                tic, pipeline="SPOC", sector=1, search_radius=100
+            ).timeseries.table
         )
         == 2
     )
@@ -257,7 +259,6 @@ def test_issue_472():
         TESSSearch("TIC41336498", sector=2).tesscut
 
 
-
 """ This test used in OG Lightkurve used the fact that we were failing when we
 tried to read the file into memmory after a download call.  In this package we
 are never reading a file into memmory so we cannot trivially replicate this test.  
@@ -350,11 +351,10 @@ def test_overlapping_targets_718():
     assert len(search) > 1
 
 
-
 def test_tesscut_795():
     """Regression test for #795: make sure the __repr__.of a TESSCut
     SearchResult works."""
-    str(TESSSearch("KIC 8462852")) 
+    str(TESSSearch("KIC 8462852"))
 
 
 def test_exptime_filtering():

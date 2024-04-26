@@ -394,7 +394,9 @@ class TESSSearch(MASTSearch):
         new_table.table["year"] = new_table.table["obs_id"].apply(
             (lambda x: int(x.split("-")[0][4:8]))
         )
-        new_table.table["sector"] = new_table.table["obs_id"].apply(lambda x:  int(x.split("-")[1][1:]))
+        new_table.table["sector"] = new_table.table["obs_id"].apply(
+            lambda x: int(x.split("-")[1][1:])
+        )
         return new_table
 
     def filter_table(
