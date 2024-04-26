@@ -56,10 +56,11 @@ class KeplerSearch(MASTSearch):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     quarter: Optional[int] = None,
-        Kepler Observing Quarter for which to search for data 
+        Kepler Observing Quarter for which to search for data
     month: Optional[int] = None,
         Observation month for Kepler
     """
+
     _REPR_COLUMNS = [
         "target_name",
         "pipeline",
@@ -112,15 +113,16 @@ class KeplerSearch(MASTSearch):
         """return a MASTSearch object with self.table only containing Mission Products"""
         mask = self.table["mission_product"]
         return self._mask(mask)
-    
-    def _check_exact(self,target):
-        """ Was a Kepler target ID passed? """
+
+    def _check_exact(self, target):
+        """Was a Kepler target ID passed?"""
         return re.match(r"^(kplr|kic) ?(\d+)$", target)
 
     def _target_to_exact_name(self, target):
         "parse Kepler TIC to exact target name"
         return f"kplr{target.group(2).zfill(9)}"
-#
+
+    #
     def _handle_kbonus(self):
         # KBONUS times are masked as they are invalid for the quarter data
         # kbonus_mask = self.table["pipeline"] == "KBONUS-BKG"
@@ -134,16 +136,17 @@ class KeplerSearch(MASTSearch):
         mission_product[self.table["pipeline"] == "Kepler"] = True
         self.table["mission_product"] = mission_product
 
-
     def _get_sequence_number(self):
         # Kepler sequence_number values were not populated at the time of
         # writing this code, so we parse them from the description field.
 
         seq_num = self.table["sequence_number"].values.astype(str)
 
-        mask = (self.table["project"] == "Kepler") & self.table[
-            "sequence_number"
-        ].isna() & ~self.table["description"].str.contains("Data Validation")
+        mask = (
+            (self.table["project"] == "Kepler")
+            & self.table["sequence_number"].isna()
+            & ~self.table["description"].str.contains("Data Validation")
+        )
         re_expr = r".*Q(\d+)"
         seq_num[mask] = [
             re.findall(re_expr, item[0])[0] if re.findall(re_expr, item[0]) else ""
@@ -151,14 +154,14 @@ class KeplerSearch(MASTSearch):
         ]
 
         self.table["sequence_number"] = seq_num
-        seq_num = [int(x) if x != '<NA>' else 99 for x in seq_num]
+        seq_num = [int(x) if x != "<NA>" else 99 for x in seq_num]
         # Create a 'Quarter' column
-        self.table["quarter"] = seq_num 
+        self.table["quarter"] = seq_num
 
-        '''self.table["mission"] = [
+        """self.table["mission"] = [
             f"{proj} - Q{seq}"
             if seq !=  '<NA>' else f"{proj}" for proj, seq in zip(self.table["mission"].values.astype(str), seq_num)  
-        ]'''
+        ]"""
 
     def _filter_kepler(
         self,
@@ -229,17 +232,19 @@ class KeplerSearch(MASTSearch):
         df = self.table
         df["sort_order"] = self.table["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order","quarter", "pipeline", "exptime"], ignore_index=True
+            by=["distance", "sort_order", "quarter", "pipeline", "exptime"],
+            ignore_index=True,
         )
         self.table = df
 
-    def filter_table(self, 
-            limit: int = None, 
-            exptime: Union[int, float, tuple, type(None)] = None,  
-            pipeline: Union[str, list[str]] = None,
-            quarter: Optional[int] = None,
-            month: Optional[int] = None,
-            ):
+    def filter_table(
+        self,
+        limit: int = None,
+        exptime: Union[int, float, tuple, type(None)] = None,
+        pipeline: Union[str, list[str]] = None,
+        quarter: Optional[int] = None,
+        month: Optional[int] = None,
+    ):
         """
         Filters the search result table by specified parameters
 
@@ -258,14 +263,14 @@ class KeplerSearch(MASTSearch):
 
         Returns
         -------
-        KeplerSearch object with updated. 
+        KeplerSearch object with updated.
         """
         mask = np.ones(len(self.table), dtype=bool)
 
         if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime) 
+            mask = mask & self._mask_by_exptime(exptime)
         if pipeline is not None:
-            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
         if (quarter is not None) | (month is not None):
             mask = mask & self._filter_kepler(quarter=quarter, month=month)
         if limit is not None:

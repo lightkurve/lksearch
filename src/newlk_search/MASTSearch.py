@@ -24,6 +24,7 @@ default_download_dir = config.get_cache_dir()
 
 log = logging.getLogger(__name__)
 
+
 class MASTSearch(object):
     """
     Generic Search Class for data exploration that queries mast for observations performed by the:
@@ -80,7 +81,7 @@ class MASTSearch(object):
         prod_table: Optional[pd.DataFrame] = None,
         table: Optional[pd.DataFrame] = None,
         search_radius: Optional[Union[float, u.Quantity]] = None,
-        exptime: Optional[Union[str, int, tuple]] = (0, 9999), 
+        exptime: Optional[Union[str, int, tuple]] = (0, 9999),
         mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
         pipeline: Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"],
         sequence: Optional[int] = None,
@@ -107,21 +108,19 @@ class MASTSearch(object):
             self.table = self._update_table(self.table)
             self.table = self._fix_table_times(self.table)
 
-
         # If MAST search tables are provided, another MAST search is not necessary
         else:
             self._searchtable_from_table(table, obs_table, prod_table)
 
-
-
     def __len__(self):
         """Returns the number of products in the SearchResult table."""
         return len(self.table)
+
     def __repr__(self):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
                 out = f"{self.__class__.__name__} object containing {len(self.table)} data products"
-                return  out + self.table[self._REPR_COLUMNS].__repr__()
+                return out + self.table[self._REPR_COLUMNS].__repr__()
             else:
                 return "No results found"
         else:
@@ -129,7 +128,6 @@ class MASTSearch(object):
 
     # Used to call the pandas table html output which is nicer
     def _repr_html_(self):
-
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
                 out = f"{self.__class__.__name__} object containing {len(self.table)} data products"
@@ -148,7 +146,7 @@ class MASTSearch(object):
         if hasattr(key, "__iter__"):
             if len(key) == len(self.table):
                 return self._mask(key)
-            
+
     @property
     def ra(self):
         """Right Ascension coordinate for each data product found."""
@@ -198,7 +196,7 @@ class MASTSearch(object):
 
     @property
     def cloud_uris(self):
-        """ Returns the cloud uris for products in self.table.
+        """Returns the cloud uris for products in self.table.
         Returns
         -------
         ~numpy.array of URI's from ~astroquery.mast
@@ -208,7 +206,7 @@ class MASTSearch(object):
         return np.asarray(
             Observations.get_cloud_uris(Table.from_pandas(self.table), full_url=True)
         )
-    
+
     @property
     def timeseries(self):
         """return a MASTSearch object with self.table only containing products that are a time-series measurement"""
@@ -232,10 +230,8 @@ class MASTSearch(object):
         mask = self._mask_product_type(filetype="dvreport")
         return self._mask(mask)
 
-
-    #@cached
-    def _searchtable_from_target(self, 
-                                 target: Union[str, tuple[float], SkyCoord]):
+    # @cached
+    def _searchtable_from_target(self, target: Union[str, tuple[float], SkyCoord]):
         """
         takes a target to search
          - parses that target to search
@@ -267,18 +263,20 @@ class MASTSearch(object):
 
         self.table = self.table[mask]
 
-    def _searchtable_from_table(self, 
-                                table: Optional[pd.DataFrame] = None, 
-                                obs_table: Optional[pd.DataFrame] = None, 
-                                prod_table: Optional[pd.DataFrame] = None):
+    def _searchtable_from_table(
+        self,
+        table: Optional[pd.DataFrame] = None,
+        obs_table: Optional[pd.DataFrame] = None,
+        prod_table: Optional[pd.DataFrame] = None,
+    ):
         """creates a unified table from either:
-            - a passed joint-table 
+            - a passed joint-table
                 - this is just passed through
             - an obs_table from astroquery.mast.query_critera.to_pandas()
                 - this uses obs_table to create a prod_table and merges tables
             - an obs_table AND a prod_table from from astroquery.mast.get_products.to_pandas()
                 - this meges obs_table and prod_table
-            
+
             self.table is then set from this table
         Parameters
         ----------
@@ -348,12 +346,11 @@ class MASTSearch(object):
             inplace=True,
         )
 
-
         return joint_table
-    
+
     def _fix_table_times(self, joint_table: pd.DataFrame):
         """fixes incorrect times and adds convenient columns to the search table
-        MAST returns the min and max time for each observation in the table. 
+        MAST returns the min and max time for each observation in the table.
         Turn this value into the standard JD format
         Also extract the observation year for sorting purposes
 
@@ -367,29 +364,24 @@ class MASTSearch(object):
         ~pandas.DataFrame
             the input table with updated values and additional columns
         """
-        if (isinstance, joint_table.index, pd.MultiIndex):
-            #Multi-Index leading to issues, re-index?
+        if isinstance(joint_table.index, pd.MultiIndex):
+            # Multi-Index leading to issues, re-index?
             joint_table = joint_table.reset_index()
-            
+
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
         # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
         for idx, row in joint_table.iterrows():
-            if (row['pipeline'] == "Kepler") & ("Data Validation" not in row['description']):
-
-                year[idx] = re.findall(
-                    r"\d+.(\d{4})\d+", row["productFilename"]
-                )[0]
+            if (row["pipeline"] == "Kepler") & (
+                "Data Validation" not in row["description"]
+            ):
+                year[idx] = re.findall(r"\d+.(\d{4})\d+", row["productFilename"])[0]
         joint_table["year"] = year.astype(int)
-        
-        joint_table["start_time"] = Time(
-            self.table["t_min"], format="mjd"
-        ).iso
-        joint_table["end_time"] = Time(
-            self.table["t_max"], format="mjd"
-        ).iso
+
+        joint_table["start_time"] = Time(self.table["t_min"], format="mjd").iso
+        joint_table["end_time"] = Time(self.table["t_max"], format="mjd").iso
 
         return joint_table
-    
+
     def _search(
         self,
         search_radius: Union[float, u.Quantity] = None,
@@ -398,8 +390,8 @@ class MASTSearch(object):
         pipeline: Union[str, list[str]] = None,
         sequence: int = None,
     ):
-        """ from a parsed target input in self.target/self.SkyCoord - 
-            creates an obs_table & prod_table from self._search_obs() & self._search_prod(, 
+        """from a parsed target input in self.target/self.SkyCoord -
+            creates an obs_table & prod_table from self._search_obs() & self._search_prod(,
             and performs an outer joint to merge them
 
         Parameters
@@ -412,14 +404,14 @@ class MASTSearch(object):
         pipeline : Union[str, list[str]], optional
             pipeline to search for products from, by default None
         sequence : int, optional
-            sequence number (e.g. Cadence/Sector/Campaign) to search for 
+            sequence number (e.g. Cadence/Sector/Campaign) to search for
             products from, by default None
 
         Returns
         -------
         ~pandas.DataFrame
-            A DataFrame resulting from an outer join on a table from 
-            ~astroquery.mast.Observations.query_criteria and its assosciated 
+            A DataFrame resulting from an outer join on a table from
+            ~astroquery.mast.Observations.query_criteria and its assosciated
             ~astroquery.mast.Observations.get_product_list
         """
         self.obs_table = self._search_obs(
@@ -435,14 +427,13 @@ class MASTSearch(object):
 
         return joint_table
 
-    def _parse_input(self, 
-                     search_input:Union[str, tuple[float], SkyCoord]):
+    def _parse_input(self, search_input: Union[str, tuple[float], SkyCoord]):
         """Parses the provided target input search information based on input type
-            - If SkyCoord, sets self.Skycoord & 
+            - If SkyCoord, sets self.Skycoord &
                 creates a search string based on coordinates
-            - If tuple, assumes RA dec - sets search string based on coordinates & 
+            - If tuple, assumes RA dec - sets search string based on coordinates &
                 creates self.SkyCoord
-            - if str, assumes target name - sets search string to input string & 
+            - if str, assumes target name - sets search string to input string &
                 creates self.SkyCoord from SkyCoord.from_name
 
         Parameters
@@ -471,7 +462,6 @@ class MASTSearch(object):
             self.target_search_string = search_input
             self.SkyCoord = SkyCoord.from_name(search_input, frame="icrs")
 
-
             target_lower = str(search_input).lower()
             target_str = self._check_exact(target_lower)
             if target_str:
@@ -483,20 +473,19 @@ class MASTSearch(object):
                 "Target must be a target name string or astropy coordinate object"
             )
 
-    def _check_exact(self,target):
-        """We dont check exact target name for the generic MAST search - 
+    def _check_exact(self, target):
+        """We dont check exact target name for the generic MAST search -
         TESS/Kepler/K2 have different exact names for identical objects"""
         return False
-    
+
     def _target_to_exact_name(self, target):
-        """We dont check exact target name for the generic MAST search - 
+        """We dont check exact target name for the generic MAST search -
         TESS/Kepler/K2 have different exact names for identical objects"""
         return NotImplementedError("Use mission appropriate search for exact targets")
-    
-    def _add_s3_url_column(self, 
-                           joint_table: pd.DataFrame) -> pd.DataFrame:
-        """ 
-            self.table will updated to have an extra column of s3 URLS if possible 
+
+    def _add_s3_url_column(self, joint_table: pd.DataFrame) -> pd.DataFrame:
+        """
+            self.table will updated to have an extra column of s3 URLS if possible
 
         Parameters
         ----------
@@ -523,10 +512,10 @@ class MASTSearch(object):
         mission=["Kepler", "K2", "TESS"],
         pipeline: Union[str, tuple[str], type[None]] = None,
         exptime: Union[int, tuple[int]] = (0, 9999),
-        sequence: Union[int, list[int], type[None]]= None,
+        sequence: Union[int, list[int], type[None]] = None,
     ):
-        """Assuming we alreads have a pased target search input, 
-        parse optional inputs and then query mast using 
+        """Assuming we alreads have a pased target search input,
+        parse optional inputs and then query mast using
         ~astroquery.mast.Observations.query_criteria
 
         Parameters
@@ -542,7 +531,7 @@ class MASTSearch(object):
         exptime : Union[int, tuple[int]], optional
             exposure time of data products to search for, by default (0, 9999)
         sequence : Union[int, list[int], type, optional
-            mission dependent sequence (e.g. segment/campaign/sector) to search for 
+            mission dependent sequence (e.g. segment/campaign/sector) to search for
             data from, by default None
 
         Returns
@@ -608,7 +597,6 @@ class MASTSearch(object):
         project: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
         pipeline: Union[str, list[str], None] = None,
         exptime: Union[int, float, tuple, type(None)] = (0, 9999),  # None,
-
         sequence_number: Union[int, list[int], None] = None,
         **extra_query_criteria,
     ):
@@ -704,7 +692,7 @@ class MASTSearch(object):
         return obs.to_pandas()
 
     def _search_prod(self):
-        """uses ~astroquery.mast.Observations.get_product_list to get data products assosicated 
+        """uses ~astroquery.mast.Observations.get_product_list to get data products assosicated
         with self.obs_table
 
         Returns
@@ -717,7 +705,7 @@ class MASTSearch(object):
         return products.to_pandas()
 
     def _join_tables(self):
-        """perform an outer join on self.obs_table on obs_id, 
+        """perform an outer join on self.obs_table on obs_id,
         and self.prod_table and return joined table
 
         Returns
@@ -738,11 +726,9 @@ class MASTSearch(object):
         log.debug(f"MAST found {len(joint_table)} matching data products.")
         return joint_table
 
-
-
     def _add_kepler_sequence_num(self):
         """adds sequence number to kepler data in the self.table["sequence_number"]
-          column since these are not populated in mast
+        column since these are not populated in mast
         """
         seq_num = self.table["sequence_number"].values.astype(str)
 
@@ -761,7 +747,7 @@ class MASTSearch(object):
         self,
         filetype: str,
     ):
-        """convenience function to filter the productFilename column in self.table 
+        """convenience function to filter the productFilename column in self.table
         using the pandas .endswith function
 
         Parameters
@@ -796,7 +782,7 @@ class MASTSearch(object):
             "target pixel",
             "lightcurve",
             "dvreport",
-        ],  
+        ],
     ) -> pd.DataFrame:
         """filter self.table based on your product search preferences
 
@@ -817,7 +803,7 @@ class MASTSearch(object):
             cumulative boolean mask for self.table based off of
             the product of individual filter properties
         """
-        
+
         """ Modify this so that it can choose what types of products to keep?
         Since this will be used by mission specific search we want this to filter:
         Filetype
@@ -877,15 +863,14 @@ class MASTSearch(object):
         """Helper function to filter by exposure time.
         Returns a boolean array"""
         if "t_exptime" in self.table.columns:
-            exposures = self.table['t_exptime']
+            exposures = self.table["t_exptime"]
         else:
-            exposures = self.table['exptime']
+            exposures = self.table["exptime"]
 
         if isinstance(exptime, (int, float)):
             mask = exposures == exptime
         elif isinstance(exptime, tuple):
-            mask = (exposures >= min(exptime)) & (
-                exposures <= max(exptime))
+            mask = (exposures >= min(exptime)) & (exposures <= max(exptime))
         elif isinstance(exptime, str):
             exptime = exptime.lower()
             if exptime in ["fast"]:
@@ -905,23 +890,22 @@ class MASTSearch(object):
 
     @suppress_stdout
     def _download_one(
-        self, 
-        row: pd.Series, 
-        cloud_only: bool = False, 
-        cache: bool = True, 
-        download_dir: str = "."
+        self,
+        row: pd.Series,
+        cloud_only: bool = False,
+        cache: bool = True,
+        download_dir: str = ".",
     ) -> pd.DataFrame:
         """Helper function that downloads an individual row.
         This may be more efficient if we are caching, but we can sent a full table
         to download_products to get multiple items.
         """
-        
+
         # Make sure astroquery uses the same level of verbosity
         print(log.getEffectiveLevel())
         logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
         logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
 
-        
         manifest = Observations.download_products(
             Table().from_pandas(row.to_frame(name=" ").transpose()),
             download_dir=download_dir,
@@ -929,19 +913,20 @@ class MASTSearch(object):
             cloud_only=cloud_only,
         )
         return manifest.to_pandas()
-    
-    def filter_table(self, 
-            # Filter the table by keywords
-            limit: int = None, 
-            exptime: Union[int, float, tuple, type(None)] = None,  
-            pipeline: Union[str, list[str]] = None,
-            ):
+
+    def filter_table(
+        self,
+        # Filter the table by keywords
+        limit: int = None,
+        exptime: Union[int, float, tuple, type(None)] = None,
+        pipeline: Union[str, list[str]] = None,
+    ):
         mask = np.ones(len(self.table), dtype=bool)
 
         if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime) 
+            mask = mask & self._mask_by_exptime(exptime)
         if pipeline is not None:
-            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
@@ -955,7 +940,7 @@ class MASTSearch(object):
         cloud_only: bool = False,
         download_dir: str = default_download_dir,
         remove_incomplete: str = True,
-    ) ->pd.DataFrame:
+    ) -> pd.DataFrame:
         """downloads products in self.table to the local hard-drive
 
         Parameters
@@ -978,11 +963,9 @@ class MASTSearch(object):
             table where each row is an ~astroquery.mast.Observations.download_products()
             manifest
         """
-        
+
         if len(self.table) == 0:
-            warnings.warn(
-                "Cannot download from an empty search result.", SearchWarning
-            )
+            warnings.warn("Cannot download from an empty search result.", SearchWarning)
             return None
 
         if cloud:
@@ -996,22 +979,17 @@ class MASTSearch(object):
 
         manifest = pd.concat(manifest)
         status = manifest["Status"] != "COMPLETE"
-        if(np.any(status)):
+        if np.any(status):
             warnings.warn(
-                "Not All Files Downloaded Successfully, Check Returned Manifest.", SearchWarning
+                "Not All Files Downloaded Successfully, Check Returned Manifest.",
+                SearchWarning,
             )
-            if(remove_incomplete):
+            if remove_incomplete:
                 for file in manifest.loc[status]["Local Path"].values:
-                    if (os.path.isfile(file)):
+                    if os.path.isfile(file):
                         os.remove(file)
-                        warnings.warn(
-                        f"Removed {file}", SearchWarning
-                        )
+                        warnings.warn(f"Removed {file}", SearchWarning)
                     else:
-                        warnings.warn(
-                            f"Not a file: {file}", SearchWarning
-                        )
-                        
+                        warnings.warn(f"Not a file: {file}", SearchWarning)
 
-                
         return manifest

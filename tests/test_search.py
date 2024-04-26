@@ -1,7 +1,5 @@
-"""Test features of search that interact with the data archive at MAST.
+"""Test features of search that interact with the data archive at MAST."""
 
-
-"""
 import os
 import pytest
 
@@ -21,48 +19,29 @@ from astropy.utils.data import get_pkg_data_filename
 
 import shutil
 
-#from lightkurve.utils import LightkurveWarning, LightkurveError
+# from lightkurve.utils import LightkurveWarning, LightkurveError
 
 from newlk_search.utils import SearchError, SearchWarning
 
 from newlk_search import MASTSearch, TESSSearch, KeplerSearch, K2Search
 
 
-
 def test_search_cubedata():
     # EPIC 210634047 was observed twice in long cadence
-    #assert len(search_cubedata("EPIC 210634047", mission="K2").table) == 2
+    # assert len(search_cubedata("EPIC 210634047", mission="K2").table) == 2
     assert len(K2Search("EPIC 210634047").cubedata.table) == 2
     # ...including Campaign 4
-    assert (
-        len(K2Search("EPIC 210634047", campaign=4).cubedata.table)
-        == 1
-    )
+    assert len(K2Search("EPIC 210634047", campaign=4).cubedata.table) == 1
     # KIC 11904151 (Kepler-10) was observed in LC in 15 Quarters
     # Note cadence='long' is now exptime='long'
-    assert (
-        len(
-            KeplerSearch(
-                "KIC 11904151", exptime="long"
-            ).cubedata.table
-        )
-        == 15
-    )
+    assert len(KeplerSearch("KIC 11904151", exptime="long").cubedata.table) == 15
     # ...including quarter 11 but not 12:
     assert (
-        len(
-            KeplerSearch(
-                "KIC 11904151", exptime='long', quarter=11
-                ).cubedata.table
-        )
+        len(KeplerSearch("KIC 11904151", exptime="long", quarter=11).cubedata.table)
         == 1
     )
     assert (
-        len(
-            KeplerSearch(
-                "KIC 11904151", exptime="long", quarter=12
-            ).cubedata.table
-        )
+        len(KeplerSearch("KIC 11904151", exptime="long", quarter=12).cubedata.table)
         == 0
     )
 
@@ -70,13 +49,17 @@ def test_search_cubedata():
     tic = "TIC 273985862"  # Has been observed in multiple sectors including 1
     assert len(MASTSearch(tic, mission="TESS").table) > 1
     assert (
-        len(TESSSearch(tic, pipeline='SPOC', sector=1, search_radius=100).timeseries.table)
+        len(
+            TESSSearch(
+                tic, pipeline="SPOC", sector=1, search_radius=100
+            ).timeseries.table
+        )
         == 2
     )
     # TODO: download test?
     manifest = TESSSearch(tic, pipeline="SPOC", sector=1).download()
     assert len(manifest) == len(TESSSearch(tic, pipeline="SPOC", sector=1))
-    assert len(TESSSearch("pi Mensae", sector=1, pipeline='SPOC').cubedata.table) == 1
+    assert len(TESSSearch("pi Mensae", sector=1, pipeline="SPOC").cubedata.table) == 1
     # Issue #445: indexing with -1 should return the last index of the search result
     # NOTE: the syntax for this is different with new search
     assert len(TESSSearch("pi Mensae").cubedata[-1].table) == 1
@@ -101,23 +84,47 @@ def test_search_timeseries(caplog):
     # The name Kepler-10 somehow no longer works on MAST. So we use 2MASS instead:
     #   https://simbad.cds.unistra.fr/simbad/sim-id?Ident=%405506010&Name=Kepler-10
     assert (
-        len(KeplerSearch('2MASS J19024305+5014286', pipeline='Kepler', exptime='long').timeseries.table)
+        len(
+            KeplerSearch(
+                "2MASS J19024305+5014286", pipeline="Kepler", exptime="long"
+            ).timeseries.table
+        )
         == 15
     )
 
-
-    # TODO: This tries to search, should probs add a check before it gets to that point. 
+    # TODO: This tries to search, should probs add a check before it gets to that point.
     # Or just check there is a NameResolveError?
     # MASTSearch("DOES_NOT_EXIST (UNIT TEST)").timeseries
     # assert "disambiguate" in caplog.text
 
     # If we ask for all cadence types, there should be four Kepler files given
-    assert len(KeplerSearch("KIC 4914423", quarter=6, exptime='any', pipeline="Kepler").timeseries.table) == 4
+    assert (
+        len(
+            KeplerSearch(
+                "KIC 4914423", quarter=6, exptime="any", pipeline="Kepler"
+            ).timeseries.table
+        )
+        == 4
+    )
 
     # ...and only one should have long cadence
-    assert len(KeplerSearch('KIC 4914423', quarter=6, exptime='long', pipeline='Kepler').timeseries.table) == 1
+    assert (
+        len(
+            KeplerSearch(
+                "KIC 4914423", quarter=6, exptime="long", pipeline="Kepler"
+            ).timeseries.table
+        )
+        == 1
+    )
     # Should be able to resolve an ra/dec
-    assert len(KeplerSearch("297.5835, 40.98339", quarter=6, pipeline="Kepler").timeseries.table) == 1
+    assert (
+        len(
+            KeplerSearch(
+                "297.5835, 40.98339", quarter=6, pipeline="Kepler"
+            ).timeseries.table
+        )
+        == 1
+    )
     # Should be able to resolve a SkyCoord
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
     search = KeplerSearch(c, quarter=6, pipeline="Kepler").timeseries
@@ -136,7 +143,9 @@ def test_search_timeseries(caplog):
     assert len(TESSSearch(tic).timeseries.table) > 1
     assert (
         len(
-            TESSSearch(tic, pipeline="spoc", sector=1, search_radius=100).timeseries.table
+            TESSSearch(
+                tic, pipeline="spoc", sector=1, search_radius=100
+            ).timeseries.table
         )
         == 2
     )
@@ -144,23 +153,22 @@ def test_search_timeseries(caplog):
     assert len(TESSSearch("pi Mensae", pipeline="SPOC", sector=1).timeseries.table) == 1
 
 
-
 def test_search_with_skycoord():
     """Can we pass both names, SkyCoord objects, and coordinate strings?"""
-    sr_name = KeplerSearch("KIC 11904151", exptime='long').cubedata
+    sr_name = KeplerSearch("KIC 11904151", exptime="long").cubedata
     assert (
         len(sr_name) == 15
     )  # Kepler-10 as observed during 15 quarters in long cadence
     # Can we search using a SkyCoord objects?
-    sr_skycoord = KeplerSearch(SkyCoord.from_name("KIC 11904151"), exptime='long').cubedata
-    assert (
-        len(sr_skycoord) == 15
-    )
+    sr_skycoord = KeplerSearch(
+        SkyCoord.from_name("KIC 11904151"), exptime="long"
+    ).cubedata
+    assert len(sr_skycoord) == 15
     assert_array_equal(
         sr_name.table["productFilename"], sr_skycoord.table["productFilename"]
     )
     # Can we search using a string of "ra dec" decimals?
-    sr_decimal = KeplerSearch("285.67942179 +50.24130576", exptime='long').cubedata
+    sr_decimal = KeplerSearch("285.67942179 +50.24130576", exptime="long").cubedata
 
     assert_array_equal(
         sr_name.table["productFilename"], sr_decimal.table["productFilename"]
@@ -171,11 +179,10 @@ def test_search_with_skycoord():
         sr_name.table["productFilename"], sr_sexagesimal.table["productFilename"]
     )
 
-    sr_kic = KeplerSearch("KIC 11904151", exptime='long').cubedata
+    sr_kic = KeplerSearch("KIC 11904151", exptime="long").cubedata
     assert_array_equal(
         sr_name.table["productFilename"], sr_kic.table["productFilename"]
     )
-
 
 
 def test_searchresult():
@@ -187,44 +194,48 @@ def test_searchresult():
     # TODO: we don't have repr_html at the moment, do we want/need it? assert "kplr" in sr._repr_html_()
 
 
-
 def test_month():
     # In short cadence, if we specify both quarter and month
-    sr = KeplerSearch("KIC 11904151", quarter=11, month=1, exptime='short').cubedata
+    sr = KeplerSearch("KIC 11904151", quarter=11, month=1, exptime="short").cubedata
     assert len(sr) == 1
-    sr = KeplerSearch("KIC 11904151", quarter=11, month=[1,3], exptime='short').cubedata
+    sr = KeplerSearch(
+        "KIC 11904151", quarter=11, month=[1, 3], exptime="short"
+    ).cubedata
     assert len(sr) == 2
 
 
-
 def test_collections():
-    assert (
-        len(K2Search("EPIC 205998445", search_radius=900).cubedata.table)
-        == 4
-    )
+    assert len(K2Search("EPIC 205998445", search_radius=900).cubedata.table) == 4
     # LightCurveFileCollection class with set targetlimit
     # K2Search("EPIC 205998445", search_radius=900, author="K2").timeseries.limit_results(3)
     # TODO: get download working
     assert (
         len(
-            MASTSearch("EPIC 205998445", mission="K2", search_radius=900, pipeline="K2").filter_table(limit=3)
+            MASTSearch(
+                "EPIC 205998445", mission="K2", search_radius=900, pipeline="K2"
+            ).filter_table(limit=3)
         )
         == 3
     )
     # if fewer targets are found than targetlimit, should still download all available
     assert (
-        len(K2Search("EPIC 205998445", search_radius=900, pipeline="K2").cubedata.filter_table(limit=6).table)
+        len(
+            K2Search("EPIC 205998445", search_radius=900, pipeline="K2")
+            .cubedata.filter_table(limit=6)
+            .table
+        )
         == 4
     )
     # if download() is used when multiple files are available, should only download 1
     # TODO: deal with downloads later
-    '''with pytest.warns(LightkurveWarning, match="4 files available to download"):
+    """with pytest.warns(LightkurveWarning, match="4 files available to download"):
         assert isinstance(
             MASTSearch(
                 "EPIC 205998445", mission="K2", search_radius=900, pipeline="K2"
             ).cubedata.download(),
             KeplerTargetPixelFile,
-        )'''
+        )"""
+
 
 def test_properties():
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
@@ -241,8 +252,8 @@ def test_source_confusion():
     desired_target = "KIC 6507433"
     tpf = KeplerSearch(desired_target, quarter=8).cubedata
     # TODO:targetid is now target_name. Was targetid modified or is it ok to make the switch?
-    assert '6507433' in tpf.target_name[0]
-    #assert tpf.targetid == 6507433
+    assert "6507433" in tpf.target_name[0]
+    # assert tpf.targetid == 6507433
 
 
 def test_empty_searchresult():
@@ -252,7 +263,7 @@ def test_empty_searchresult():
     str(sr)
     with pytest.warns(SearchWarning, match="Cannot download"):
         sr.download()
-    #with pytest.warns(LightkurveWarning, match="empty search"):
+    # with pytest.warns(LightkurveWarning, match="empty search"):
     #    sr.download()
 
 
@@ -266,7 +277,7 @@ def test_issue_472():
     # of the FFI footprint polygons at the MAST portal have changed at times.
     with pytest.raises(SearchError, match="No data"):
         TESSSearch("TIC41336498", sector=2).tesscut
-    #assert isinstance(search, TESSSearch)
+    # assert isinstance(search, TESSSearch)
 
 
 """ This test used in OG Lightkurve used the fact that we were failing when we
@@ -275,7 +286,7 @@ are never reading a file into memmory so we cannot trivially replicate this test
 A corrupted file will just exist on disk, but can be over-written with a keyword.  
 Is there a good way to replicate this behaviour?  
 """
-#def test_corrupt_download_handling_case_empty():
+# def test_corrupt_download_handling_case_empty():
 #    """When a corrupt file exists in the cache, make sure the user receives
 #    a helpful error message.
 #
@@ -305,12 +316,12 @@ Is there a good way to replicate this behaviour?
 #        #assert "may be corrupt" in err.value.args[0]
 #        #assert expected_fn in err.value.args[0]
 
-#Couldn't get the below to work - I think because we're missing a setattr in MASTSearch.  Look into this.  
-#def test_mast_http_error_handling(monkeypatch):
+# Couldn't get the below to work - I think because we're missing a setattr in MASTSearch.  Look into this.
+# def test_mast_http_error_handling(monkeypatch):
 #    """Regression test for #1211; ensure downloads yields an warning when MAST download result in an error.
 #    This is an intentional change from lightkurve search behaviour - since we are returning the file manifest
 #    we now throw a warning not an error"""
-#    
+#
 #    from astroquery.mast import Observations
 #
 #    result = TESSSearch("TIC 273985862").timeseries
@@ -338,9 +349,10 @@ Is there a good way to replicate this behaviour?
 def test_indexerror_631():
     """Regression test for #631; avoid IndexError."""
     # This previously triggered an exception:
-    result = TESSSearch("KIC 8462852", sector=15, search_radius=1, pipeline="spoc").timeseries
+    result = TESSSearch(
+        "KIC 8462852", sector=15, search_radius=1, pipeline="spoc"
+    ).timeseries
     assert len(result) == 1
-
 
 
 def test_overlapping_targets_718():
@@ -355,13 +367,12 @@ def test_overlapping_targets_718():
 
     # When using `radius=1` we should also retrieve the overlapping targets
     # TODO: The third one is only finding 1 target for some reason
-    search = KeplerSearch("KIC 5112705", quarter=11, pipeline="Kepler", search_radius=1 * u.arcsec).timeseries
+    search = KeplerSearch(
+        "KIC 5112705", quarter=11, pipeline="Kepler", search_radius=1 * u.arcsec
+    ).timeseries
     assert len(search) > 1
 
-    
-    search = TESSSearch(
-        "KIC 8462852", sector=15, pipeline="spoc"
-    ).timeseries
+    search = TESSSearch("KIC 8462852", sector=15, pipeline="spoc").timeseries
     assert len(search) == 1
 
 
@@ -371,45 +382,40 @@ def test_tesscut_795():
     str(TESSSearch("KIC 8462852"))  # This raised a KeyError
 
 
-
-
 def test_exptime_filtering():
     """Can we pass "fast", "short", exposure time to the cadence argument?"""
     # Try `cadence="fast"`
     res = TESSSearch("AU Mic", sector=27, exptime="fast").timeseries
     assert len(res) == 1
-    assert res.exptime[0] == 20.
+    assert res.exptime[0] == 20.0
     # Try `cadence="short"`
     res = TESSSearch("AU Mic", sector=27, exptime="short").timeseries
     assert len(res) == 1
-    assert res.table["exptime"][0] == 120.
+    assert res.table["exptime"][0] == 120.0
     # Try `cadence=20`
     res = TESSSearch("AU Mic", sector=27, exptime=20).timeseries
     assert len(res) == 1
-    assert res.table["exptime"][0] == 20.
+    assert res.table["exptime"][0] == 20.0
     assert "fast" in res.table["productFilename"][0]
-
 
 
 def test_search_slicing_regression():
     # Regression test: slicing after calling __repr__ failed.
-    res = TESSSearch("AU Mic",exptime=20).timeseries
+    res = TESSSearch("AU Mic", exptime=20).timeseries
     res.__repr__()
     res[res.exptime[0] < 100]
 
 
 def test_ffi_hlsp():
     """Can SPOC, QLP (FFI), and TESS-SPOC (FFI) light curves be accessed?"""
-    search = TESSSearch(
-        "TrES-2b", sector=26
-    ).timeseries  # aka TOI 2140.01
-    assert search.table['pipeline'].str.contains('QLP').any()
-    assert search.table['pipeline'].str.contains('TESS-SPOC').any() 
-    assert search.table['pipeline'].str.contains('SPOC').any() 
+    search = TESSSearch("TrES-2b", sector=26).timeseries  # aka TOI 2140.01
+    assert search.table["pipeline"].str.contains("QLP").any()
+    assert search.table["pipeline"].str.contains("TESS-SPOC").any()
+    assert search.table["pipeline"].str.contains("SPOC").any()
     # tess-spoc also products tpfs
     search = TESSSearch("TrES-2b", sector=26).cubedata
-    assert search.table['pipeline'].str.contains('TESS-SPOC').any()  
-    assert search.table['pipeline'].str.contains('SPOC').any()
+    assert search.table["pipeline"].str.contains("TESS-SPOC").any()
+    assert search.table["pipeline"].str.contains("SPOC").any()
 
 
 def test_qlp_ffi_lightcurve():
@@ -418,8 +424,7 @@ def test_qlp_ffi_lightcurve():
     assert len(search) == 1
     assert search.pipeline[0] == "QLP"
     # TODO: Add units back in when you alter the search result
-    assert search.exptime[0] == 1800. # * u.second  # Sector 26 had 30-minute FFIs
-
+    assert search.exptime[0] == 1800.0  # * u.second  # Sector 26 had 30-minute FFIs
 
 
 def test_spoc_ffi_lightcurve():
@@ -427,8 +432,7 @@ def test_spoc_ffi_lightcurve():
     search = TESSSearch("TrES-2b", sector=26, pipeline="tess-spoc").timeseries
     assert len(search) == 1
     assert search.pipeline[0] == "TESS-SPOC"
-    assert search.exptime[0] == 1800. # * u.second  # Sector 26 had 30-minute FFIs
-
+    assert search.exptime[0] == 1800.0  # * u.second  # Sector 26 had 30-minute FFIs
 
 
 def test_split_k2_campaigns():
@@ -438,7 +442,7 @@ def test_split_k2_campaigns():
     assert search_c09.table["campaign"][0] == "09a"
     assert search_c09.table["campaign"][1] == "09b"
     # Campaign 10
-    
+
     search_c10 = K2Search("EPIC 228725972", exptime="long", campaign=10).cubedata
     assert search_c10.table["campaign"][0] == "10a"
     assert search_c10.table["campaign"][1] == "10b"
@@ -448,12 +452,13 @@ def test_split_k2_campaigns():
     assert search_c11.table["campaign"][1] == "11b"
 
 
-
 def test_tesscut():
     """Can we find TESS tesscut tpfs"""
     target = "Kepler 16b"
-    assert len(TESSSearch("Kepler 16b").search_individual_ffi(58682,58710, sector=14)) == 1281
-
+    assert (
+        len(TESSSearch("Kepler 16b").search_individual_ffi(58682, 58710, sector=14))
+        == 1281
+    )
 
 
 def test_tesscut():

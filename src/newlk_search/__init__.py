@@ -5,8 +5,8 @@ from . import config as _config
 import os
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
-PREFER_CLOUD = True # Do you prefer URIs pointing to the Amazon bucket when available?
-DOWNLOAD_CLOUD = True # TODO: Ask Tyler if this only downloads if there is cloud data?
+PREFER_CLOUD = True  # Do you prefer URIs pointing to the Amazon bucket when available?
+DOWNLOAD_CLOUD = True  # TODO: Ask Tyler if this only downloads if there is cloud data?
 
 from .version import __version__
 
@@ -31,6 +31,7 @@ class Conf(_config.ConfigNamespace):
         Default cache directory for data files downloaded, etc. Defaults to ``~/.newlk_search/cache`` if not specified.
 
     """
+
     # Note: when using list or string_list datatype,
     # the behavior of astropy's parsing of the config file value:
     # - it does not accept python list literal
@@ -41,16 +42,15 @@ class Conf(_config.ConfigNamespace):
         [],
         "List of extra columns to be included when displaying a SearchResult object.",
         cfgtype="string_list",
-        module="newlk_search.search"
+        module="newlk_search.search",
     )
 
     cache_dir = _config.ConfigItem(
         None,
         "Default cache directory for data files downloaded, etc.",
         cfgtype="string",
-        module="newlk_search.config"
+        module="newlk_search.config",
     )
-
 
 
 conf = Conf()

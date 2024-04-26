@@ -2,16 +2,20 @@ import os
 import sys
 
 from . import config
+
 default_download_dir = config.get_cache_dir()
 
 
 from functools import wraps
 
+
 class SearchError(Exception):
     pass
 
+
 class SearchWarning(Warning):
     pass
+
 
 def suppress_stdout(f, *args, **kwargs):
     """A simple decorator to suppress function print outputs."""
@@ -29,4 +33,3 @@ def suppress_stdout(f, *args, **kwargs):
                 sys.stdout = old_out
 
     return wrapper
-

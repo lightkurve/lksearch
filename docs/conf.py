@@ -14,14 +14,14 @@ except ImportError:
 import os
 import sys
 
-#Add the modules source to the path
+# Add the modules source to the path
 sys.path.insert(0, os.path.abspath("../../src"))
 
 
-project = 'newlk_search'
-copyright = '2024, TESS Science Support Center'
-author = 'TESS Science Support Center'
-release = '0.01a'
+project = "newlk_search"
+copyright = "2024, TESS Science Support Center"
+author = "TESS Science Support Center"
+release = "0.01a"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -29,34 +29,33 @@ release = '0.01a'
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
-    #"sphinx_autodoc_typehints",
+    # "sphinx_autodoc_typehints",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx_automodapi.automodapi",
     "numpydoc",
     "sphinx.ext.intersphinx",
-    #"nbsphinx",
-    #"pandoc",
+    # "nbsphinx",
+    # "pandoc",
 ]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+html_theme = "alabaster"
 
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 html_sidebars = {
-    '**': [
-        'about.html',
-        'localtoc.html',
-        'navigation.html',
+    "**": [
+        "about.html",
+        "localtoc.html",
+        "navigation.html",
         #'relations.html',
         #'searchbox.html',
     ]

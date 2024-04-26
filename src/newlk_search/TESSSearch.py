@@ -56,8 +56,9 @@ class TESSSearch(MASTSearch):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     sector: Optional[int] = None,
-        TESS Observing Sector for which to search for data 
+        TESS Observing Sector for which to search for data
     """
+
     _REPR_COLUMNS = [
         "target_name",
         "pipeline",
@@ -79,8 +80,8 @@ class TESSSearch(MASTSearch):
         exptime: Optional[Union[str, int, tuple]] = (0, 9999),
         pipeline: Optional[Union[str, list[str]]] = None,
         sector: Optional[int] = None,
-        hlsp: bool = True
-    ):  
+        hlsp: bool = True,
+    ):
         if hlsp is False:
             pipeline = ["SPOC", "TESS-SPOC", "TESScut"]
 
@@ -96,7 +97,7 @@ class TESSSearch(MASTSearch):
             sequence=sector,
         )
         if table is None:
-            if(("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None))):
+            if ("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None)):
                 self._add_tesscut_products(sector)
             self._add_TESS_mission_product()
             self._sort_TESS()
@@ -112,8 +113,8 @@ class TESSSearch(MASTSearch):
         """return a MASTSearch object with self.table only containing Mission Products"""
         mask = self.table["mission_product"]
         return self._mask(mask)
-  
-    @property 
+
+    @property
     def tesscut(self):
         """return the TESScut only data"""
         mask = self.table["pipeline"] == "TESScut"
@@ -122,27 +123,27 @@ class TESSSearch(MASTSearch):
     @property
     def cubedata(self):
         """return a MASTSearch object with self.table only containing products that are image cubes"""
-        mask = self._mask_product_type("target pixel") | (self.table["pipeline"] == "TESScut" )
+        mask = self._mask_product_type("target pixel") | (
+            self.table["pipeline"] == "TESScut"
+        )
 
         # return self._cubedata()
-        return self._mask(mask)  
+        return self._mask(mask)
 
-    def _check_exact(self,target):
-        """ Was a TESS target ID passed? """
+    def _check_exact(self, target):
+        """Was a TESS target ID passed?"""
         return re.match(r"^(tess|tic) ?(\d+)$", target)
 
     def _target_to_exact_name(self, target):
         "parse TESS TIC to exact target name"
         return f"{target.group(2)}"
-    
+
     def _add_TESS_mission_product(self):
         # Some products are HLSPs and some are mission products
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "SPOC"] = True
         self.table["mission_product"] = mission_product
-        self.table['sector'] = self.table['sequence_number']
-
-                   
+        self.table["sector"] = self.table["sequence_number"]
 
     def _add_tesscut_products(self, sector_list: Union[int, list[int]]):
         """Add tesscut product information to the search table
@@ -163,7 +164,7 @@ class TESSSearch(MASTSearch):
     # Then download_ffi requires a sector and time range?
 
     def _get_tesscut_info(self, sector_list: Union[int, list[int]]):
-        """Get the tesscut (TESS FFI) obsering information for self.target 
+        """Get the tesscut (TESS FFI) obsering information for self.target
         for a particular sector(s)
 
         Parameters
@@ -191,8 +192,8 @@ class TESSSearch(MASTSearch):
         # Check each sector / camera / ccd for observability
         # Submit a tesswcs PR for to convert table to pandas
         pointings = pointings.to_pandas()
-        
-        if(sector_list is None):
+
+        if sector_list is None:
             sector_list = pointings["Sector"].values
 
         for _, row in pointings.iterrows():
@@ -200,8 +201,8 @@ class TESSSearch(MASTSearch):
             tess_dec = row["Dec"]
             tess_roll = row["Roll"]
             sector = row["Sector"].astype(int)
-            
-            if(sector in np.atleast_1d(sector_list)):
+
+            if sector in np.atleast_1d(sector_list):
                 AddSector = False
                 for camera in np.arange(1, 5):
                     for ccd in np.arange(1, 5):
@@ -227,7 +228,9 @@ class TESSSearch(MASTSearch):
                     )  # Time(row[6], format="jd").iso)
                     tesscut_exptime.append(self._sector2ffiexptime(sector))
                     tesscut_seqnum.append(sector)
-                    tesscut_year.append(int(np.floor(Time(row["Start"], format='jd').decimalyear)))
+                    tesscut_year.append(
+                        int(np.floor(Time(row["Start"], format="jd").decimalyear))
+                    )
 
         # Build the ffi dataframe from the observability
         n_results = len(tesscut_seqnum)
@@ -247,7 +250,7 @@ class TESSSearch(MASTSearch):
                 "sequence_number": tesscut_seqnum,
                 "project": ["TESS"] * n_results,
                 "obs_collection": ["TESS"] * n_results,
-                "year": tesscut_year
+                "year": tesscut_year,
             }
         )
 
@@ -292,18 +295,21 @@ class TESSSearch(MASTSearch):
         df = self.table
         df["sort_order"] = df["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order", "sector", "pipeline", "exptime"], ignore_index=True
+            by=["distance", "sort_order", "sector", "pipeline", "exptime"],
+            ignore_index=True,
         )
         self.table = df
 
-    def search_individual_ffi(self,
-                   tmin: Union[float,Time],
-                   tmax: Union[float,Time],
-                   search_radius: Union[float, u.Quantity] = 0.0001 * u.arcsec,
-                   exptime: Union[str, int, tuple] = (0, 9999),
-                   sector: Union[int, type[None]] = None,
-                   **extra_query_criteria):
-        """ Search for a particular FFI file given a time range, return the product list 
+    def search_individual_ffi(
+        self,
+        tmin: Union[float, Time],
+        tmax: Union[float, Time],
+        search_radius: Union[float, u.Quantity] = 0.0001 * u.arcsec,
+        exptime: Union[str, int, tuple] = (0, 9999),
+        sector: Union[int, type[None]] = None,
+        **extra_query_criteria,
+    ):
+        """Search for a particular FFI file given a time range, return the product list
         of FFIs for that this target and time range
 
 
@@ -325,15 +331,15 @@ class TESSSearch(MASTSearch):
         TESSSearch
             TESSSearch object that contains a joint table of FFI info
         """
-        
+
         query_criteria = {"project": "TESS", **extra_query_criteria}
         query_criteria["provenance_name"] = "SPOC"
         query_criteria["dataproduct_type"] = "image"
-        #query_criteria["calib_level"] = 2
-        
+        # query_criteria["calib_level"] = 2
+
         if type(tmin) == type(Time):
             tmin = tmin.mjd
- 
+
         if type(tmax) == type(Time):
             tmax = tmax.mjd
 
@@ -343,57 +349,62 @@ class TESSSearch(MASTSearch):
         if not isinstance(search_radius, u.quantity.Quantity):
             log.warning(
                 f"Search radius {search_radius} units not specified, assuming arcsec"
-                )
+            )
             search_radius = search_radius * u.arcsec
-        
+
         if sector is not None:
             query_criteria["sequence_number"] = sector
 
         if exptime is not None:
             query_criteria["t_exptime"] = exptime
-        
+
         query_criteria["radius"] = str(search_radius.to(u.deg))
 
-        ffi_obs = Observations.query_criteria(objectname=self.target_search_string,
-                                              **query_criteria,
-                                            )
-        
-        ffi_products = Observations.get_product_list(ffi_obs
-                                                     )
-        #filter out uncalibrated ffi's & theoretical potential HLSP
-        prod_mask = ffi_products['calib_level'] == 2
-        ffi_products = ffi_products[prod_mask] 
+        ffi_obs = Observations.query_criteria(
+            objectname=self.target_search_string,
+            **query_criteria,
+        )
+
+        ffi_products = Observations.get_product_list(ffi_obs)
+        # filter out uncalibrated ffi's & theoretical potential HLSP
+        prod_mask = ffi_products["calib_level"] == 2
+        ffi_products = ffi_products[prod_mask]
 
         new_table = deepcopy(self)
 
         # Unlike the other products, ffis don't map cleanly bia obs_id as advertised, so we invert and add specific column info
         new_table.obs_table = ffi_products.to_pandas()
-        new_table.obs_table['year'] = np.nan
-        
+        new_table.obs_table["year"] = np.nan
+
         new_table.prod_table = ffi_obs.to_pandas()
         new_table.table = None
-        
+
         test_table = new_table._join_tables()
         test_table.reset_index()
         new_table.table = new_table._update_table(test_table)
-    
+
         new_table.table["target_name"] = new_table.obs_table["obs_id"]
         new_table.table["obs_collection"] = ["TESS"] * len(new_table.table)
-        
-        new_table.table["pipeline"] =  [new_table.prod_table["provenance_name"].values[0]] * len(new_table.table)
-        new_table.table["exptime"] =  new_table.table["obs_id"].apply(
-            (lambda x: self._sector2ffiexptime(int(x.split("-")[1][1:]))))
-        new_table.table["year"] = new_table.table["obs_id"].apply(
-            (lambda x: int(x.split("-")[0][4:8])))
-        
-        return new_table 
 
-    def filter_table(self, 
-            limit: int = None, 
-            exptime: Union[int, float, tuple, type(None)] = None,  
-            pipeline: Union[str, list[str]] = None,
-            sector: Union[int, list[int]] = None,
-            ):
+        new_table.table["pipeline"] = [
+            new_table.prod_table["provenance_name"].values[0]
+        ] * len(new_table.table)
+        new_table.table["exptime"] = new_table.table["obs_id"].apply(
+            (lambda x: self._sector2ffiexptime(int(x.split("-")[1][1:])))
+        )
+        new_table.table["year"] = new_table.table["obs_id"].apply(
+            (lambda x: int(x.split("-")[0][4:8]))
+        )
+
+        return new_table
+
+    def filter_table(
+        self,
+        limit: int = None,
+        exptime: Union[int, float, tuple, type(None)] = None,
+        pipeline: Union[str, list[str]] = None,
+        sector: Union[int, list[int]] = None,
+    ):
         """
         Filters the search result table by specified parameters
 
@@ -415,56 +426,68 @@ class TESSSearch(MASTSearch):
         mask = np.ones(len(self.table), dtype=bool)
 
         if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime) 
+            mask = mask & self._mask_by_exptime(exptime)
         if pipeline is not None:
-            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
         if sector is not None:
-            mask = mask & self.table['sequence_number'].isin(np.atleast_1d(sector))
+            mask = mask & self.table["sequence_number"].isin(np.atleast_1d(sector))
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
                 mask = mask & (cusu <= limit)
         return self._mask(mask)
-    
 
-    def download(self, cloud: PREFER_CLOUD = True, cache: PREFER_CLOUD = True, cloud_only: PREFER_CLOUD = False, download_dir: PACKAGEDIR = default_download_dir, 
-                 #TESScut_product="SPOC",
-                 TESScut_size = 10):
+    def download(
+        self,
+        cloud: PREFER_CLOUD = True,
+        cache: PREFER_CLOUD = True,
+        cloud_only: PREFER_CLOUD = False,
+        download_dir: PACKAGEDIR = default_download_dir,
+        # TESScut_product="SPOC",
+        TESScut_size=10,
+    ):
         mast_mf = []
         tesscut_mf = []
         manifest = []
-        if ("TESScut"  not in self.table.provenance_name.unique()):
-            mast_mf  = super().download(cloud, cache, cloud_only, download_dir)
+        if "TESScut" not in self.table.provenance_name.unique():
+            mast_mf = super().download(cloud, cache, cloud_only, download_dir)
 
-        elif ("TESScut" in self.table.provenance_name.unique()):
+        elif "TESScut" in self.table.provenance_name.unique():
             TESSCut_dir = f"{default_download_dir}/mastDownload/TESSCut"
-            if (not os.path.isdir(TESSCut_dir)):
+            if not os.path.isdir(TESSCut_dir):
                 os.makedirs(TESSCut_dir)
             mask = self.table["provenance_name"] == "TESScut"
-            sector_list = self.table.loc[mask]['sequence_number'].values
-            if(np.any(~mask)):
+            sector_list = self.table.loc[mask]["sequence_number"].values
+            if np.any(~mask):
                 mast_mf = self._mask(~mask).download()
             from astroquery.mast import Tesscut
-            #if cloud:
+
+            # if cloud:
             #    Tesscut.enable_cloud_dataset()
-            tesscut_mf= [Tesscut.download_cutouts(coordinates=self.SkyCoord, 
-                                          size=TESScut_size, 
-                                          sector=sector,
-                                          # Uncomment when astroquery 0.4.8 is released to enable TICA support
-                                          # product=TESScut_product,  
-                                          # verbose=False
-                                          path=f"{default_download_dir}/mastDownload/TESSCut", 
-                                          inflate=True, 
-                                          moving_target=False, #this could be added
-                                          mt_type=None, 
-                                          ).to_pandas() for sector in sector_list]
+            tesscut_mf = [
+                Tesscut.download_cutouts(
+                    coordinates=self.SkyCoord,
+                    size=TESScut_size,
+                    sector=sector,
+                    # Uncomment when astroquery 0.4.8 is released to enable TICA support
+                    # product=TESScut_product,
+                    # verbose=False
+                    path=f"{default_download_dir}/mastDownload/TESSCut",
+                    inflate=True,
+                    moving_target=False,  # this could be added
+                    mt_type=None,
+                ).to_pandas()
+                for sector in sector_list
+            ]
         if len(mast_mf) != 0:
             manifest = mast_mf
-        
+
         if len(tesscut_mf) != 0:
-            tesscut_mf = pd.concat(tesscut_mf,ignore_index=True)
-            #Check to see if files exist, is so mark complete
-            tesscut_mf['Status'] = tesscut_mf["Local Path"].apply(lambda x: "COMPLETE" if os.path.isfile(x)  else "504")
+            tesscut_mf = pd.concat(tesscut_mf, ignore_index=True)
+            # Check to see if files exist, is so mark complete
+            tesscut_mf["Status"] = tesscut_mf["Local Path"].apply(
+                lambda x: "COMPLETE" if os.path.isfile(x) else "504"
+            )
 
             if len(manifest) != 0:
                 manifest = pd.concat([manifest, tesscut_mf], ignore_index=True)

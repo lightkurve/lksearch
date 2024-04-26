@@ -56,8 +56,9 @@ class K2Search(MASTSearch):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     campaign: Optional[int] = None,
-        K2 Observing Campaign for which to search for data 
+        K2 Observing Campaign for which to search for data
     """
+
     _REPR_COLUMNS = [
         "target_name",
         "pipeline",
@@ -109,15 +110,15 @@ class K2Search(MASTSearch):
         mask = self.table["mission_product"]
         return self._mask(mask)
 
-    def _check_exact(self,target):
-        """ Was a K2 target ID passed? """
+    def _check_exact(self, target):
+        """Was a K2 target ID passed?"""
         return re.match(r"^(ktwo|epic) ?(\d+)$", target)
 
     def _target_to_exact_name(self, target):
         "parse K2 TIC to exact target name"
         return f"ktwo{target.group(2).zfill(9)}"
 
-#
+    #
     def _add_K2_mission_product(self):
         # Some products are HLSPs and some are mission products
         mission_product = np.zeros(len(self.table), dtype=bool)
@@ -146,16 +147,18 @@ class K2Search(MASTSearch):
         df = self.table
         df["sort_order"] = self.table["pipeline"].map(sort_priority).fillna(9)
         df = df.sort_values(
-            by=["distance", "sort_order", "campaign", "pipeline","exptime"], ignore_index=True
+            by=["distance", "sort_order", "campaign", "pipeline", "exptime"],
+            ignore_index=True,
         )
         self.table = df
 
-    def filter_table(self, 
-            limit: int = None, 
-            exptime: Union[int, float, tuple, type(None)] = None,  
-            pipeline: Union[str, list[str]] = None,
-            campaign: Union[int, list] = None,
-            ):
+    def filter_table(
+        self,
+        limit: int = None,
+        exptime: Union[int, float, tuple, type(None)] = None,
+        pipeline: Union[str, list[str]] = None,
+        campaign: Union[int, list] = None,
+    ):
         """
         Filters the search result table by specified parameters
 
@@ -172,19 +175,18 @@ class K2Search(MASTSearch):
 
         Returns
         -------
-        K2Search object with updated table. 
+        K2Search object with updated table.
         """
         mask = np.ones(len(self.table), dtype=bool)
 
         if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime) 
+            mask = mask & self._mask_by_exptime(exptime)
         if pipeline is not None:
-            mask = mask & self.table['pipeline'].isin(np.atleast_1d(pipeline))
+            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
         if campaign is not None:
-            mask = mask & self.table['sequence_number'].isin(np.atleast_1d(campaign))
+            mask = mask & self.table["sequence_number"].isin(np.atleast_1d(campaign))
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
                 mask = mask & (cusu <= limit)
         return self._mask(mask)
-    
