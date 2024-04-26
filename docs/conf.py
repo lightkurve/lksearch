@@ -14,14 +14,13 @@ except ImportError:
 import os
 import sys
 
-for x in os.walk('../../src'):
-    sys.path.insert(0, x[0])
-
 # Add the modules source to the path
 sys.path.insert(0, os.path.abspath("../../src"))
+# sphinx-action still cant find things, try:
+for x in os.walk("../../src"):
+    sys.path.insert(0, x[0])
 
-
-project = "Timeseries Simple Search Combo (TSSC)"
+project = "Timeseries Simple Search Combo (tssc)"
 copyright = "2024, TESS Science Support Center"
 author = "TESS Science Support Center"
 release = "0.1.dev"
