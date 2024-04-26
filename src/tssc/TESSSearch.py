@@ -380,12 +380,11 @@ class TESSSearch(MASTSearch):
         new_table.table = None
 
         test_table = new_table._join_tables()
-        test_table.reset_index()
+        test_table.reset_index(inplace=True)
         new_table.table = new_table._update_table(test_table)
-
+        new_table.table.reset_index(inplace=True)
         new_table.table["target_name"] = new_table.obs_table["obs_id"]
         new_table.table["obs_collection"] = ["TESS"] * len(new_table.table)
-
         new_table.table["pipeline"] = [
             new_table.prod_table["provenance_name"].values[0]
         ] * len(new_table.table)
@@ -395,7 +394,7 @@ class TESSSearch(MASTSearch):
         new_table.table["year"] = new_table.table["obs_id"].apply(
             (lambda x: int(x.split("-")[0][4:8]))
         )
-
+        new_table.table["sector"] = new_table.table["obs_id"].apply(lambda x:  int(x.split("-")[1][1:]))
         return new_table
 
     def filter_table(
