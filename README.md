@@ -1,8 +1,8 @@
-newlk_search
+Timeseries Simple Search Combo (TSSC)
 ==========
 **Helpful package to search for TESS/Kepler/K2 data**
 
-**newlk_search** is a community developed, open source Python package that offers a user-friendly approach to searching the [Barbara A. Mikulski Archive for Space Telescopes (MAST)](https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html) web portal for scientific data and mission products from **NASA's TESS, K2, and Kepler missions**.  This package aims to lower the barrier for students, astronomers, and citizen scientists interested in analyzing time-series data from these NASA missions. It does this by providing a set of streamlined classes with simplified inputs and outputs that wraps [Astroquery's](https://astroquery.readthedocs.io/en/latest/#) [MAST.Observations](https://astroquery.readthedocs.io/en/latest/mast/mast_obsquery.html) class with user-friendly post-processing of observation tables and convenient bundled download methods.  .  
+**TSSC** is a community developed, open source Python package that offers a user-friendly approach to searching the [Barbara A. Mikulski Archive for Space Telescopes (MAST)](https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html) web portal for scientific data and mission products from **NASA's TESS, K2, and Kepler missions**.  This package aims to lower the barrier for students, astronomers, and citizen scientists interested in analyzing time-series data from these NASA missions. It does this by providing a set of streamlined classes with simplified inputs and outputs that wraps [Astroquery's](https://astroquery.readthedocs.io/en/latest/#) [MAST.Observations](https://astroquery.readthedocs.io/en/latest/mast/mast_obsquery.html) class with user-friendly post-processing of observation tables and convenient bundled download methods.  .  
 
 Documentation
 -------------
@@ -17,11 +17,12 @@ Please visit our quickstart guide at [TBD](https://heasarc.gsfc.nasa.gov/docs/te
 
 *This package is not currently available on PyPI, but is intended to be pip-installable when made available to users*
 
-The easiest way to install *newlk_search* and all of its dependencies is to use the ``pip`` command,
-which is a standard part of all Python distributions.
-To install *newlk_search*, run the following command in a terminal window::
+The easiest way to install *TSSC* and all of its dependencies is to use the ``pip`` command,
+which is a standard part of all Python distributions. (upon release)
 
-    $ python -m pip install newlk_search --upgrade
+To install *TSSC*, run the following command in a terminal window::
+
+    $ python -m pip install TSSC --upgrade
 
 The ``--upgrade`` flag is optional, but recommended if you already
 have *newlk_seach* installed and want to upgrade to the latest version.
@@ -45,7 +46,7 @@ This package is a stand-alone implementation of the lightkurve search functional
 
 Usage
 -----
-  from newlk_search import MASTSearch, TESSSearch, KeplerSearch, K2Search
+  from TSSC import MASTSearch, TESSSearch, KeplerSearch, K2Search
   ### Get long-cadence target pixel files for Kepler 
     result = search.KeplerSearch("KIC 11904151", exptime="long").cubedata
   ### Get TESScut cutouts for a particular target and sector
@@ -66,7 +67,11 @@ Please read the citation instructions at [TBD](https://heasarc.gsfc.nasa.gov/doc
 
 Contact
 -------
-*Newlk_search* is an open source community project created by the [TESS Science Support Center](https://heasarc.gsfc.nasa.gov/docs/tess/). The best way to contact us is to [open an issue](https://github.com/lightkurve/lightkurve/issues/new) or to e-mail tesshelp@bigbang.gsfc.nasa.gov.
+*TSSC* is an open source community project created by the [TESS Science Support Center](https://heasarc.gsfc.nasa.gov/docs/tess/). The best way to contact us is to [open an issue](https://github.com/lightkurve/lightkurve/issues/new) or to e-mail tesshelp@bigbang.gsfc.nasa.gov.
 
 Please include a self-contained example that fully demonstrates your problem or question.
 
+alternative name pitches:
+Search Package for TESS Kepler and K2 Surveys (SPEKKS)
+(Search)SpaceCubes
+The Terrible Secret of Space
