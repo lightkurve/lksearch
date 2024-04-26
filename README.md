@@ -7,16 +7,14 @@ Timeseries Simple Search Combo (TSSC)
 
 Documentation
 -------------
-Read the documentation [here](https://heasarc.gsfc.nasa.gov/docs/tess/https://tylerapritchard.github.io/TSSC/).
+Read the documentation [here](https://tylerapritchard.github.io/TSSC/).
 Check out the tutorial notebook [here](docs/tutorials/Example_searches.ipynb)
 
 
 Quickstart and Installation
 ---------------------------
 
-Please visit our quickstart guide at [TBD](https://heasarc.gsfc.nasa.gov/docs/tess/). 
-
-*This package is not currently available on PyPI, but is intended to be pip-installable when made available to users*
+*This package is not currently available on PyPI, but is intended to be pip-installable when made available to users currently we suggest you clone the github and install with poetry* 
 
 The easiest way to install *TSSC* and all of its dependencies is to use the ``pip`` command,
 which is a standard part of all Python distributions. (upon release)
