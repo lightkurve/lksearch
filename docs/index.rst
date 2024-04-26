@@ -11,6 +11,9 @@ Welcome to Timeseries Simple Search Combo (TSSC) documentation!
    :maxdepth: 2
    :caption: Contents:
 
+.. automodule:: TSSC
+   :members:
+
 .. autoclass:: TSSC.MASTSearch
    :members:
 
@@ -21,9 +24,6 @@ Welcome to Timeseries Simple Search Combo (TSSC) documentation!
    :members:
    
 .. autoclass:: TSSC.TESSSearch
-   :members:
-
-.. automodule:: TSSC
    :members:
 
 Indices and tables
