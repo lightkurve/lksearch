@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "newlk-search"
+name = "TSSC"
 version = "0.1.0"
 description = "Helpful package to search for TESS/Kepler/K2 data"
 authors = ["Your Name <you@example.com>"]
