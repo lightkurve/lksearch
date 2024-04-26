@@ -11,7 +11,6 @@ from astropy.coordinates import SkyCoord
 import astropy.units as u
 from astropy.table import Table
 
-import lightkurve as lk
 import pandas as pd
 
 from pathlib import Path
