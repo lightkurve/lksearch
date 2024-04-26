@@ -6,7 +6,7 @@ import shutil
 import astropy.config as astropyconfig
 
 
-ROOTNAME = "TSSC"
+ROOTNAME = "tssc"
 
 
 class ConfigNamespace(astropyconfig.ConfigNamespace):

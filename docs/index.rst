@@ -11,19 +11,19 @@ Welcome to Timeseries Simple Search Combo (TSSC) documentation!
    :maxdepth: 2
    :caption: Contents:
 
-.. automodule:: TSSC
+.. automodule:: tssc
    :members:
 
-.. autoclass:: TSSC.MASTSearch
+.. autoclass:: tssc.MASTSearch
    :members:
 
-.. autoclass:: TSSC.KeplerSearch
+.. autoclass:: tssc.KeplerSearch
    :members:
 
-.. autoclass:: TSSC.K2Search
+.. autoclass:: tssc.K2Search
    :members:
    
-.. autoclass:: TSSC.TESSSearch
+.. autoclass:: tssc.TESSSearch
    :members:
 
 Indices and tables

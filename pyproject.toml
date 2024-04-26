@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "TSSC"
+name = "tssc"
 version = "0.1.0"
 description = "Helpful package to search for TESS/Kepler/K2 data"
-authors = ["Your Name <you@example.com>"]
+authors = ["TESS SCience Support Center <tesshelp@bigbang.gsfc.nasa.gov>"]
 license = "MIT"
 readme = "README.md"
 
