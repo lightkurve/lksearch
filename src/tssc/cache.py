@@ -126,7 +126,7 @@ def set_disk_cache_directory(cache_directory):
     CACHE_DIR = cache_directory
 
 
-_default_cache_dir = check_cache_dir(os.path.join(os.path.expanduser("~"), ".TSSC"))
+_default_cache_dir = check_cache_dir(os.path.join(os.path.expanduser("~"), ".tssc"))
 _config_file_path = os.path.join(_default_cache_dir, "config.ini")
 
 USE_DISK_CACHE = load_config()["CacheSettings"]["use_disk_cache"].lower() in [
