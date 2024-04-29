@@ -11,6 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
+      - uses: pandoc/actions/setup@{main}
+        with:
+          version: 2.19
       - name: Install dependencies
         run: |
           pip install poetry
