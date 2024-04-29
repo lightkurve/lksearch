@@ -6,25 +6,16 @@
 Welcome to Timeseries Simple Search Combo (tssc) documentation!
 ===============================================================
 
+.. include:: ../README.md
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
-.. automodule:: tssc
-   :members:
-
-.. autoclass:: tssc.MASTSearch
-   :members:
-
-.. autoclass:: tssc.KeplerSearch
-   :members:
-
-.. autoclass:: tssc.K2Search
-   :members:
+   apidoc
+   tutorials/Example_searches
    
-.. autoclass:: tssc.TESSSearch
-   :members:
+
 
 Indices and tables
 ==================

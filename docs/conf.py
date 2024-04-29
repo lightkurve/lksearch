@@ -38,6 +38,7 @@ release = "0.1.dev"
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
+     "nbsphinx",
     # "sphinx_autodoc_typehints",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
@@ -45,7 +46,7 @@ extensions = [
     "sphinx_automodapi.automodapi",
     "numpydoc",
     "sphinx.ext.intersphinx",
-    # "nbsphinx",
+    "myst_parser",
     # "pandoc",
 ]
 
@@ -62,9 +63,10 @@ html_static_path = ["_static"]
 
 html_sidebars = {
     "**": [
-        "about.html",
-        "localtoc.html",
-        "navigation.html",
+        #"about.html",
+        #"navigation.html",
+        #"localtoc.html",
+        "globaltoc.html",
         #'relations.html',
         #'searchbox.html',
     ]
@@ -102,9 +104,9 @@ default_role = "py:obj"
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
-    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
-    "matplotlib": ("https://matplotlib.org", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "astropy": ("https://docs.astropy.org/en/latest/", None),
     "astroquery": ("https://astroquery.readthedocs.io/en/latest/", None),

@@ -45,12 +45,12 @@ This package is a stand-alone implementation of the lightkurve search functional
 
 Usage
 -----
-  from TSSC import MASTSearch, TESSSearch, KeplerSearch, K2Search
-  ### Get long-cadence target pixel files for Kepler 
-    result = search.KeplerSearch("KIC 11904151", exptime="long").cubedata
-  ### Get TESScut cutouts for a particular target and sector
-    result = TESSSearch("TOI 2257").tesscut
-    result.download()
+from TSSC import MASTSearch, TESSSearch, KeplerSearch, K2Search
+### Get long-cadence target pixel files for Kepler 
+`result = search.KeplerSearch("KIC 11904151", exptime="long").cubedata`
+### Get TESScut cutouts for a particular target and sector
+`result = TESSSearch("TOI 2257").tesscut`
+`result.download()`
 
 Contributing
 ------------
