@@ -23,6 +23,7 @@ sphinx_rtd_theme = "^2.0.0"
 myst_parser = "^3.0.0"
 sphinx_astropy = "^1.9.1"
 sphinx_automodapi = "^0.17.0"
+nbsphinx = "^0.9.3"
 
 [build-system]
 requires = ["poetry-core"]
