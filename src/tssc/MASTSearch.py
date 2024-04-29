@@ -133,27 +133,28 @@ class MASTSearch(object):
                 return "No results found"
         else:
             return "I am an uninitialized MASTSearch result"
-    
 
     def __getitem__(self, key):
         # TODO: Look into class mixins & pandas for this?
         strlist = False
         intlist = False
-        if(isinstance(key, list)):
-            if(all(isinstance(n, int) for n in key)):
+        if isinstance(key, list):
+            if all(isinstance(n, int) for n in key):
                 intlist = True
-            if(all(isinstance(n, str) for n in key)):
+            if all(isinstance(n, str) for n in key):
                 strlist = True
-        
+
         if isinstance(key, (slice, int)) or (intlist):
-            if(not intlist):
-                mask = np.in1d(np.arange(len(self.table)), np.arange(len(self.table))[key])
+            if not intlist:
+                mask = np.in1d(
+                    np.arange(len(self.table)), np.arange(len(self.table))[key]
+                )
             else:
                 mask = np.in1d(self.table.index, key)
             return self._mask(mask)
-        if (isinstance(key, (str, pd.Series)) or strlist):
+        if isinstance(key, (str, pd.Series)) or strlist:
             # Return a column as a series, or a dataframe of columns
-            # Note that we're not returning a Search Object here as 
+            # Note that we're not returning a Search Object here as
             # we havce additional Requiered columns, etc.
             return self.table[key]
         if hasattr(key, "__iter__"):
