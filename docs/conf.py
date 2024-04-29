@@ -38,7 +38,7 @@ release = "0.1.dev"
 extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
-     "nbsphinx",
+    "nbsphinx",
     # "sphinx_autodoc_typehints",
     "sphinx.ext.autosummary",
     "sphinx.ext.mathjax",
@@ -63,9 +63,9 @@ html_static_path = ["_static"]
 
 html_sidebars = {
     "**": [
-        #"about.html",
-        #"navigation.html",
-        #"localtoc.html",
+        # "about.html",
+        # "navigation.html",
+        # "localtoc.html",
         "globaltoc.html",
         #'relations.html',
         #'searchbox.html',
