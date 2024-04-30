@@ -7,6 +7,8 @@ import astropy.config as astropyconfig
 
 
 ROOTNAME = "tssc"
+PREFER_CLOUD = True  # Do you prefer URIs pointing to the Amazon bucket when available?
+DOWNLOAD_CLOUD = True
 
 
 class ConfigNamespace(astropyconfig.ConfigNamespace):

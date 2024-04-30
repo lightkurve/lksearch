@@ -72,6 +72,9 @@ html_sidebars = {
     ]
 }
 
+#-- MyST-parser configuration--------------------------------------------------
+myst_heading_anchors = 3
+
 # -- Plot configuration -------------------------------------------------------
 plot_rcparams = {
     "axes.labelsize": "large",

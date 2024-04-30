@@ -16,7 +16,7 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
+from . import PACKAGEDIR, conf, config
 
 pd.options.display.max_rows = 10
 
@@ -201,7 +201,7 @@ class MASTSearch(object):
         """Location Information of the products in the table"""
         uris = self.table["dataURI"].values
 
-        if PREFER_CLOUD:
+        if config.PREFER_CLOUD:
             cloud_uris = self.cloud_uris
             mask = cloud_uris != None
             uris[mask] = cloud_uris[mask]

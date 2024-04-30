@@ -1,6 +1,8 @@
 Timeseries Simple Search Combo (TSSC)
 # *PRE-RELEASE*
-==========
+
+================
+
 **Helpful package to search for TESS/Kepler/K2 data**
 
 **TSSC** is a community developed, open source Python package that offers a user-friendly approach to searching the [Barbara A. Mikulski Archive for Space Telescopes (MAST)](https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html) web portal for scientific data and mission products from **NASA's TESS, K2, and Kepler missions**.  This package aims to lower the barrier for students, astronomers, and citizen scientists interested in analyzing time-series data from these NASA missions. It does this by providing a set of streamlined classes with simplified inputs and outputs that wraps [Astroquery's](https://astroquery.readthedocs.io/en/latest/#) [MAST.Observations](https://astroquery.readthedocs.io/en/latest/mast/mast_obsquery.html) class with user-friendly post-processing of observation tables and convenient bundled download methods.
