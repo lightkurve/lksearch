@@ -11,6 +11,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astropy.time import Time
+from tqdm import tqdm
 
 from copy import deepcopy
 
@@ -477,7 +478,10 @@ class TESSSearch(MASTSearch):
                     moving_target=False,  # this could be added
                     mt_type=None,
                 ).to_pandas()
-                for sector in sector_list
+                # for sector in sector_list
+                for sector in tqdm(
+                    sector_list, total=len(sector_list), desc="TESScut          "
+                )
             ]
         if len(mast_mf) != 0:
             manifest = mast_mf
