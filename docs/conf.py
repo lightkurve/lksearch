@@ -72,7 +72,7 @@ html_sidebars = {
     ]
 }
 
-#-- MyST-parser configuration--------------------------------------------------
+# -- MyST-parser configuration--------------------------------------------------
 myst_heading_anchors = 3
 
 # -- Plot configuration -------------------------------------------------------
