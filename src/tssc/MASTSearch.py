@@ -11,6 +11,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astropy.time import Time
+from tqdm import tqdm
 
 from copy import deepcopy
 
@@ -983,7 +984,8 @@ class MASTSearch(object):
 
         manifest = [
             self._download_one(row, cloud_only, cache, download_dir)
-            for _, row in self.table.iterrows()
+            for _, row in tqdm(self.table.iterrows(), total=self.table.shape[0], desc="pipeline products")
+            #for _, row in self.table.iterrows()
         ]
 
         manifest = pd.concat(manifest)
