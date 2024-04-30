@@ -260,17 +260,21 @@ class MASTSearch(object):
         None - sets self.table equal to the masked/filtered joint table
         """
         self._parse_input(target)
+        seq = self.search_sequence
+        if isinstance(seq, list):
+            seq = None
         self.table = self._search(
             search_radius=self.search_radius,
             exptime=self.search_exptime,
             mission=self.search_mission,
             pipeline=self.search_pipeline,
-            sequence=self.search_sequence,
+            sequence=seq,
         )
         mask = self._filter(
             exptime=self.search_exptime,
             mission=self.search_mission,
             pipeline=self.search_pipeline,
+            sequence=self.search_sequence,
         )  # setting provenance_name=None will return HLSPs
 
         self.table = self.table[mask]
@@ -793,6 +797,7 @@ class MASTSearch(object):
             "lightcurve",
             "dvreport",
         ],
+        sequence: Union[int, list[int]] = None,
     ) -> pd.DataFrame:
         """filter self.table based on your product search preferences
 
@@ -806,7 +811,8 @@ class MASTSearch(object):
             pipeline provinence to search for data from, by default ["kepler", "k2", "spoc"]
         filetype : Union[str, list[str]], optional
             file types to search for, by default [ "target pixel", "lightcurve", "dvreport", ]
-
+        sequence : Union[int, list[int]], optional
+            sequence number to filter by. Corresponds to sector for TESS, campaign for K2, and quarter for Kepler
         Returns
         -------
         mask
@@ -866,7 +872,15 @@ class MASTSearch(object):
         else:
             exptime_mask = not mask
 
-        mask = file_mask & mission_mask & provenance_mask & exptime_mask
+        # Filter by sequence
+        sequence_mask = mask.copy()
+        if not isinstance(sequence, type(None)):
+            for s in np.atleast_1d(sequence).tolist():
+                sequence_mask |= self.table.sequence_number == s
+        else:
+            sequence_mask = np.logical_not(sequence_mask)
+
+        mask = file_mask & mission_mask & provenance_mask & exptime_mask & sequence_mask
         return mask
 
     def _mask_by_exptime(self, exptime: Union[int, tuple[float]]):
@@ -984,8 +998,12 @@ class MASTSearch(object):
 
         manifest = [
             self._download_one(row, cloud_only, cache, download_dir)
-            for _, row in tqdm(self.table.iterrows(), total=self.table.shape[0], desc="pipeline products")
-            #for _, row in self.table.iterrows()
+            for _, row in tqdm(
+                self.table.iterrows(),
+                total=self.table.shape[0],
+                desc="pipeline products",
+            )
+            # for _, row in self.table.iterrows()
         ]
 
         manifest = pd.concat(manifest)

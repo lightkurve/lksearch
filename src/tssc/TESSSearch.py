@@ -478,8 +478,10 @@ class TESSSearch(MASTSearch):
                     moving_target=False,  # this could be added
                     mt_type=None,
                 ).to_pandas()
-                #for sector in sector_list
-                for sector in tqdm(sector_list, total=len(sector_list), desc='TESScut          ')
+                # for sector in sector_list
+                for sector in tqdm(
+                    sector_list, total=len(sector_list), desc="TESScut          "
+                )
             ]
         if len(mast_mf) != 0:
             manifest = mast_mf
