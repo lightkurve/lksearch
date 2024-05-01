@@ -55,8 +55,8 @@ class KeplerSearch(MASTSearch):
         Mission(s) for which to search for data on
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
-    quarter: Optional[int] = None,
-        Kepler Observing Quarter for which to search for data. In the initial search, only a single quarter can be used. However, you can later use search_result.filter_table(quarter=[1,2]) to access a specific subset of quarters.
+    quarter: Optional[Union[int, list[int]]] = None,
+        Kepler Observing Quarter(s) for which to search for data.
     month: Optional[int] = None,
         Observation month for Kepler
     """
@@ -81,7 +81,7 @@ class KeplerSearch(MASTSearch):
         search_radius: Optional[Union[float, u.Quantity]] = None,
         exptime: Optional[Union[str, int, tuple]] = (0, 9999),
         pipeline: Optional[Union[str, list[str]]] = None,
-        quarter: Optional[int] = None,
+        quarter: Optional[Union[int, list[int]]] = None,
         month: Optional[int] = None,
     ):
         super().__init__(
