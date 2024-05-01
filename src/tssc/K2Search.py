@@ -55,8 +55,8 @@ class K2Search(MASTSearch):
         Mission(s) for which to search for data on
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
-    campaign: Optional[int] = None,
-        K2 Observing Campaign for which to search for data. In the initial search, only a single campaign can be used. However, you can later use search_result.filter_table(campaign=[1,2]) to access a specific subset of campains.
+    campaign: Optional[Union[int, list[int]]]  = None,
+        K2 Observing Campaign(s) for which to search for data.
     """
 
     _REPR_COLUMNS = [
@@ -79,7 +79,7 @@ class K2Search(MASTSearch):
         search_radius: Optional[Union[float, u.Quantity]] = None,
         exptime: Optional[Union[str, int, tuple]] = (0, 9999),
         pipeline: Optional[Union[str, list[str]]] = None,
-        campaign: Optional[int] = None,
+        campaign: Optional[Union[int, list[int]]] = None,
     ):
         super().__init__(
             target=target,

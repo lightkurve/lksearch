@@ -56,8 +56,8 @@ class TESSSearch(MASTSearch):
         Mission(s) for which to search for data on
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
-    sector: Optional[int] = None,
-        TESS Observing Sector for which to search for data. In the initial search, only a single sector can be used. However, you can later use search_result.filter_table(sector=[1,2]) to access a specific subset of sectors.
+    sector: Optional[Union[int, list[int]]] = None,
+        TESS Observing Sector(s) for which to search for data.
     """
 
     _REPR_COLUMNS = [
@@ -80,7 +80,7 @@ class TESSSearch(MASTSearch):
         search_radius: Optional[Union[float, u.Quantity]] = None,
         exptime: Optional[Union[str, int, tuple]] = (0, 9999),
         pipeline: Optional[Union[str, list[str]]] = None,
-        sector: Optional[int] = None,
+        sector: Optional[Union[int, list[int]]] = None,
         hlsp: bool = True,
     ):
         if hlsp is False:

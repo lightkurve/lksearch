@@ -56,8 +56,8 @@ class MASTSearch(object):
         Mission(s) for which to search for data on
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
-    sequence: Optional[int] = None,
-        Mission Specific Survey value that corresponds to Sector (TESS), Campaign (K2), or Quarter (Kepler). Only 1 value permitted, will assume the same sequence number for all missions.
+    sequence: Optional[Union[int, list[int]]] = None,
+        Mission Specific Survey value that corresponds to Sector (TESS), Campaign (K2), or Quarter (Kepler). Will assume the same sequence number for all missions.
     """
 
     _REPR_COLUMNS = [
@@ -82,7 +82,7 @@ class MASTSearch(object):
         exptime: Optional[Union[str, int, tuple]] = (0, 9999),
         mission: Optional[Union[str, list[str]]] = ["Kepler", "K2", "TESS"],
         pipeline: Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"],
-        sequence: Optional[int] = None,
+        sequence: Optional[Union[int, list[int]]] = None,
     ):
         self.search_radius = search_radius
         self.search_exptime = exptime
