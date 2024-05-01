@@ -180,15 +180,18 @@ class TESSSearch(MASTSearch):
         tesscut_results: pd.DataFrame
             table containing information on sectors in which TESS FFI data is available
         """
-        
+
         from tesswcs import pointings
+
         sector_table = Tesscut.get_sectors(coordinates=self.SkyCoord)
-        
-        if(sector_list is None):
+
+        if sector_list is None:
             sector_list = sector_table["sector"].value
         else:
-            sector_list = list(set(sector_list) & set(sector_table["sector"].value))
-        
+            sector_list = list(
+                set(np.atleast_1d(sector_list)) & set(sector_table["sector"].value)
+            )
+
         tesscut_desc = []
         tesscut_mission = []
         tesscut_tmin = []
@@ -198,21 +201,23 @@ class TESSSearch(MASTSearch):
         tesscut_year = []
 
         for sector in sector_list:
-            log.debug(
-                f"Target Observable in Sector {sector}, Camera {camera}, CCD {ccd}"
-            )
+            log.debug(f"Target Observable in Sector {sector}")
             tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
             tesscut_mission.append(f"TESS Sector {sector:02d}")
             tesscut_tmin.append(
-                pointings[sector-1]["Start"] - 2400000.5
+                pointings[sector - 1]["Start"] - 2400000.5
             )  # Time(row[5], format="jd").iso)
             tesscut_tmax.append(
-                pointings[sector-1]["End"] - 2400000.5
+                pointings[sector - 1]["End"] - 2400000.5
             )  # Time(row[6], format="jd").iso)
             tesscut_exptime.append(self._sector2ffiexptime(sector))
             tesscut_seqnum.append(sector)
             tesscut_year.append(
-                int(np.floor(Time(pointings[sector-1]["Start"], format="jd").decimalyear))
+                int(
+                    np.floor(
+                        Time(pointings[sector - 1]["Start"], format="jd").decimalyear
+                    )
+                )
             )
 
         # Build the FFI dataframe from the observability
