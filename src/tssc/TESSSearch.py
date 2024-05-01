@@ -11,6 +11,8 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astropy.time import Time
+from astroquery.mast import Tesscut
+
 from tqdm import tqdm
 
 from copy import deepcopy
@@ -164,7 +166,7 @@ class TESSSearch(MASTSearch):
     # Use TESS WCS to just return a table of sectors and dates?
     # Then download_ffi requires a sector and time range?
 
-    def _get_tesscut_info(self, sector_list: Union[int, list[int]]):
+    def _get_tesscut_info(self, sector_list: Union[int, list[int]] = None):
         """Get the tesscut (TESS FFI) obsering information for self.target
         for a particular sector(s)
 
@@ -178,10 +180,15 @@ class TESSSearch(MASTSearch):
         tesscut_results: pd.DataFrame
             table containing information on sectors in which TESS FFI data is available
         """
+        
         from tesswcs import pointings
-        from tesswcs import WCS
-
-        log.debug("Checking tesswcs for TESSCut cutouts")
+        sector_table = Tesscut.get_sectors(coordinates=self.SkyCoord)
+        
+        if(sector_list is None):
+            sector_list = sector_table["sector"].value
+        else:
+            sector_list = list(set(sector_list) & set(sector_table["sector"].value))
+        
         tesscut_desc = []
         tesscut_mission = []
         tesscut_tmin = []
@@ -190,48 +197,23 @@ class TESSSearch(MASTSearch):
         tesscut_seqnum = []
         tesscut_year = []
 
-        # Check each sector / camera / ccd for observability
-        # Submit a tesswcs PR for to convert table to pandas
-        pointings = pointings.to_pandas()
-
-        if sector_list is None:
-            sector_list = pointings["Sector"].values
-
-        for _, row in pointings.iterrows():
-            tess_ra = row["RA"]
-            tess_dec = row["Dec"]
-            tess_roll = row["Roll"]
-            sector = row["Sector"].astype(int)
-
-            if sector in np.atleast_1d(sector_list):
-                AddSector = False
-                for camera in np.arange(1, 5):
-                    for ccd in np.arange(1, 5):
-                        # predict the WCS
-                        wcs = WCS.predict(
-                            tess_ra, tess_dec, tess_roll, camera=camera, ccd=ccd
-                        )
-                        # check if the target falls inside the CCD
-                        if wcs.footprint_contains(self.SkyCoord):
-                            AddSector = True
-
-                if AddSector:
-                    log.debug(
-                        f"Target Observable in Sector {sector}, Camera {camera}, CCD {ccd}"
-                    )
-                    tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
-                    tesscut_mission.append(f"TESS Sector {sector:02d}")
-                    tesscut_tmin.append(
-                        row["Start"] - 2400000.5
-                    )  # Time(row[5], format="jd").iso)
-                    tesscut_tmax.append(
-                        row["End"] - 2400000.5
-                    )  # Time(row[6], format="jd").iso)
-                    tesscut_exptime.append(self._sector2ffiexptime(sector))
-                    tesscut_seqnum.append(sector)
-                    tesscut_year.append(
-                        int(np.floor(Time(row["Start"], format="jd").decimalyear))
-                    )
+        for sector in sector_list:
+            log.debug(
+                f"Target Observable in Sector {sector}, Camera {camera}, CCD {ccd}"
+            )
+            tesscut_desc.append(f"TESS FFI Cutout (sector {sector})")
+            tesscut_mission.append(f"TESS Sector {sector:02d}")
+            tesscut_tmin.append(
+                pointings[sector-1]["Start"] - 2400000.5
+            )  # Time(row[5], format="jd").iso)
+            tesscut_tmax.append(
+                pointings[sector-1]["End"] - 2400000.5
+            )  # Time(row[6], format="jd").iso)
+            tesscut_exptime.append(self._sector2ffiexptime(sector))
+            tesscut_seqnum.append(sector)
+            tesscut_year.append(
+                int(np.floor(Time(pointings[sector-1]["Start"], format="jd").decimalyear))
+            )
 
         # Build the FFI dataframe from the observability
         n_results = len(tesscut_seqnum)
@@ -461,7 +443,6 @@ class TESSSearch(MASTSearch):
             sector_list = self.table.loc[mask]["sequence_number"].values
             if np.any(~mask):
                 mast_mf = self._mask(~mask).download()
-            from astroquery.mast import Tesscut
 
             # if cloud:
             #    Tesscut.enable_cloud_dataset()
