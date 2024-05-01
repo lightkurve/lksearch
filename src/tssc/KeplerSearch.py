@@ -56,7 +56,7 @@ class KeplerSearch(MASTSearch):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     quarter: Optional[Union[int, list[int]]] = None,
-        Kepler Observing Quarter(s) for which to search for data. 
+        Kepler Observing Quarter(s) for which to search for data.
     month: Optional[int] = None,
         Observation month for Kepler
     """
