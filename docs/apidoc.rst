@@ -1,16 +1,16 @@
 API documentation
 ===============================================================
-.. automodule:: tssc
+.. automodule:: lksearch
    :members:
 
-.. autoclass:: tssc.MASTSearch
+.. autoclass:: lksearch.MASTSearch
    :members:
 
-.. autoclass:: tssc.KeplerSearch
+.. autoclass:: lksearch.KeplerSearch
    :members:
 
-.. autoclass:: tssc.K2Search
+.. autoclass:: lksearch.K2Search
    :members:
    
-.. autoclass:: tssc.TESSSearch
+.. autoclass:: lksearch.TESSSearch
    :members:
