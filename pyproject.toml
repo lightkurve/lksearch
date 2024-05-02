@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "tssc"
+name = "lksearch"
 version = "0.1.0"
-description = "Helpful package to search for TESS/Kepler/K2 data"
+description = "A helpful little package to search for TESS/Kepler/K2 data"
 authors = ["TESS SCience Support Center <tesshelp@bigbang.gsfc.nasa.gov>"]
 license = "MIT"
 readme = "README.md"
@@ -25,7 +25,6 @@ pytest = "^7.4.4"
 nbsphinx = "^0.9.3"
 sphinx = "^7.3.7"
 sphinx_rtd_theme = "^2.0.0"
-myst_parser = "^3.0.0"
 sphinx_astropy = "^1.9.1"
 sphinx_automodapi = "^0.17.0"
 

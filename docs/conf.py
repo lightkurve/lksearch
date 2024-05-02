@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.abspath("../../src/"))
 sys.path.insert(0, os.path.abspath("../../src/tssc"))
 
-project = "Timeseries Simple Search Combo (tssc)"
+project = "lksearch"
 copyright = "2024, TESS Science Support Center"
 author = "TESS Science Support Center"
 release = "0.1.dev"
@@ -46,8 +46,6 @@ extensions = [
     "sphinx_automodapi.automodapi",
     "numpydoc",
     "sphinx.ext.intersphinx",
-    "myst_parser",
-    # "pandoc",
 ]
 
 templates_path = ["_templates"]

@@ -18,9 +18,9 @@ from astropy.utils.data import get_pkg_data_filename
 
 import shutil
 
-from tssc.utils import SearchError, SearchWarning
+from lksearch.utils import SearchError, SearchWarning
 
-from tssc import MASTSearch, TESSSearch, KeplerSearch, K2Search
+from lksearch import MASTSearch, TESSSearch, KeplerSearch, K2Search
 
 
 def test_search_cubedata():

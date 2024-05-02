@@ -28,7 +28,7 @@ class Conf(_config.ConfigNamespace):
         List of extra columns to be included when displaying a SearchResult object.
 
     cache_dir
-        Default cache directory for data files downloaded, etc. Defaults to ``~/.tssc/cache`` if not specified.
+        Default cache directory for data files downloaded, etc. Defaults to ``~/.lksearch/cache`` if not specified.
 
     """
 
@@ -42,14 +42,14 @@ class Conf(_config.ConfigNamespace):
         [],
         "List of extra columns to be included when displaying a SearchResult object.",
         cfgtype="string_list",
-        module="tssc.search",
+        module="lksearch.search",
     )
 
     cache_dir = _config.ConfigItem(
         None,
         "Default cache directory for data files downloaded, etc.",
         cfgtype="string",
-        module="tssc.config",
+        module="lksearch.config",
     )
 
 

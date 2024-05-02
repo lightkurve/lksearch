@@ -6,7 +6,7 @@ import shutil
 import astropy.config as astropyconfig
 
 
-ROOTNAME = "tssc"
+ROOTNAME = "lksearch"
 PREFER_CLOUD = True  # Do you prefer URIs pointing to the Amazon bucket when available?
 DOWNLOAD_CLOUD = True
 
@@ -24,9 +24,9 @@ def get_config_dir():
     Determines the package configuration directory name and creates the
     directory if it doesn't exist.
 
-    This directory is typically ``$HOME/.tssc/config``, but if the
+    This directory is typically ``$HOME/.lksearch/config``, but if the
     XDG_CONFIG_HOME environment variable is set and the
-    ``$XDG_CONFIG_HOME/tssc`` directory exists, it will be that directory.
+    ``$XDG_CONFIG_HOME/lksearch`` directory exists, it will be that directory.
     If neither exists, the former will be created and symlinked to the latter.
 
     Returns
@@ -40,13 +40,13 @@ def get_config_dir():
 
 def get_cache_dir():
     """
-    Determines the default TSSC cache directory name and creates the
+    Determines the default lksearch cache directory name and creates the
     directory if it doesn't exist. If the directory cannot be access or created,
     then it returns the current directory (``"."``).
 
-    This directory is typically ``$HOME/.tssc/cache``, but if the
+    This directory is typically ``$HOME/.lksearch/cache``, but if the
     XDG_CACHE_HOME environment variable is set and the
-    ``$XDG_CACHE_HOME/tssc`` directory exists, it will be that directory.
+    ``$XDG_CACHE_HOME/lksearch`` directory exists, it will be that directory.
     If neither exists, the former will be created and symlinked to the latter.
 
     The value can be also configured via ``cache_dir`` configuration parameter.
