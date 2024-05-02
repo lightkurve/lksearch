@@ -9,15 +9,15 @@ lksearch
 **lksearch** is a community developed, open source Python package that offers a user-friendly approach to searching the `Barbara A. Mikulski Archive for Space Telescopes (MAST) <https://mast.stsci.edu/portal/Mashup/Clients/Mast/Portal.html>`_ web portal for scientific data and mission products from **NASA's TESS, K2, and Kepler missions**.  
 This package aims to lower the barrier for students, astronomers, and citizen scientists interested in analyzing time-series data from these NASA missions. 
 It does this by providing a set of streamlined classes with simplified inputs and outputs that wraps `Astroquery's <https://astroquery.readthedocs.io/en/latest/#>`_ `MAST.Observations <https://astroquery.readthedocs.io/en/latest/mast/mast_obsquery.html>`_ class with user-friendly post-processing of observation tables and convenient bundled download methods.
+
 .. <!-- intro content end -->
 
 Documentation
 =============
 
-Check out the `tutorial notebook <tutorials/Example_searches.ipynb>`
+Check out the `tutorial notebook <docs/tutorials/Example_searches.ipynb>`_
 
-Read the `documentation`_ 
-  .. _`documentation`: https://tylerapritchard.github.io/TSSC/
+Read the `documentation <https://tylerapritchard.github.io/lksearch>`_ 
 
 .. <!-- quickstart content start -->
 
@@ -80,6 +80,7 @@ Contributing
 ============
 
 We welcome community contributions!
+
 Guidelines TBD
 
 .. <!-- Contributing content end -->
@@ -89,15 +90,17 @@ Guidelines TBD
 Citing
 ======
 
-If you find *lksearch* useful in your research, please cite it and give us a GitHub star!
+If you find **lksearch** useful in your research, please cite it and give us a GitHub star!
+
 Citation Instructions TBD
+
 .. <!-- Citing content end -->
 
 .. <!-- Contact content start -->
 
 Contact
 =======
-*lksearch* is an open source community project created by the `TESS Science Support Center`_. 
+**lksearch** is an open source community project created by the `TESS Science Support Center`_. 
 The best way to contact us is to `open an issue`_ or to e-mail tesshelp@bigbang.gsfc.nasa.gov.
   
   .. _`TESS Science Support Center`: https://heasarc.gsfc.nasa.gov/docs/tess/
