@@ -1,3 +1,0 @@
-How to Cite
-================================================
-If you have used lksearch in your research ...

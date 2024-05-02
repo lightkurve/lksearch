@@ -4,6 +4,7 @@ lksearch
 
 **PRE-RELEASE**
 
+<!-- intro content start -->
 
 **Helpful package to search for TESS/Kepler/K2 data**
 
@@ -11,13 +12,17 @@ lksearch
 This package aims to lower the barrier for students, astronomers, and citizen scientists interested in analyzing time-series data from these NASA missions. 
 It does this by providing a set of streamlined classes with simplified inputs and outputs that wraps `Astroquery's <https://astroquery.readthedocs.io/en/latest/#>`_ `MAST.Observations <https://astroquery.readthedocs.io/en/latest/mast/mast_obsquery.html>`_ class with user-friendly post-processing of observation tables and convenient bundled download methods.
 
+<!-- intro content end -->
+
 Documentation
 =============
 
-Check out the :doc:`tutorial notebook here <tutorials/Example_searches>`
+Check out the `tutorial notebook <tutorials/Example_searches.ipynb>`
 
-Read the   :doc:`api documentation here <apidoc>` .
+Read the `documentation`_ 
+  .. _`documentation`: https://tylerapritchard.github.io/TSSC/
 
+<!-- quickstart content start -->
 Quickstart and Installation
 ===========================
 
@@ -58,7 +63,7 @@ Changes Include:
 
 
 Usage
-=====
+-----
 
 .. code-block:: python
 
@@ -69,18 +74,26 @@ Usage
   res = TESSSearch("TOI 2257").tesscut
   res.download()
 
+<!-- quickstart content end -->
+
+<!-- Contributing content start -->
 Contributing
 ============
 
 We welcome community contributions!
-Please read the  `guidelines here <docs/GetInvolved>`_ .
+Guidelines TBD
 
+<!-- Contributing content end -->
+
+<!-- Citing content start -->
 Citing
 ======
 
 If you find *lksearch* useful in your research, please cite it and give us a GitHub star!
 Please read the citation instructions here `citation instructions <docs/How-to-Cite>`_  .
+<!-- Citing content end -->
 
+<!-- Contact content start -->
 Contact
 =======
 *lksearch* is an open source community project created by the `TESS Science Support Center`_. 
@@ -91,3 +104,4 @@ The best way to contact us is to `open an issue`_ or to e-mail tesshelp@bigbang.
   .. _`open an issue`: https://github.com/lightkurve/lksearch/issues/new
 
 Please include a self-contained example that fully demonstrates your problem or question.
+<!-- Contact content end -->
