@@ -471,7 +471,7 @@ class MASTSearch(object):
 
         elif isinstance(search_input, tuple):
             self.target_search_string = f"{search_input[0]}, {search_input[1]}"
-            self.SkyCoord = SkyCoord(search_input, frame="icrs", unit="deg")
+            self.SkyCoord = SkyCoord(*search_input, frame="icrs", unit="deg")
 
         elif isinstance(search_input, str):
             self.target_search_string = search_input
