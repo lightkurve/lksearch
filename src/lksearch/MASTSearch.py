@@ -57,7 +57,8 @@ class MASTSearch(object):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     sequence: Optional[Union[int, list[int]]] = None,
-        Mission Specific Survey value that corresponds to Sector (TESS), Campaign (K2), or Quarter (Kepler). Will assume the same sequence number for all missions.
+        Mission Specific Survey value that corresponds to Sector (TESS) AND Campaign (K2). Not valid for Kepler.
+        Setting sequence is not recommented for MASTSearch.
     """
 
     _REPR_COLUMNS = [
@@ -90,6 +91,13 @@ class MASTSearch(object):
         if pipeline is not None:
             pipeline = np.atleast_1d(pipeline).tolist()
         self.search_pipeline = pipeline
+
+        if ("kepler" in (m.lower() for m in mission)) & (sequence != None):
+            log.warning(
+                f"Sequence not valid when searching for Kepler data. Setting sequence to None"
+            )
+            sequence = None
+
         self.search_sequence = sequence
 
         # Legacy functionality - no longer query kic/tic by integer value only
@@ -117,7 +125,7 @@ class MASTSearch(object):
     def __repr__(self):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
-                out = f"{self.__class__.__name__} object containing {len(self.table)} data products"
+                out = f"{self.__class__.__name__} object containing {len(self.table)} data products \n"
                 return out + self.table[self._REPR_COLUMNS].__repr__()
             else:
                 return "No results found"
@@ -128,7 +136,7 @@ class MASTSearch(object):
     def _repr_html_(self):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
-                out = f"{self.__class__.__name__} object containing {len(self.table)} data products"
+                out = f"{self.__class__.__name__} object containing {len(self.table)} data products \n"
                 return out + self.table[self._REPR_COLUMNS]._repr_html_()
             else:
                 return "No results found"
@@ -261,8 +269,7 @@ class MASTSearch(object):
         """
         self._parse_input(target)
         seq = self.search_sequence
-        if isinstance(seq, list):
-            seq = None
+
         self.table = self._search(
             search_radius=self.search_radius,
             exptime=self.search_exptime,
