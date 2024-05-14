@@ -17,7 +17,7 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import PACKAGEDIR, ENABLE_CACHE, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
+from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
 pd.options.display.max_rows = 10
 
@@ -911,7 +911,6 @@ class MASTSearch(object):
                 mask = np.ones(len(exposures), dtype=bool)
                 log.debug("invalid string input. No exptime filter applied")
         return mask
-    
 
     def filter_table(
         self,
@@ -958,14 +957,12 @@ class MASTSearch(object):
         )
         return manifest.to_pandas()
 
-
-
     def download(
         self,
         cloud: bool = PREFER_CLOUD,
-        cache: bool = ENABLE_CACHE,
         cloud_only: bool = DOWNLOAD_CLOUD,
         download_dir: str = default_download_dir,
+        cache=True,
         remove_incomplete: str = True,
     ) -> pd.DataFrame:
         """downloads products in self.table to the local hard-drive
@@ -974,14 +971,14 @@ class MASTSearch(object):
         ----------
         cloud : bool, optional
             enable cloud (as opposed to MAST) downloading, by default True
-        cache : bool, optional
-            enable astroquery_caching of the downloaded files, by default True
-            if True, will not overwrite the file to be downloaded if it is found to exist
         cloud_only : bool, optional
             download only products availaible in the cloud, by default False
         download_dir : str, optional
             directory where the products should be downloaded to,
              by default default_download_dir
+            cache : bool, optional
+        passed to `~astroquery.mast.Observations.download_products`, by default True
+            if False, will overwrite the file to be downloaded (for example to replace a corrrupted file)
         remove_incomplete: str, optional
             remove files with a status not "COMPLETE" in the manifest, by default True
         Returns

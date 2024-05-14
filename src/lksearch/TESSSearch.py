@@ -19,7 +19,7 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 from .MASTSearch import MASTSearch
-from . import PACKAGEDIR, ENABLE_CACHE, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
+from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
 pd.options.display.max_rows = 10
 
@@ -428,11 +428,11 @@ class TESSSearch(MASTSearch):
     def download(
         self,
         cloud: bool = PREFER_CLOUD,
-        cache: bool = ENABLE_CACHE,
         cloud_only: bool = DOWNLOAD_CLOUD,
         download_dir: str = default_download_dir,
+        cache: bool = True,
         # TESScut_product="SPOC",
-        TESScut_size: int =10,
+        TESScut_size: int = 10,
     ):
         mast_mf = []
         tesscut_mf = []
