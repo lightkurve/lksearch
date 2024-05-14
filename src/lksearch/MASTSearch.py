@@ -17,7 +17,7 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import PACKAGEDIR, conf, config
+from . import PACKAGEDIR, ENABLE_CACHE, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
 pd.options.display.max_rows = 10
 
@@ -911,6 +911,26 @@ class MASTSearch(object):
                 mask = np.ones(len(exposures), dtype=bool)
                 log.debug("invalid string input. No exptime filter applied")
         return mask
+    
+
+    def filter_table(
+        self,
+        # Filter the table by keywords
+        limit: int = None,
+        exptime: Union[int, float, tuple, type(None)] = None,
+        pipeline: Union[str, list[str]] = None,
+    ):
+        mask = np.ones(len(self.table), dtype=bool)
+
+        if exptime is not None:
+            mask = mask & self._mask_by_exptime(exptime)
+        if pipeline is not None:
+            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
+        if limit is not None:
+            cusu = np.cumsum(mask)
+            if max(cusu) > limit:
+                mask = mask & (cusu <= limit)
+        return self._mask(mask)
 
     @suppress_stdout
     def _download_one(
@@ -938,30 +958,13 @@ class MASTSearch(object):
         )
         return manifest.to_pandas()
 
-    def filter_table(
-        self,
-        # Filter the table by keywords
-        limit: int = None,
-        exptime: Union[int, float, tuple, type(None)] = None,
-        pipeline: Union[str, list[str]] = None,
-    ):
-        mask = np.ones(len(self.table), dtype=bool)
 
-        if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime)
-        if pipeline is not None:
-            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
-        if limit is not None:
-            cusu = np.cumsum(mask)
-            if max(cusu) > limit:
-                mask = mask & (cusu <= limit)
-        return self._mask(mask)
 
     def download(
         self,
-        cloud: bool = True,
-        cache: bool = True,
-        cloud_only: bool = False,
+        cloud: bool = PREFER_CLOUD,
+        cache: bool = ENABLE_CACHE,
+        cloud_only: bool = DOWNLOAD_CLOUD,
         download_dir: str = default_download_dir,
         remove_incomplete: str = True,
     ) -> pd.DataFrame:
@@ -970,7 +973,7 @@ class MASTSearch(object):
         Parameters
         ----------
         cloud : bool, optional
-            enable cloud (as oposed to MAST) downloading, by default True
+            enable cloud (as opposed to MAST) downloading, by default True
         cache : bool, optional
             enable astroquery_caching of the downloaded files, by default True
             if True, will not overwrite the file to be downloaded if it is found to exist

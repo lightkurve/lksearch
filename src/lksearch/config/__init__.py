@@ -8,6 +8,7 @@ import astropy.config as astropyconfig
 
 ROOTNAME = "lksearch"
 PREFER_CLOUD = True  # Do you prefer URIs pointing to the Amazon bucket when available?
+ENABLE_CACHE = True # if True, will not overwrite the file to be downloaded if it is found to exist
 DOWNLOAD_CLOUD = True
 
 
