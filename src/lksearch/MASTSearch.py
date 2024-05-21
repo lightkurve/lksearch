@@ -955,7 +955,6 @@ class MASTSearch(object):
         print(log.getEffectiveLevel())
         logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
         logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
-
         manifest = Observations.download_products(
             Table().from_pandas(row.to_frame(name=" ").transpose()),
             download_dir=download_dir,
