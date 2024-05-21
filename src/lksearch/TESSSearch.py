@@ -19,11 +19,12 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 from .MASTSearch import MASTSearch
-from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
+from . import PACKAGEDIR, conf, config
+
+PREFER_CLOUD = conf.PREFER_CLOUD
+DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
 
 pd.options.display.max_rows = 10
-
-default_download_dir = config.get_cache_dir()
 
 log = logging.getLogger(__name__)
 
@@ -427,10 +428,10 @@ class TESSSearch(MASTSearch):
 
     def download(
         self,
-        cloud: PREFER_CLOUD = True,
-        cache: PREFER_CLOUD = True,
-        cloud_only: PREFER_CLOUD = False,
-        download_dir: PACKAGEDIR = default_download_dir,
+        cloud: bool = conf.PREFER_CLOUD,
+        cache: bool = True,
+        cloud_only: bool = conf.CLOUD_ONLY,
+        download_dir: str = config.get_cache_dir(),
         # TESScut_product="SPOC",
         TESScut_size=10,
     ):
@@ -441,7 +442,7 @@ class TESSSearch(MASTSearch):
             mast_mf = super().download(cloud, cache, cloud_only, download_dir)
 
         elif "TESScut" in self.table.provenance_name.unique():
-            TESSCut_dir = f"{default_download_dir}/mastDownload/TESSCut"
+            TESSCut_dir = f"{download_dir}/mastDownload/TESSCut"
             if not os.path.isdir(TESSCut_dir):
                 os.makedirs(TESSCut_dir)
             mask = self.table["provenance_name"] == "TESScut"
@@ -459,7 +460,7 @@ class TESSSearch(MASTSearch):
                     # Uncomment when astroquery 0.4.8 is released to enable TICA support
                     # product=TESScut_product,
                     # verbose=False
-                    path=f"{default_download_dir}/mastDownload/TESSCut",
+                    path=f"{download_dir}/mastDownload/TESSCut",
                     inflate=True,
                     moving_target=False,  # this could be added
                     mt_type=None,
@@ -469,7 +470,7 @@ class TESSSearch(MASTSearch):
                     sector_list, total=len(sector_list), desc="TESScut          "
                 )
             ]
-        if len(mast_mf) != 0:
+        if len(np.atleast_1d(mast_mf)) != 0:
             manifest = mast_mf
 
         if len(tesscut_mf) != 0:

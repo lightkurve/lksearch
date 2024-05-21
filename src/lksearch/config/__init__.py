@@ -3,19 +3,16 @@ import warnings
 import glob
 import shutil
 
-import astropy.config as astropyconfig
-
+import astropy.config as _config
 
 ROOTNAME = "lksearch"
-PREFER_CLOUD = True  # Do you prefer URIs pointing to the Amazon bucket when available?
-DOWNLOAD_CLOUD = True
 
 
-class ConfigNamespace(astropyconfig.ConfigNamespace):
+class ConfigNamespace(_config.ConfigNamespace):
     rootname = ROOTNAME
 
 
-class ConfigItem(astropyconfig.ConfigItem):
+class ConfigItem(_config.ConfigItem):
     rootname = ROOTNAME
 
 
@@ -35,7 +32,30 @@ def get_config_dir():
         The absolute path to the configuration directory.
 
     """
-    return astropyconfig.get_config_dir(ROOTNAME)
+    return _config.get_config_dir(ROOTNAME)
+
+
+def get_config_file():
+    return f"{get_config_dir()}/{ROOTNAME}.cfg"
+
+
+def create_config_file(overwrite: bool = False):
+    """Creates a default configuration file in the config directory"""
+
+    from .. import conf
+
+    # check if config file exists
+    path_to_config_file = get_config_file()
+    cfg_exists = os.path.isfile(path_to_config_file)
+
+    if not cfg_exists or (cfg_exists and overwrite):
+        with open(path_to_config_file, "w", encoding="utf-8") as f:
+            for item in conf.items():
+                f.write(f"## {item[1].description} \n")
+                f.write(f"# {item[0]} = {item[1].defaultvalue} \n")
+                f.write("\n")
+    else:
+        log.error("Config file exists and overwrite set to {overwrite}")
 
 
 def get_cache_dir():
@@ -62,7 +82,7 @@ def get_cache_dir():
 
     cache_dir = conf.cache_dir
     if cache_dir is None or cache_dir == "":
-        cache_dir = astropyconfig.get_cache_dir(ROOTNAME)
+        cache_dir = _config.get_cache_dir(ROOTNAME)
     cache_dir = _ensure_cache_dir_exists(cache_dir)
     cache_dir = os.path.abspath(cache_dir)
 
