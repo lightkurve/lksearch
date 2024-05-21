@@ -327,11 +327,12 @@ class MASTSearch(object):
         else:
             raise (ValueError("No Target or object table supplied"))
 
-    def _mask(self, mask):
+    def _downsize_table(self, ds_table):
+    #def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then returns them as a new Search object.
         deepcopy is used to preserve the class metadata stored in class variables"""
         new_MASTSearch = deepcopy(self)
-        new_MASTSearch.table = self.table[mask].reset_index()
+        new_MASTSearch.table = ds_table.reset_index()
 
         return new_MASTSearch
 
