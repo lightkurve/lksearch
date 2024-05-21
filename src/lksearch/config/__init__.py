@@ -76,7 +76,7 @@ def get_cache_dir():
     cachedir : str
         The absolute path to the cache directory.
 
-    See :ref:`configuration <api.config>` for more information.
+    See `~lksearch.Conf` for more information.
     """
     from .. import conf
 
@@ -108,6 +108,14 @@ def _ensure_cache_dir_exists(cache_dir):
 
 
 def clearcache(test=True):
+    """Deletes all downloaded files in the lksearch download directory
+
+    Parameters
+    ----------
+    test : bool, optional
+       perform this in test mode, printing what folders will be deleted, by default True.
+       Set test=False to delete cache
+    """
     # Check to see if default download dir/mastDownload exists
     mastdir = f"{get_cache_dir()}/mastDownload"
     if os.path.isdir(mastdir):

@@ -20,7 +20,7 @@ class Conf(_config.ConfigNamespace):
 
     The attributes listed below are the available configuration parameters.
 
-    Attributes
+    Parameters
     ----------
     search_result_display_extra_columns
         List of extra columns to be included when displaying a SearchResult object.

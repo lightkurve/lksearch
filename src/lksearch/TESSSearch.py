@@ -433,8 +433,35 @@ class TESSSearch(MASTSearch):
         cloud_only: bool = conf.CLOUD_ONLY,
         download_dir: str = config.get_cache_dir(),
         # TESScut_product="SPOC",
-        TESScut_size: int = 10,
+        TESScut_size: Union[int, tuple] = 10,
     ):
+        """downloads products in self.table to the local hard-drive
+
+        Parameters
+        ----------
+        cloud : bool, optional
+            enable cloud (as opposed to MAST) downloading, by default True
+        cloud_only : bool, optional
+            download only products availaible in the cloud, by default False
+        download_dir : str, optional
+            directory where the products should be downloaded to,
+            by default default_download_dir
+            cache : bool, optional
+        passed to `~astroquery.mast.Observations.download_products`, by default True
+            if False, will overwrite the file to be downloaded (for example to replace a corrrupted file)
+        remove_incomplete: str, optional
+            remove files with a status not "COMPLETE" in the manifest, by default True
+        TESScut_size : Union[int, tuple], optional,
+            The size of a TESScut FFI cutout in pixels
+
+        Returns
+        -------
+        ~pandas.DataFrame
+            table where each row is an ~astroquery.mast.Observations.download_products()
+            manifest
+
+        """
+
         mast_mf = []
         tesscut_mf = []
         manifest = []

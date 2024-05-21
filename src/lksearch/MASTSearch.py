@@ -17,7 +17,7 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
+from . import PACKAGEDIR, conf, config
 
 pd.options.display.max_rows = 10
 
@@ -1006,17 +1006,19 @@ class MASTSearch(object):
             download only products availaible in the cloud, by default False
         download_dir : str, optional
             directory where the products should be downloaded to,
-             by default default_download_dir
+            by default default_download_dir
             cache : bool, optional
         passed to `~astroquery.mast.Observations.download_products`, by default True
             if False, will overwrite the file to be downloaded (for example to replace a corrrupted file)
         remove_incomplete: str, optional
             remove files with a status not "COMPLETE" in the manifest, by default True
+
         Returns
         -------
         ~pandas.DataFrame
             table where each row is an ~astroquery.mast.Observations.download_products()
             manifest
+
         """
 
         if len(self.table) == 0:
