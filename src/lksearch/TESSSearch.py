@@ -427,18 +427,23 @@ class TESSSearch(MASTSearch):
 
     def download(
         self,
-        cloud: PREFER_CLOUD = True,
-        cache: PREFER_CLOUD = True,
-        cloud_only: PREFER_CLOUD = False,
-        download_dir: PACKAGEDIR = default_download_dir,
+        cloud: bool = PREFER_CLOUD,
+        cloud_only: bool = DOWNLOAD_CLOUD,
+        download_dir: str = default_download_dir,
+        cache: bool = True,
         # TESScut_product="SPOC",
-        TESScut_size=10,
+        TESScut_size: int = 10,
     ):
         mast_mf = []
         tesscut_mf = []
         manifest = []
         if "TESScut" not in self.table.provenance_name.unique():
-            mast_mf = super().download(cloud, cache, cloud_only, download_dir)
+            mast_mf = super().download(
+                cloud=cloud,
+                cache=cache,
+                cloud_only=cloud_only,
+                download_dir=download_dir,
+            )
 
         elif "TESScut" in self.table.provenance_name.unique():
             TESSCut_dir = f"{default_download_dir}/mastDownload/TESSCut"

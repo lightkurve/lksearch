@@ -17,7 +17,7 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import PACKAGEDIR, conf, config
+from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
 
 pd.options.display.max_rows = 10
 
@@ -57,7 +57,8 @@ class MASTSearch(object):
     pipeline:  Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"]
         Pipeline(s) which have produced the observed data
     sequence: Optional[Union[int, list[int]]] = None,
-        Mission Specific Survey value that corresponds to Sector (TESS), Campaign (K2), or Quarter (Kepler). Will assume the same sequence number for all missions.
+        Mission Specific Survey value that corresponds to Sector (TESS) AND Campaign (K2). Not valid for Kepler.
+        Setting sequence is not recommented for MASTSearch.
     """
 
     _REPR_COLUMNS = [
@@ -90,6 +91,13 @@ class MASTSearch(object):
         if pipeline is not None:
             pipeline = np.atleast_1d(pipeline).tolist()
         self.search_pipeline = pipeline
+
+        if ("kepler" in (m.lower() for m in mission)) & (sequence != None):
+            log.warning(
+                f"Sequence not valid when searching for Kepler data. Setting sequence to None"
+            )
+            sequence = None
+
         self.search_sequence = sequence
 
         # Legacy functionality - no longer query kic/tic by integer value only
@@ -117,7 +125,7 @@ class MASTSearch(object):
     def __repr__(self):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
-                out = f"{self.__class__.__name__} object containing {len(self.table)} data products"
+                out = f"{self.__class__.__name__} object containing {len(self.table)} data products \n"
                 return out + self.table[self._REPR_COLUMNS].__repr__()
             else:
                 return "No results found"
@@ -128,7 +136,7 @@ class MASTSearch(object):
     def _repr_html_(self):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
-                out = f"{self.__class__.__name__} object containing {len(self.table)} data products"
+                out = f"{self.__class__.__name__} object containing {len(self.table)} data products \n"
                 return out + self.table[self._REPR_COLUMNS]._repr_html_()
             else:
                 return "No results found"
@@ -261,8 +269,7 @@ class MASTSearch(object):
         """
         self._parse_input(target)
         seq = self.search_sequence
-        if isinstance(seq, list):
-            seq = None
+
         self.table = self._search(
             search_radius=self.search_radius,
             exptime=self.search_exptime,
@@ -912,32 +919,6 @@ class MASTSearch(object):
                 log.debug("invalid string input. No exptime filter applied")
         return mask
 
-    @suppress_stdout
-    def _download_one(
-        self,
-        row: pd.Series,
-        cloud_only: bool = False,
-        cache: bool = True,
-        download_dir: str = ".",
-    ) -> pd.DataFrame:
-        """Helper function that downloads an individual row.
-        This may be more efficient if we are caching, but we can sent a full table
-        to download_products to get multiple items.
-        """
-
-        # Make sure astroquery uses the same level of verbosity
-        print(log.getEffectiveLevel())
-        logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
-        logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
-
-        manifest = Observations.download_products(
-            Table().from_pandas(row.to_frame(name=" ").transpose()),
-            download_dir=download_dir,
-            cache=cache,
-            cloud_only=cloud_only,
-        )
-        return manifest.to_pandas()
-
     def filter_table(
         self,
         # Filter the table by keywords
@@ -957,12 +938,37 @@ class MASTSearch(object):
                 mask = mask & (cusu <= limit)
         return self._mask(mask)
 
+    @suppress_stdout
+    def _download_one(
+        self,
+        row: pd.Series,
+        cloud_only: bool = False,
+        cache: bool = True,
+        download_dir: str = ".",
+    ) -> pd.DataFrame:
+        """Helper function that downloads an individual row.
+        This may be more efficient if we are caching, but we can sent a full table
+        to download_products to get multiple items.
+        """
+
+        # Make sure astroquery uses the same level of verbosity
+        print(log.getEffectiveLevel())
+        logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
+        logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
+        manifest = Observations.download_products(
+            Table().from_pandas(row.to_frame(name=" ").transpose()),
+            download_dir=download_dir,
+            cache=cache,
+            cloud_only=cloud_only,
+        )
+        return manifest.to_pandas()
+
     def download(
         self,
-        cloud: bool = True,
-        cache: bool = True,
-        cloud_only: bool = False,
+        cloud: bool = PREFER_CLOUD,
+        cloud_only: bool = DOWNLOAD_CLOUD,
         download_dir: str = default_download_dir,
+        cache=True,
         remove_incomplete: str = True,
     ) -> pd.DataFrame:
         """downloads products in self.table to the local hard-drive
@@ -970,15 +976,15 @@ class MASTSearch(object):
         Parameters
         ----------
         cloud : bool, optional
-            enable cloud (as oposed to MAST) downloading, by default True
-        cache : bool, optional
-            enable astroquery_caching of the downloaded files, by default True
-            if True, will not overwrite the file to be downloaded if it is found to exist
+            enable cloud (as opposed to MAST) downloading, by default True
         cloud_only : bool, optional
             download only products availaible in the cloud, by default False
         download_dir : str, optional
             directory where the products should be downloaded to,
              by default default_download_dir
+            cache : bool, optional
+        passed to `~astroquery.mast.Observations.download_products`, by default True
+            if False, will overwrite the file to be downloaded (for example to replace a corrrupted file)
         remove_incomplete: str, optional
             remove files with a status not "COMPLETE" in the manifest, by default True
         Returns
