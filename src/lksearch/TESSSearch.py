@@ -438,7 +438,12 @@ class TESSSearch(MASTSearch):
         tesscut_mf = []
         manifest = []
         if "TESScut" not in self.table.provenance_name.unique():
-            mast_mf = super().download(cloud=cloud,cache=cache, cloud_only=cloud_only, download_dir=download_dir)
+            mast_mf = super().download(
+                cloud=cloud,
+                cache=cache,
+                cloud_only=cloud_only,
+                download_dir=download_dir,
+            )
 
         elif "TESScut" in self.table.provenance_name.unique():
             TESSCut_dir = f"{default_download_dir}/mastDownload/TESSCut"
