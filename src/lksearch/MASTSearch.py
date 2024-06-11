@@ -111,7 +111,7 @@ class MASTSearch(object):
 
         if isinstance(table, type(None)):
             self._searchtable_from_target(target)
-            self.table = self._update_table(self.table)
+            #self.table = self._update_table(self.table)
             self.table = self._fix_table_times(self.table)
 
         # If MAST search tables are provided, another MAST search is not necessary
@@ -276,6 +276,7 @@ class MASTSearch(object):
             pipeline=self.search_pipeline,
             sequence=self.search_sequence,
         )
+        self.table = self._update_table(self.table)
         
         filetype = [
             "target pixel",
@@ -292,7 +293,7 @@ class MASTSearch(object):
             inplace=True,
         )  # setting provenance_name=None will return HLSPs
 
-        self.table = self.table[mask]
+        #self.table = self.table[mask]
 
     def _searchtable_from_table(
         self,
@@ -970,9 +971,10 @@ class MASTSearch(object):
         description: Union[str, list[str]] = None,
         pipeline: Union[str, list[str]] = None,
         sequence: Union[int, list[int]] = None,
+        mission: Union[str, list[str]] = None,
         inplace: bool = False,
-        **kwargs,
     ):
+        
 
         mask = np.ones(len(self.table), dtype=bool)
 
@@ -1032,6 +1034,9 @@ class MASTSearch(object):
             for s in np.atleast_1d(sequence).tolist():
                 sequence_mask |= self.table.sequence_number == s
             mask = mask & sequence_mask
+
+        if mission is not None:
+            mask = mask & self.table["mission"].isin(np.atleast_1d(mission))
 
         if limit is not None:
             cusu = np.cumsum(mask)

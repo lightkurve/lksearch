@@ -389,11 +389,16 @@ class TESSSearch(MASTSearch):
     def filter_table(
         self,
         limit: int = None,
-        exptime: Union[int, float, tuple, type(None)] = None,
+        filetype: Union[str, list[str]] = None,
+        exptime: Union[int, float, tuple[float], type(None)] = None,
+        distance: Union[float, tuple[float]] = None,
+        year: Union[int, list[int], tuple[int]] = None,
+        description: Union[str, list[str]] = None,
         pipeline: Union[str, list[str]] = None,
         sector: Union[int, list[int]] = None,
-        inplace = False,
-        **kwargs
+        mission: Union[str, list[str]] = None,
+        #sequence = None,
+        inplace: bool = False,
     ):
         """
         Filters the search result table by specified parameters
@@ -413,16 +418,17 @@ class TESSSearch(MASTSearch):
         -------
         TESSSearch object with updated table
         """
+        
         return super().filter_table(
-            limit = limit
-            filetype = filetype 
-            exptime = exptime 
-            distance = distance 
-            year = year 
-            description = description 
-            pipeline = pipeline 
-            sequence = sector 
-            inplace = inplace 
+            limit = limit,
+            filetype = filetype,
+            exptime = exptime,
+            distance = distance,
+            year = year,
+            description = description,
+            pipeline = pipeline,
+            sequence = sector,
+            inplace = inplace,
             )
 
     def download(

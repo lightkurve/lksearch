@@ -444,8 +444,11 @@ def test_tesscut():
     assert len(manifest) == 1
 
 
-'''def test_filter():
+def test_filter():
     """Can we properly filter the data"""
 
     results = TESSSearch("Kepler 16b")
-    filtered = results.filter_table(sector=14)'''
+    filtered = results.filter_table(sector=14)
+    queried = results.filter_table("sector == 14")
+    assert len(filtered) == len(queried)
+    
