@@ -392,6 +392,8 @@ class TESSSearch(MASTSearch):
         exptime: Union[int, float, tuple, type(None)] = None,
         pipeline: Union[str, list[str]] = None,
         sector: Union[int, list[int]] = None,
+        inplace = False,
+        **kwargs
     ):
         """
         Filters the search result table by specified parameters
@@ -411,19 +413,17 @@ class TESSSearch(MASTSearch):
         -------
         TESSSearch object with updated table
         """
-        mask = np.ones(len(self.table), dtype=bool)
-
-        if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime)
-        if pipeline is not None:
-            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
-        if sector is not None:
-            mask = mask & self.table["sequence_number"].isin(np.atleast_1d(sector))
-        if limit is not None:
-            cusu = np.cumsum(mask)
-            if max(cusu) > limit:
-                mask = mask & (cusu <= limit)
-        return self._mask(mask)
+        return super().filter_table(
+            limit = limit
+            filetype = filetype 
+            exptime = exptime 
+            distance = distance 
+            year = year 
+            description = description 
+            pipeline = pipeline 
+            sequence = sector 
+            inplace = inplace 
+            )
 
     def download(
         self,

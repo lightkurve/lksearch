@@ -442,3 +442,10 @@ def test_tesscut():
     assert len(results.cubedata) == 3
     manifest = results.cubedata[2].download()
     assert len(manifest) == 1
+
+
+'''def test_filter():
+    """Can we properly filter the data"""
+
+    results = TESSSearch("Kepler 16b")
+    filtered = results.filter_table(sector=14)'''

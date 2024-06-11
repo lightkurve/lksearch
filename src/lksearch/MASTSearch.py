@@ -268,20 +268,28 @@ class MASTSearch(object):
         None - sets self.table equal to the masked/filtered joint table
         """
         self._parse_input(target)
-        seq = self.search_sequence
 
         self.table = self._search(
             search_radius=self.search_radius,
             exptime=self.search_exptime,
             mission=self.search_mission,
             pipeline=self.search_pipeline,
-            sequence=seq,
+            sequence=self.search_sequence,
         )
-        mask = self._filter(
+        
+        filetype = [
+            "target pixel",
+            "lightcurve",
+            "dvreport",
+        ]
+
+        mask = self.filter_table(
             exptime=self.search_exptime,
             mission=self.search_mission,
             pipeline=self.search_pipeline,
             sequence=self.search_sequence,
+            filetype=filetype,
+            inplace=True,
         )  # setting provenance_name=None will return HLSPs
 
         self.table = self.table[mask]
@@ -327,12 +335,12 @@ class MASTSearch(object):
         else:
             raise (ValueError("No Target or object table supplied"))
 
-    def _downsize_table(self, ds_table):
-    #def _mask(self, mask):
+    #def _downsize_table(self, ds_table):
+    def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then returns them as a new Search object.
         deepcopy is used to preserve the class metadata stored in class variables"""
         new_MASTSearch = deepcopy(self)
-        new_MASTSearch.table = ds_table.reset_index()
+        new_MASTSearch.table = self.table[mask].reset_index()
 
         return new_MASTSearch
 
@@ -846,7 +854,7 @@ class MASTSearch(object):
         allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
 
         filter_ftype = [
-            file.lower() for file in filetype if file.lower() in allowed_ftype
+            file.lower() for file in np.atleast_1d(filetype) if file.lower() in allowed_ftype
         ]
         # First filter on filetype
 
@@ -919,25 +927,121 @@ class MASTSearch(object):
                 mask = np.ones(len(exposures), dtype=bool)
                 log.debug("invalid string input. No exptime filter applied")
         return mask
+    
+    def query_table(
+            self,
+            criteria: str,
+            inplace: bool = False,
+            **kwargs,
+        ):
+        ''' Filter the Search Result table using pandas query 
+            https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html
+
+            Parameters
+            ----------
+            criteria : str
+                string containing criteria to filter table. Can handle multiple criteria,
+                e.g. "exptime>=100 and exptime<=500". 
+            inplace : bool
+                if True, modify table in MASTSearch object directly. If False, returns a 
+                new MASTSearch object with the resulting table
+
+            Returns
+            -------
+            MASTSearch : MASTSearch object
+                Only returned if inplace = False
+        '''
+        filtered_table = self.table.query(criteria).reset_index()
+        if inplace:
+            self.table = filtered_table
+        else:
+            new_MASTSearch = deepcopy(self)
+            new_MASTSearch.table = filtered_table
+            return new_MASTSearch
 
     def filter_table(
         self,
         # Filter the table by keywords
         limit: int = None,
-        exptime: Union[int, float, tuple, type(None)] = None,
+        filetype: Union[str, list[str]] = None,
+        exptime: Union[int, float, tuple[float], type(None)] = None,
+        distance: Union[float, tuple[float]] = None,
+        year: Union[int, list[int], tuple[int]] = None,
+        description: Union[str, list[str]] = None,
         pipeline: Union[str, list[str]] = None,
+        sequence: Union[int, list[int]] = None,
+        inplace: bool = False,
+        **kwargs,
     ):
+
         mask = np.ones(len(self.table), dtype=bool)
+
+        if not isinstance(filetype, type(None)):
+            allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
+            filter_ftype = [
+                file.lower() for file in np.atleast_1d(filetype) if file.lower() in allowed_ftype
+                ]
+            if len(filter_ftype) == 0:
+                filter_ftype = allowed_ftype
+                log.warning("Invalid filetype filtered. Returning all filetypes.")
+
+            file_mask = mask.copy()
+            for ftype in filter_ftype:
+                file_mask |= self._mask_product_type(ftype)
+            mask = mask & file_mask
 
         if exptime is not None:
             mask = mask & self._mask_by_exptime(exptime)
+
+        if distance is not None:
+            if isinstance(distance, float):
+                mask = mask & self.table["distance"].query("distance <= @distance")
+            elif isinstance(distance, tuple):
+                mask = mask & self.table["distance"].query("(distance >= @distance[0]) & (distance <= @distance[1])")
+            else:
+                log.warning("Invalid input for `distance`, allowed inputs are float and tuple. Ignoring `distance` search parameter.")
+
+        if year is not None:
+            if isinstance(year, str):
+                year = int(year)
+            if hasattr(year, "__iter__"):
+                year_type = type(year)
+                year = [int(y) for y in year]
+                year = year_type(year)
+            if isinstance(year, np.int_) or isinstance(year, int) or isinstance(year, list):
+                mask = mask & self.table["year"].isin(np.atleast_1d(year))
+            elif isinstance(year, tuple):
+                mask = mask & self.table.query("year>=@year[0] & year<=@year[1]")
+            else:
+                log.warning("Invalid input for `year`, allowed inputs are str, int, and tuple. Ignoring `year` search parameter.")
+        
         if pipeline is not None:
             mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
+        
+        if description is not None:
+            if isinstance(description, str):
+                mask = mask & self.table["description"].str.lower().str.contains(description.lower())
+            elif hasattr(description, "__iter__"):
+                for word in description:
+                    mask = mask & self.table["description"].str.lower().str.contains(word)
+            else:
+                log.warning("Invalid input for `description`, allowed inputs are str and list[str]. Ignoring `description` search parameter.")
+
+        if not isinstance(sequence, type(None)):
+            sequence_mask = mask.copy()
+            for s in np.atleast_1d(sequence).tolist():
+                sequence_mask |= self.table.sequence_number == s
+            mask = mask & sequence_mask
+
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
                 mask = mask & (cusu <= limit)
-        return self._mask(mask)
+        
+        if (inplace):
+            self.table = self.table[mask].reset_index()
+        else:
+            return self._mask(mask)
 
     @suppress_stdout
     def _download_one(
