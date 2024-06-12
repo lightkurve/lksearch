@@ -111,7 +111,6 @@ class MASTSearch(object):
 
         if isinstance(table, type(None)):
             self._searchtable_from_target(target)
-            #self.table = self._update_table(self.table)
             self.table = self._fix_table_times(self.table)
 
         # If MAST search tables are provided, another MAST search is not necessary
@@ -120,7 +119,7 @@ class MASTSearch(object):
 
         for col in self.table.columns:
             if not hasattr(self, col):
-                setattr(self, col, self.table[col]) 
+                setattr(self, col, self.table[col])
 
     def __len__(self):
         """Returns the number of products in the SearchResult table."""
@@ -281,23 +280,21 @@ class MASTSearch(object):
             sequence=self.search_sequence,
         )
         self.table = self._update_table(self.table)
-        
+
         filetype = [
             "target pixel",
             "lightcurve",
             "dvreport",
         ]
 
-        mask = self.filter_table(
+        mask = self._filter(
             exptime=self.search_exptime,
             mission=self.search_mission,
             pipeline=self.search_pipeline,
-            sequence=self.search_sequence,
+            sequence_number=self.search_sequence,
             filetype=filetype,
-            inplace=True,
         )  # setting provenance_name=None will return HLSPs
-
-        #self.table = self.table[mask]
+        self.table = self.table[mask].reset_index(drop=True)
 
     def _searchtable_from_table(
         self,
@@ -340,7 +337,7 @@ class MASTSearch(object):
         else:
             raise (ValueError("No Target or object table supplied"))
 
-    #def _downsize_table(self, ds_table):
+    # def _downsize_table(self, ds_table):
     def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then returns them as a new Search object.
         deepcopy is used to preserve the class metadata stored in class variables"""
@@ -808,102 +805,6 @@ class MASTSearch(object):
             mask |= self.table.productFilename.str.endswith(value)
         return mask
 
-    def _filter(
-        self,
-        exptime: Union[str, int, tuple[int], type(None)] = (0, 9999),
-        mission: Union[str, list[str]] = ["Kepler", "K2", "TESS"],
-        pipeline: Union[str, list[str]] = ["kepler", "k2", "spoc"],
-        filetype: Union[str, list[str]] = [
-            "target pixel",
-            "lightcurve",
-            "dvreport",
-        ],
-        sequence: Union[int, list[int]] = None,
-    ) -> pd.DataFrame:
-        """filter self.table based on your product search preferences
-
-        Parameters
-        ----------
-        exptime : Union[str, int, tuple[int], type, optional
-            exposure time of data products to search, by default (0, 9999)
-        project : Union[str, list[str]], optional
-            mission project to search, by default ["Kepler", "K2", "TESS"]
-        pipeline : Union[str, list[str]], optional
-            pipeline provinence to search for data from, by default ["kepler", "k2", "spoc"]
-        filetype : Union[str, list[str]], optional
-            file types to search for, by default [ "target pixel", "lightcurve", "dvreport", ]
-        sequence : Union[int, list[int]], optional
-            sequence number to filter by. Corresponds to sector for TESS, campaign for K2, and quarter for Kepler
-        Returns
-        -------
-        mask
-            cumulative boolean mask for self.table based off of
-            the product of individual filter properties
-        """
-
-        """ Modify this so that it can choose what types of products to keep?
-        Since this will be used by mission specific search we want this to filter:
-        Filetype
-        ExposureTime/cadence
-        Pipe(Provenance)/Project - e.g. (SPOC/TESSSpoc)
-        <Segment/Quarter/Sector/Campaign> this will be in mission specific search
-        """
-
-        self.search_exptime = exptime
-        mask = np.zeros(len(self.table), dtype=bool)
-
-        # First filter on filetype
-        file_mask = mask.copy()
-
-        # This is the list of allowed filetypes we can interact with
-        allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
-
-        filter_ftype = [
-            file.lower() for file in np.atleast_1d(filetype) if file.lower() in allowed_ftype
-        ]
-        # First filter on filetype
-
-        if len(filter_ftype) == 0:
-            filter_ftype = allowed_ftype
-            log.warning("Invalid filetype filtered. Returning all data.")
-
-        file_mask = mask.copy()
-        for ftype in filter_ftype:
-            file_mask |= self._mask_product_type(ftype)
-
-        # Next Filter on mission
-        mission_mask = mask.copy()
-        if not isinstance(mission_mask, type(None)):
-            for m in mission:
-                mission_mask |= self.table.project_obs.values == m
-        else:
-            mission_mask = np.logical_not(mission_mask)
-
-        # Next Filter on pipeline (provenance_name in mast table)
-        provenance_mask = mask.copy()
-        if not isinstance(pipeline, type(None)):
-            for a in np.atleast_1d(pipeline).tolist():
-                provenance_mask |= self.table.provenance_name.str.lower() == a.lower()
-        else:
-            provenance_mask = np.logical_not(provenance_mask)
-
-        # Filter by cadence
-        if not isinstance(exptime, type(None)):
-            exptime_mask = self._mask_by_exptime(exptime)
-        else:
-            exptime_mask = not mask
-
-        # Filter by sequence
-        sequence_mask = mask.copy()
-        if not isinstance(sequence, type(None)):
-            for s in np.atleast_1d(sequence).tolist():
-                sequence_mask |= self.table.sequence_number == s
-        else:
-            sequence_mask = np.logical_not(sequence_mask)
-
-        mask = file_mask & mission_mask & provenance_mask & exptime_mask & sequence_mask
-        return mask
-
     def _mask_by_exptime(self, exptime: Union[int, tuple[float]]):
         """Helper function to filter by exposure time.
         Returns a boolean array"""
@@ -935,32 +836,32 @@ class MASTSearch(object):
             mask = np.zeros(len(exposures), dtype=bool)
             for et in exptime:
                 mask = mask | (exposures == et)
-            
+
         return mask
-    
+
     def query_table(
-            self,
-            criteria: str,
-            inplace: bool = False,
-            **kwargs,
-        ):
-        ''' Filter the Search Result table using pandas query 
-            https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html
+        self,
+        criteria: str,
+        inplace: bool = False,
+        **kwargs,
+    ):
+        """Filter the Search Result table using pandas query
+        https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html
 
-            Parameters
-            ----------
-            criteria : str
-                string containing criteria to filter table. Can handle multiple criteria,
-                e.g. "exptime>=100 and exptime<=500". 
-            inplace : bool
-                if True, modify table in MASTSearch object directly. If False, returns a 
-                new MASTSearch object with the resulting table
+        Parameters
+        ----------
+        criteria : str
+            string containing criteria to filter table. Can handle multiple criteria,
+            e.g. "exptime>=100 and exptime<=500".
+        inplace : bool
+            if True, modify table in MASTSearch object directly. If False, returns a
+            new MASTSearch object with the resulting table
 
-            Returns
-            -------
-            MASTSearch : MASTSearch object
-                Only returned if inplace = False
-        '''
+        Returns
+        -------
+        MASTSearch : MASTSearch object
+            Only returned if inplace = False
+        """
         filtered_table = self.table.query(criteria).reset_index()
         if inplace:
             self.table = filtered_table
@@ -969,36 +870,75 @@ class MASTSearch(object):
             new_MASTSearch.table = filtered_table
             return new_MASTSearch
 
-    def filter_table(
+    def _filter(
         self,
-        # Filter the table by keywords
         target_name: Union[str, list[str]] = None,
-        limit: int = None,
-        filetype: Union[str, list[str]] = None,
-        exptime: Union[int, float, tuple[float], type(None)] = None,
+        pipeline: Union[str, list[str]] = None,
+        mission: Union[str, list[str]] = None,
+        exptime: Union[int, float, tuple[float]] = None,
         distance: Union[float, tuple[float]] = None,
         year: Union[int, list[int], tuple[int]] = None,
-        description: Union[str, list[str]] = None,
-        pipeline: Union[str, list[str]] = None,
-        sequence: Union[int, list[int]] = None,
-        mission: Union[str, list[str]] = None,
-        inplace: bool = False,
+        description: Union[str, list[str], tuple[str]] = None,
+        filetype: Union[str, list[str]] = None,
+        sequence_number: Union[int, list[int]] = None,
     ):
-        
+        """filter self.table based on your product search preferences
+
+        Parameters
+        ----------
+        target_name : str, optional
+            Name of targets.
+        pipeline : str or list[str]], optional
+            Pipeline provenance to search for data from.
+        mission : str or list[str], optional
+            Mission projects to search, options are "Kepler", "K2", and "TESS".
+        exptime : int or float, tuple[float]], optional
+            Exposure time of data products to search.
+            An int, float, or list will look for exact matches,
+            a tuple will look for a range of times,
+            and string values "fast", "short", "long", "shortest", and "longest"
+            will match the appropriate exposure times.
+        distance : float or tuple[float]], optional
+            Distance from given search target to get data products.
+            A float searches for products within the given distance,
+            a tuple searches between the given values.
+        year : int or list[int], tuple[int], optional
+            Year of creation.
+            A list will look for all years given,
+            a tuple will look in the range of years given.
+        description : str or list[str], optional
+            Key words to search for in the description of the data product.
+            A list will look for descriptions containing any keywords given,
+            a tuple will look for descriptions containing all the keywords.
+        filetype : str or list[str], optional
+            file types to search for, options are "target pixel", "lightcurve", "dvreport".
+        sequence_number : int or list[int]], optional
+            Sequence number to filter by. Corresponds to sector for TESS, campaign for K2, and quarter for Kepler.
+
+        Returns
+        -------
+        mask : np.ndarray
+            cumulative boolean mask for self.table based off of
+            the product of individual filter properties
+        """
+
         mask = np.ones(len(self.table), dtype=bool)
         if target_name is not None:
             target_name = np.atleast_1d(target_name).astype(str)
-            mask = mask & self.table['target_name'].isin(target_name)
+            mask = mask & self.table["target_name"].isin(target_name)
+
         if not isinstance(filetype, type(None)):
             allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
             filter_ftype = [
-                file.lower() for file in np.atleast_1d(filetype) if file.lower() in allowed_ftype
-                ]
+                file.lower()
+                for file in np.atleast_1d(filetype)
+                if file.lower() in allowed_ftype
+            ]
             if len(filter_ftype) == 0:
                 filter_ftype = allowed_ftype
                 log.warning("Invalid filetype filtered. Returning all filetypes.")
 
-            file_mask = mask.copy()
+            file_mask = np.zeros(len(self.table), dtype=bool)
             for ftype in filter_ftype:
                 file_mask |= self._mask_product_type(ftype)
             mask = mask & file_mask
@@ -1010,9 +950,13 @@ class MASTSearch(object):
             if isinstance(distance, float):
                 mask = mask & self.table.eval("distance <= @distance")
             elif isinstance(distance, tuple):
-                mask = mask & self.table.eval("(distance >= @distance[0]) & (distance <= @distance[1])")
+                mask = mask & self.table.eval(
+                    "(distance >= @distance[0]) & (distance <= @distance[1])"
+                )
             else:
-                log.warning("Invalid input for `distance`, allowed inputs are float and tuple. Ignoring `distance` search parameter.")
+                log.warning(
+                    "Invalid input for `distance`, allowed inputs are float and tuple. Ignoring `distance` search parameter."
+                )
 
         if year is not None:
             if isinstance(year, str):
@@ -1021,46 +965,127 @@ class MASTSearch(object):
                 year_type = type(year)
                 year = [int(y) for y in year]
                 year = year_type(year)
-            if isinstance(year, np.int_) or isinstance(year, int) or isinstance(year, list):
+            if (
+                isinstance(year, np.int_)
+                or isinstance(year, int)
+                or isinstance(year, list)
+            ):
                 mask = mask & self.table["year"].isin(np.atleast_1d(year))
             elif isinstance(year, tuple):
                 mask = mask & self.table.eval("year>=@year[0] & year<=@year[1]")
             else:
-                log.warning("Invalid input for `year`, allowed inputs are str, int, and tuple. Ignoring `year` search parameter.")
-        
+                log.warning(
+                    "Invalid input for `year`, allowed inputs are str, int, and tuple. Ignoring `year` search parameter."
+                )
+
         if pipeline is not None:
             pipeline = list(map(str.lower, np.atleast_1d(pipeline)))
             mask = mask & self.table["pipeline"].str.lower().isin(pipeline)
-        
+
         if description is not None:
             if isinstance(description, str):
-                mask = mask & self.table["description"].str.lower().str.contains(description.lower())
+                mask = mask & self.table["description"].str.lower().str.contains(
+                    description.lower()
+                )
             elif isinstance(description, tuple):
                 # Looks for descriptions which contain *all* of the given keywords
                 for word in description:
-                    mask = mask & self.table["description"].str.lower().str.contains(word.lower())
+                    mask = mask & self.table["description"].str.lower().str.contains(
+                        word.lower()
+                    )
             elif hasattr(description, "__iter__"):
                 # Looks for descriptions which contain *any* of the given keywords
                 desc_mask = np.zeros(len(self.table), dtype=bool)
                 for word in description:
-                    desc_mask = desc_mask | self.table["description"].str.lower().str.contains(word.lower())
+                    desc_mask = desc_mask | self.table[
+                        "description"
+                    ].str.lower().str.contains(word.lower())
                 mask = mask & desc_mask
             else:
-                log.warning("Invalid input for `description`, allowed inputs are str and list[str]. Ignoring `description` search parameter.")
+                log.warning(
+                    "Invalid input for `description`, allowed inputs are str and list[str]. Ignoring `description` search parameter."
+                )
 
-        if sequence is not None):
-            mask = mask & self.table.sequence_number.isin(np.atleast_1d(s))
+        if sequence_number is not None:
+            mask = mask & self.table.sequence_number.isin(
+                np.atleast_1d(sequence_number)
+            )
 
         if mission is not None:
             mission = list(map(str.lower, np.atleast_1d(mission)))
             mask = mask & self.table["mission"].str.lower().isin(mission)
 
+        return mask
+
+    def filter_table(
+        self,
+        target_name: Union[str, list[str]] = None,
+        pipeline: Union[str, list[str]] = None,
+        mission: Union[str, list[str]] = None,
+        exptime: Union[int, float, tuple[float]] = None,
+        distance: Union[float, tuple[float]] = None,
+        year: Union[int, list[int], tuple[int]] = None,
+        description: Union[str, list[str]] = None,
+        filetype: Union[str, list[str]] = None,
+        limit: int = None,
+        inplace=False,
+        **kwargs
+    ):
+        """Filter the search by keywords
+
+        Parameters
+        ----------
+        target_name : str, optional
+            Name of targets. A list will look for multiple target names.
+        pipeline : str or list[str]], optional
+            Data pipeline.  A list will look for multiple pipelines.
+        mission : str or list[str]], optional
+            Mission. A list will look for muliple missions.
+        exptime : int or float, tuple[float]], optional
+            Exposure Time. A tuple will look for a range of times.
+        distance : float or tuple[float]], optional
+            Distance. A float searches for products with a distance less than the value given,
+            a tuple will search between the given values.
+        year : int or list[int], tuple[int]], optional
+            Year. A list will look for multiple years, a tuple will look in the range of years.
+        description : str or list[str]], optional
+            Description of product. A list will look for descriptions containing any keywords given,
+            a tuple will look for descriptions containing all the keywords.
+        filetype : str or list[str]], optional
+            Type of product. A list will look for multiple filetypes.
+        sequence : int or list[int]], optional
+            Sequence number refers to "quarter" for Kepler, "campaign" for K2, and "sector" for TESS.
+        limit : int, optional
+            _description_, by default None
+        inplace : bool, optional
+            _description_, by default False
+
+        Returns
+        -------
+        MASTSearch or None
+            Returns a filtered MASTSearch object or None if `inplace=True`
+        """
+        if "sequence" in kwargs:
+            sequence = kwargs["sequence"]
+
+        mask = self._filter(
+            target_name=target_name,
+            pipeline=pipeline,
+            mission=mission,
+            exptime=exptime,
+            distance=distance,
+            year=year,
+            description=description,
+            filetype=filetype,
+            sequence_number=sequence,
+        )
+
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
                 mask = mask & (cusu <= limit)
-        
-        if (inplace):
+
+        if inplace:
             self.table = self.table[mask].reset_index()
         else:
             return self._mask(mask)

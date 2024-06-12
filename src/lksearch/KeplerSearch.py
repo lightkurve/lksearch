@@ -238,42 +238,75 @@ class KeplerSearch(MASTSearch):
 
     def filter_table(
         self,
-        limit: int = None,
-        exptime: Union[int, float, tuple, type(None)] = None,
+        target_name: Union[str, list[str]] = None,
         pipeline: Union[str, list[str]] = None,
+        mission: Union[str, list[str]] = None,
+        exptime: Union[int, float, tuple[float]] = None,
+        distance: Union[float, tuple[float]] = None,
+        year: Union[int, list[int], tuple[int]] = None,
+        description: Union[str, list[str]] = None,
+        filetype: Union[str, list[str]] = None,
+        limit: int = None,
+        inplace=False,
         quarter: Optional[int] = None,
         month: Optional[int] = None,
+        **kwargs
     ):
         """
         Filters the search result table by specified parameters
 
         Parameters
         ----------
-        limit : int, optional
-            limit to the number of results, by default None
-        exptime : Union[int, float, tuple, type, optional
-            exposure times to filter by, by default None
-        pipeline : Union[str, list[str]], optional
-            pipeline used for data reduction, by default None
+        target_name : str, optional
+            Name of targets. A list will look for multiple target names.
+        pipeline : str or list[str]], optional
+            Data pipeline.  A list will look for multiple pipelines.
+        mission : str or list[str]], optional
+            Mission. A list will look for muliple missions.
+        exptime : int or float, tuple[float]], optional
+            Exposure Time. A tuple will look for a range of times.
+        distance : float or tuple[float]], optional
+            Distance. A float searches for products with a distance less than the value given,
+            a tuple will search between the given values.
+        year : int or list[int], tuple[int]], optional
+            Year. A list will look for multiple years, a tuple will look in the range of years.
+        description : str or list[str]], optional
+            Description of product. A list will look for descriptions containing any keywords given,
+            a tuple will look for descriptions containing all the keywords.
+        filetype : str or list[str]], optional
+            Type of product. A list will look for multiple filetypes.
         quarter : Optional[int], optional
             Kepler observing quarter, by default None
         month : Optional[int], optional
             Kepler observing month, by default None
+        limit : int, optional
+            how many rows to return, by default None
+        inplace : bool, optional
+            whether to modify the KeplerSearch inplace, by default False
 
         Returns
         -------
-        KeplerSearch object with updated table.
+        KeplerSearch object with updated table or None if `inplace==True`
         """
         mask = np.ones(len(self.table), dtype=bool)
+        mask = self._filter(
+            target_name = target_name,
+            filetype = filetype,
+            exptime = exptime,
+            distance = distance,
+            year = year,
+            description = description,
+            pipeline = pipeline,
+            mission = mission, 
+            )
 
-        if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime)
-        if pipeline is not None:
-            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
         if (quarter is not None) | (month is not None):
             mask = mask & self._filter_kepler(quarter=quarter, month=month)
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
                 mask = mask & (cusu <= limit)
-        return self._mask(mask)
+        if inplace:
+            self.table = self.table[mask].reset_index()
+        else:
+            return self._mask(mask)
