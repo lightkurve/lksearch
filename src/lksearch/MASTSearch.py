@@ -975,7 +975,6 @@ class MASTSearch(object):
         inplace: bool = False,
     ):
         
-
         mask = np.ones(len(self.table), dtype=bool)
 
         if not isinstance(filetype, type(None)):
@@ -997,9 +996,9 @@ class MASTSearch(object):
 
         if distance is not None:
             if isinstance(distance, float):
-                mask = mask & self.table["distance"].query("distance <= @distance")
+                mask = mask & self.table["distance"].eval("distance <= @distance")
             elif isinstance(distance, tuple):
-                mask = mask & self.table["distance"].query("(distance >= @distance[0]) & (distance <= @distance[1])")
+                mask = mask & self.table["distance"].eval("(distance >= @distance[0]) & (distance <= @distance[1])")
             else:
                 log.warning("Invalid input for `distance`, allowed inputs are float and tuple. Ignoring `distance` search parameter.")
 
@@ -1013,7 +1012,7 @@ class MASTSearch(object):
             if isinstance(year, np.int_) or isinstance(year, int) or isinstance(year, list):
                 mask = mask & self.table["year"].isin(np.atleast_1d(year))
             elif isinstance(year, tuple):
-                mask = mask & self.table.query("year>=@year[0] & year<=@year[1]")
+                mask = mask & self.table.eval("year>=@year[0] & year<=@year[1]")
             else:
                 log.warning("Invalid input for `year`, allowed inputs are str, int, and tuple. Ignoring `year` search parameter.")
         
