@@ -443,6 +443,52 @@ def test_tesscut():
     manifest = results.cubedata[2].download()
     assert len(manifest) == 1
 
+@pytest.mark.parametrize("target_name", (None, 0, 299096355, "kplr012644769", [299096355, "kplr012644769"], [299096355, "299096355"]))
+@pytest.mark.parametrize("limit", (None, 0, 10, 1000))
+@pytest.mark.parametrize("filetype", (None, 0, "lightcurve"))
+@pytest.mark.parametrize("exptime", (None, 0, 20, 20.0, [0, 20], [20, 60.0], (0, 100), "fast", "short", "long", "shortest", "longest"))
+@pytest.mark.parametrize("distance", (None, 0, 0.2, (0.2, 0.4)))
+@pytest.mark.parametrize("year", (None, 0, 2013, (2000, 2020), [2013, 2019]))
+@pytest.mark.parametrize("description", (None, 0, "data", ["TPS", "report"], ("TPS", "report")))
+@pytest.mark.parametrize("pipeline", (None, 0, "Kepler", "spoc", ["kepler", "spoc"]))
+@pytest.mark.parametrize("sequence", (None, 0, 14, [14, 15]))
+@pytest.mark.parametrize("mission", (None, 0, "Kepler", "Tess", ["Kepler", "Tess"]))
+def test_mastsearch_filter(target_name, limit, filetype, exptime, distance, year, description, pipeline, sequence, mission):
+    results = MASTSearch("Kepler 16b")
+    filter_results = results.filter_table(target_name=target_name,
+                                          limit=limit,
+                                          filetype=filetype,
+                                          exptime=exptime,
+                                          distance=distance,
+                                          year=year,
+                                          description=description,
+                                          pipeline=pipeline,
+                                          sequence=sequence,
+                                          mission=mission)
+    # from pandas.testing import assert_frame_equal
+
+    # assert results.table.shape == (220, 61), "Test search result returned unexpected size."
+    # ft = results.filter_table
+    # assert ft(target_name=0).table.shape == (0, 62), "Null filter_table test returned unexpected size."
+    # ft_tn = ft(target_name="299096355")
+    # assert ft_tn.table.shape == (125, 62), "filter_table on target_name returned unexpected size."
+
+    # def frame_assertion(ft1, ft2, msg): 
+    #     try:
+    #         assert_frame_equal(ft1.table, ft2.table)
+    #     except AssertionError:
+    #         raise(AssertionError(msg))
+    # frame_assertion(ft_tn, ft(target_name=299096355), "Problem parsing target name of type `int`.")
+    # frame_assertion(ft_tn, ft(target_name=[299096355]), "Problem parsing list[int] target names")
+    # frame_assertion(ft_tn, ft(target_name=["299096355"]), "Problem parsing list[str] target names")
+    
+    # assert ft(target_name="kplr012644769").table.shape == (95, 62), "Filter table on target_name returned unexpected size."
+    # ft_tn = ft(target_name=["299096355", "kplr012644769"])
+    # assert ft_tn.table.shape == (220, 62), "Filter table on target_name returned unexpected size."
+    # frame_assertion(ft_tn, ft(target_name=[299096355, "kplr012644769"]), "Problem parsing list[mixed] target names")
+    # assert ft(target_name=[0, "299096355"]).shape == (125, 62), "filter_table on target_name with valid and invalid keys returned unexpected size."
+    # assert ft(target_name=[299096355, "299096355"]).shape == (125, 62), "filter_table on target_name with duplicate keys returned unexpected size."
+
 
 def test_filter():
     """Can we properly filter the data"""

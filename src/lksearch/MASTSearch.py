@@ -118,6 +118,10 @@ class MASTSearch(object):
         else:
             self._searchtable_from_table(table, obs_table, prod_table)
 
+        for col in self.table.columns:
+            if not hasattr(self, col):
+                setattr(self, col, self.table[col]) 
+
     def __len__(self):
         """Returns the number of products in the SearchResult table."""
         return len(self.table)
@@ -927,6 +931,11 @@ class MASTSearch(object):
             else:
                 mask = np.ones(len(exposures), dtype=bool)
                 log.debug("invalid string input. No exptime filter applied")
+        elif isinstance(exptime, list):
+            mask = np.zeros(len(exposures), dtype=bool)
+            for et in exptime:
+                mask = mask | (exposures == et)
+            
         return mask
     
     def query_table(
@@ -963,6 +972,7 @@ class MASTSearch(object):
     def filter_table(
         self,
         # Filter the table by keywords
+        target_name: Union[str, list[str]] = None,
         limit: int = None,
         filetype: Union[str, list[str]] = None,
         exptime: Union[int, float, tuple[float], type(None)] = None,
@@ -976,7 +986,9 @@ class MASTSearch(object):
     ):
         
         mask = np.ones(len(self.table), dtype=bool)
-
+        if target_name is not None:
+            target_name = np.atleast_1d(target_name).astype(str)
+            mask = mask & self.table['target_name'].isin(target_name)
         if not isinstance(filetype, type(None)):
             allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
             filter_ftype = [
@@ -996,9 +1008,9 @@ class MASTSearch(object):
 
         if distance is not None:
             if isinstance(distance, float):
-                mask = mask & self.table["distance"].eval("distance <= @distance")
+                mask = mask & self.table.eval("distance <= @distance")
             elif isinstance(distance, tuple):
-                mask = mask & self.table["distance"].eval("(distance >= @distance[0]) & (distance <= @distance[1])")
+                mask = mask & self.table.eval("(distance >= @distance[0]) & (distance <= @distance[1])")
             else:
                 log.warning("Invalid input for `distance`, allowed inputs are float and tuple. Ignoring `distance` search parameter.")
 
@@ -1017,25 +1029,31 @@ class MASTSearch(object):
                 log.warning("Invalid input for `year`, allowed inputs are str, int, and tuple. Ignoring `year` search parameter.")
         
         if pipeline is not None:
-            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
+            pipeline = list(map(str.lower, np.atleast_1d(pipeline)))
+            mask = mask & self.table["pipeline"].str.lower().isin(pipeline)
         
         if description is not None:
             if isinstance(description, str):
                 mask = mask & self.table["description"].str.lower().str.contains(description.lower())
-            elif hasattr(description, "__iter__"):
+            elif isinstance(description, tuple):
+                # Looks for descriptions which contain *all* of the given keywords
                 for word in description:
-                    mask = mask & self.table["description"].str.lower().str.contains(word)
+                    mask = mask & self.table["description"].str.lower().str.contains(word.lower())
+            elif hasattr(description, "__iter__"):
+                # Looks for descriptions which contain *any* of the given keywords
+                desc_mask = np.zeros(len(self.table), dtype=bool)
+                for word in description:
+                    desc_mask = desc_mask | self.table["description"].str.lower().str.contains(word.lower())
+                mask = mask & desc_mask
             else:
                 log.warning("Invalid input for `description`, allowed inputs are str and list[str]. Ignoring `description` search parameter.")
 
-        if not isinstance(sequence, type(None)):
-            sequence_mask = mask.copy()
-            for s in np.atleast_1d(sequence).tolist():
-                sequence_mask |= self.table.sequence_number == s
-            mask = mask & sequence_mask
+        if sequence is not None):
+            mask = mask & self.table.sequence_number.isin(np.atleast_1d(s))
 
         if mission is not None:
-            mask = mask & self.table["mission"].isin(np.atleast_1d(mission))
+            mission = list(map(str.lower, np.atleast_1d(mission)))
+            mask = mask & self.table["mission"].str.lower().isin(mission)
 
         if limit is not None:
             cusu = np.cumsum(mask)
