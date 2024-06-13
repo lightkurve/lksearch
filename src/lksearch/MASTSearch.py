@@ -931,7 +931,7 @@ class MASTSearch(object):
             allowed_ftype = ["lightcurve", "target pixel", "dvreport"]
             filter_ftype = [
                 file.lower()
-                for file in np.atleast_1d(filetype)
+                for file in np.atleast_1d(filetype).astype(str)
                 if file.lower() in allowed_ftype
             ]
             if len(filter_ftype) == 0:
@@ -979,7 +979,7 @@ class MASTSearch(object):
                 )
 
         if pipeline is not None:
-            pipeline = list(map(str.lower, np.atleast_1d(pipeline)))
+            pipeline = list(map(str.lower, np.atleast_1d(pipeline).astype(str)))
             mask = mask & self.table["pipeline"].str.lower().isin(pipeline)
 
         if description is not None:
@@ -1012,7 +1012,7 @@ class MASTSearch(object):
             )
 
         if mission is not None:
-            mission = list(map(str.lower, np.atleast_1d(mission)))
+            mission = list(map(str.lower, np.atleast_1d(mission).astype(str)))
             mask = mask & self.table["mission"].str.lower().isin(mission)
 
         return mask
@@ -1067,6 +1067,8 @@ class MASTSearch(object):
         """
         if "sequence" in kwargs:
             sequence = kwargs["sequence"]
+        else:
+            sequence = None
 
         mask = self._filter(
             target_name=target_name,

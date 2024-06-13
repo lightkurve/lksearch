@@ -443,40 +443,40 @@ def test_tesscut():
     manifest = results.cubedata[2].download()
     assert len(manifest) == 1
 
-def test_mastsearch_filter():
+class TestMASTSearchFilter():
     results = MASTSearch("Kepler 16b")
     @pytest.mark.parametrize("target_name", (0, 299096355, "kplr012644769", [299096355, "kplr012644769"], [299096355, "299096355"]))
-    def test_target_name(target_name):
-        filter_results = results.filter_table(target_name=target_name)
+    def test_target_name(self, target_name):
+        filter_results = self.results.filter_table(target_name=target_name)
     @pytest.mark.parametrize("limit", (0, 10, 1000))
-    def test_limit(limit):
-        filter_results = results.filter_table(limit=limit)
+    def test_limit(self, limit):
+        filter_results = self.results.filter_table(limit=limit)
     @pytest.mark.parametrize("filetype", (0, "lightcurve"))
-    def test_filetype(filetype):
-        filter_results = results.filter_table(filetype=filetype)
+    def test_filetype(self, filetype):
+        filter_results = self.results.filter_table(filetype=filetype)
     @pytest.mark.parametrize("exptime", (0, 20, 20.0, [0, 20], [20, 60.0], (0, 100), "fast", "short", "long", "shortest", "longest"))
-    def test_exptime(exptime):
-        filter_results = results.filter_table(exptime=exptime)
+    def test_exptime(self, exptime):
+        filter_results = self.results.filter_table(exptime=exptime)
     @pytest.mark.parametrize("distance", (0, 0.2, (0.2, 0.4)))
-    def test_distance(distance):
-        filter_results = results.filter_table(distance=distance)
+    def test_distance(self, distance):
+        filter_results = self.results.filter_table(distance=distance)
     @pytest.mark.parametrize("year", (0, 2013, (2000, 2020), [2013, 2019]))
-    def test_year(year):
-        filter_results = results.filter_table(year=year)
+    def test_year(self, year):
+        filter_results = self.results.filter_table(year=year)
     @pytest.mark.parametrize("description", (0, "data", ["TPS", "report"], ("TPS", "report")))
-    def test_description(description):
-        filter_results = results.filter_table(description=description)
+    def test_description(self, description):
+        filter_results = self.results.filter_table(description=description)
     @pytest.mark.parametrize("pipeline", (0, "Kepler", "spoc", ["kepler", "spoc"]))
-    def test_pipeline(pipeline):
-        filter_results = results.filter_table(pipeline=pipeline)
+    def test_pipeline(self, pipeline):
+        filter_results = self.results.filter_table(pipeline=pipeline)
     @pytest.mark.parametrize("sequence", (0, 14, [14, 15]))
-    def test_sequence(sequence):
-        filter_results = results.filter_table(sequence=sequence)
+    def test_sequence(self, sequence):
+        filter_results = self.results.filter_table(sequence=sequence)
     @pytest.mark.parametrize("mission", (0, "Kepler", "Tess", ["Kepler", "Tess"]))
-    def test_mission(mission):
-        filter_results = results.filter_table(mission=mission)
-    def test_combination():
-        filter_results = results.filter_table(target_name=299096355,
+    def test_mission(self, mission):
+        filter_results = self.results.filter_table(mission=mission)
+    def test_combination(self, ):
+        filter_results = self.results.filter_table(target_name=299096355,
                                               pipeline="SPOC",
                                               mission="TESS",
                                               exptime=120,
@@ -487,11 +487,8 @@ def test_mastsearch_filter():
                                               sequence=55,
                                               limit=10,
                                               )
-        from pandas.testing import assert_series_equal
-        try:
-            assert_series_equal(filter_results.set_index('index').iloc[0], results.table.iloc[5])
-        except AssertionError as exc:
-            raise AssertionError("Problem applying search parameters together.") from exc
+        assert filter_results.table.obs_id.values[0] == "tess2022217014003-s0055-0000000299096355-0242-s"
+
 
 def test_filter():
     """Can we properly filter the data"""
