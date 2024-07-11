@@ -79,9 +79,10 @@ Usage
 Contributing
 ============
 
-We welcome community contributions!
+**lksearch**  is an open-source, community driven package. 
+We welcome users to contribute and develop new features for lksearch.  
 
-Guidelines TBD
+For further information, please see the `Lightkurve Community guidelines <https://docs.lightkurve.org/development/contributing.html>`_.
 
 .. <!-- Contributing content end -->
 
@@ -92,7 +93,11 @@ Citing
 
 If you find **lksearch** useful in your research, please cite it and give us a GitHub star!
 
-Citation Instructions TBD
+If you use Lightkurve for work or research presented in a publication, we request the following acknowledgment or citation:
+
+`This research made use of Lightkurve, a Python package for Kepler and TESS data analysis (Lightkurve Collaboration, 2018).`
+
+See full citation instuctions, including dependencies, in the `Lightkurve documentation <https://docs.lightkurve.org/about/citing.html>`_. 
 
 .. <!-- Citing content end -->
 

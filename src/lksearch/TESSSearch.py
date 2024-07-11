@@ -19,11 +19,12 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 from .MASTSearch import MASTSearch
-from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
+from . import PACKAGEDIR, conf, config
+
+PREFER_CLOUD = conf.PREFER_CLOUD
+DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
 
 pd.options.display.max_rows = 10
-
-default_download_dir = config.get_cache_dir()
 
 log = logging.getLogger(__name__)
 
@@ -459,13 +460,40 @@ class TESSSearch(MASTSearch):
 
     def download(
         self,
-        cloud: bool = PREFER_CLOUD,
-        cloud_only: bool = DOWNLOAD_CLOUD,
-        download_dir: str = default_download_dir,
+        cloud: bool = conf.PREFER_CLOUD,
         cache: bool = True,
+        cloud_only: bool = conf.CLOUD_ONLY,
+        download_dir: str = config.get_cache_dir(),
         # TESScut_product="SPOC",
-        TESScut_size: int = 10,
+        TESScut_size: Union[int, tuple] = 10,
     ):
+        """downloads products in self.table to the local hard-drive
+
+        Parameters
+        ----------
+        cloud : bool, optional
+            enable cloud (as opposed to MAST) downloading, by default True
+        cloud_only : bool, optional
+            download only products availaible in the cloud, by default False
+        download_dir : str, optional
+            directory where the products should be downloaded to,
+            by default default_download_dir
+            cache : bool, optional
+        passed to `~astroquery.mast.Observations.download_products`, by default True
+            if False, will overwrite the file to be downloaded (for example to replace a corrrupted file)
+        remove_incomplete: str, optional
+            remove files with a status not "COMPLETE" in the manifest, by default True
+        TESScut_size : Union[int, tuple], optional,
+            The size of a TESScut FFI cutout in pixels
+
+        Returns
+        -------
+        ~pandas.DataFrame
+            table where each row is an ~astroquery.mast.Observations.download_products()
+            manifest
+
+        """
+
         mast_mf = []
         tesscut_mf = []
         manifest = []
@@ -478,7 +506,7 @@ class TESSSearch(MASTSearch):
             )
 
         elif "TESScut" in self.table.provenance_name.unique():
-            TESSCut_dir = f"{default_download_dir}/mastDownload/TESSCut"
+            TESSCut_dir = f"{download_dir}/mastDownload/TESSCut"
             if not os.path.isdir(TESSCut_dir):
                 os.makedirs(TESSCut_dir)
             mask = self.table["provenance_name"] == "TESScut"
@@ -496,7 +524,7 @@ class TESSSearch(MASTSearch):
                     # Uncomment when astroquery 0.4.8 is released to enable TICA support
                     # product=TESScut_product,
                     # verbose=False
-                    path=f"{default_download_dir}/mastDownload/TESSCut",
+                    path=f"{download_dir}/mastDownload/TESSCut",
                     inflate=True,
                     moving_target=False,  # this could be added
                     mt_type=None,
@@ -506,7 +534,7 @@ class TESSSearch(MASTSearch):
                     sector_list, total=len(sector_list), desc="TESScut          "
                 )
             ]
-        if len(mast_mf) != 0:
+        if len(np.atleast_1d(mast_mf)) != 0:
             manifest = mast_mf
 
         if len(tesscut_mf) != 0:

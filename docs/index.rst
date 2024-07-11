@@ -2,6 +2,7 @@
    sphinx-quickstart on Mon Apr 22 14:10:27 2024.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
+
 ########
 lksearch
 ########

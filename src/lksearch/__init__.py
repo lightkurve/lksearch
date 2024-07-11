@@ -5,8 +5,6 @@ from . import config as _config
 import os
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
-PREFER_CLOUD = True  # Do you prefer URIs pointing to the Amazon bucket when available?
-DOWNLOAD_CLOUD = True
 
 from .version import __version__
 
@@ -22,7 +20,7 @@ class Conf(_config.ConfigNamespace):
 
     The attributes listed below are the available configuration parameters.
 
-    Attributes
+    Parameters
     ----------
     search_result_display_extra_columns
         List of extra columns to be included when displaying a SearchResult object.
@@ -30,6 +28,12 @@ class Conf(_config.ConfigNamespace):
     cache_dir
         Default cache directory for data files downloaded, etc. Defaults to ``~/.lksearch/cache`` if not specified.
 
+    PREFER_CLOUD
+        Use Cloud-based data product retrieval where available (primarily Amazon S3 buckets for MAST holdings)
+
+    DOWNLOAD_CLOUD
+       Download cloud based data. If False, download() will return a pointer to the cloud based data instead of
+       downloading it - intended usage for cloud-based science platforms (e.g. TIKE)
     """
 
     # Note: when using list or string_list datatype,
@@ -42,7 +46,7 @@ class Conf(_config.ConfigNamespace):
         [],
         "List of extra columns to be included when displaying a SearchResult object.",
         cfgtype="string_list",
-        module="lksearch.search",
+        module="lksearch",
     )
 
     cache_dir = _config.ConfigItem(
@@ -50,6 +54,28 @@ class Conf(_config.ConfigNamespace):
         "Default cache directory for data files downloaded, etc.",
         cfgtype="string",
         module="lksearch.config",
+    )
+
+    CLOUD_ONLY = _config.ConfigItem(
+        False,
+        "Only Download cloud based data."
+        "If False, will download all data"
+        "If True, will only download data located on a cloud (Amazon S3) bucket",
+        cfgtype="boolean",
+    )
+
+    PREFER_CLOUD = _config.ConfigItem(
+        True,
+        "Prefer Cloud-based data product retrieval where available",
+        cfgtype="boolean",
+    )
+
+    DOWNLOAD_CLOUD = _config.ConfigItem(
+        True,
+        "Download cloud based data."
+        "If False, download() will return a pointer to the cloud based data"
+        "instead of downloading it - intended usage for cloud-based science platforms (e.g. TIKE)",
+        cfgtype="boolean",
     )
 
 
