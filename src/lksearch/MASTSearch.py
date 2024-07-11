@@ -285,14 +285,13 @@ class MASTSearch(object):
             "lightcurve",
             "dvreport",
         ]
-
         mask = self._filter(
             exptime=self.search_exptime,
             mission=self.search_mission,
             pipeline=self.search_pipeline,
             sequence_number=self.search_sequence,
             filetype=filetype,
-        )  # setting provenance_name=None will return HLSPs
+        )
         self.table = self.table[mask].reset_index(drop=True)
 
     def _searchtable_from_table(
@@ -924,7 +923,6 @@ class MASTSearch(object):
             cumulative boolean mask for self.table based off of
             the product of individual filter properties
         """
-
         mask = np.ones(len(self.table), dtype=bool)
         if target_name is not None:
             target_name = np.atleast_1d(target_name).astype(str)
@@ -1122,7 +1120,6 @@ class MASTSearch(object):
             if pd.notna(row["cloud_uri"]):
                 download = False
         if conf.DOWNLOAD_CLOUD or download:
-            print(cloud_only)
             manifest = Observations.download_products(
                 Table().from_pandas(row.to_frame(name=" ").transpose()),
                 download_dir=download_dir,

@@ -88,10 +88,13 @@ class TESSSearch(MASTSearch):
     ):
         if hlsp is False:
             pipeline = ["SPOC", "TESS-SPOC", "TESScut"]
+            self.mission_search = ["TESS"]
+        else:
+            self.mission_search = ["TESS", "HLSP"]
 
         super().__init__(
             target=target,
-            mission=["TESS"],
+            mission=self.mission_search,
             obs_table=obs_table,
             prod_table=prod_table,
             table=table,
@@ -100,6 +103,7 @@ class TESSSearch(MASTSearch):
             pipeline=pipeline,
             sequence=sector,
         )
+
         if table is None:
             if ("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None)):
                 self._add_tesscut_products(sector)
