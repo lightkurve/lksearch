@@ -1032,7 +1032,7 @@ class MASTSearch(object):
         filetype: Union[str, list[str]] = None,
         limit: int = None,
         inplace=False,
-        **kwargs
+        **kwargs,
     ):
         """Filter the search by keywords
 

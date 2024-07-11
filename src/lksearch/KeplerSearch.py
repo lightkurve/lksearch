@@ -248,7 +248,7 @@ class KeplerSearch(MASTSearch):
         inplace=False,
         quarter: Optional[int] = None,
         month: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Filters the search result table by specified parameters
@@ -288,15 +288,15 @@ class KeplerSearch(MASTSearch):
         """
         mask = np.ones(len(self.table), dtype=bool)
         mask = self._filter(
-            target_name = target_name,
-            filetype = filetype,
-            exptime = exptime,
-            distance = distance,
-            year = year,
-            description = description,
-            pipeline = pipeline,
-            mission = mission, 
-            )
+            target_name=target_name,
+            filetype=filetype,
+            exptime=exptime,
+            distance=distance,
+            year=year,
+            description=description,
+            pipeline=pipeline,
+            mission=mission,
+        )
 
         if (quarter is not None) | (month is not None):
             mask = mask & self._filter_kepler(quarter=quarter, month=month)

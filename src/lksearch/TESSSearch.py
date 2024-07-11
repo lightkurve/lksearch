@@ -400,7 +400,7 @@ class TESSSearch(MASTSearch):
         limit: int = None,
         inplace=False,
         sector: Union[int, list[str]] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Filters the search result table by specified parameters

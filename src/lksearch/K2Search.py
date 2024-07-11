@@ -163,7 +163,7 @@ class K2Search(MASTSearch):
         campaign: Union[int, list] = None,
         limit: int = None,
         inplace=False,
-        **kwargs
+        **kwargs,
     ):
         """
         Filters the search result table by specified parameters
@@ -200,16 +200,16 @@ class K2Search(MASTSearch):
         K2Search object with updated table or None if `inplace==True`
         """
         mask = self._filter(
-                    target_name = target_name,
-                    filetype = filetype,
-                    exptime = exptime,
-                    distance = distance,
-                    year = year,
-                    description = description,
-                    pipeline = pipeline,
-                    mission = mission, 
-                    sequence_number=campaign
-                    )
+            target_name=target_name,
+            filetype=filetype,
+            exptime=exptime,
+            distance=distance,
+            year=year,
+            description=description,
+            pipeline=pipeline,
+            mission=mission,
+            sequence_number=campaign,
+        )
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
