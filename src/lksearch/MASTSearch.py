@@ -17,11 +17,9 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import PACKAGEDIR, PREFER_CLOUD, DOWNLOAD_CLOUD, conf, config
+from . import PACKAGEDIR, conf, config
 
 pd.options.display.max_rows = 10
-
-default_download_dir = config.get_cache_dir()
 
 log = logging.getLogger(__name__)
 
@@ -153,6 +151,10 @@ class MASTSearch(object):
             if all(isinstance(n, str) for n in key):
                 strlist = True
 
+        if hasattr(key, "__iter__") or isinstance(key, pd.Series):
+            if len(key) == len(self.table):
+                return self._mask(key)
+
         if isinstance(key, (slice, int)) or (intlist):
             if not intlist:
                 mask = np.in1d(
@@ -161,14 +163,11 @@ class MASTSearch(object):
             else:
                 mask = np.in1d(self.table.index, key)
             return self._mask(mask)
-        if isinstance(key, (str, pd.Series)) or strlist:
+        if isinstance(key, str) or strlist:
             # Return a column as a series, or a dataframe of columns
             # Note that we're not returning a Search Object here as
             # we havce additional Requiered columns, etc.
             return self.table[key]
-        if hasattr(key, "__iter__"):
-            if len(key) == len(self.table):
-                return self._mask(key)
 
     @property
     def ra(self):
@@ -210,7 +209,7 @@ class MASTSearch(object):
         """Location Information of the products in the table"""
         uris = self.table["dataURI"].values
 
-        if config.PREFER_CLOUD:
+        if conf.PREFER_CLOUD:
             cloud_uris = self.cloud_uris
             mask = cloud_uris != None
             uris[mask] = cloud_uris[mask]
@@ -225,10 +224,10 @@ class MASTSearch(object):
         ~numpy.array of URI's from ~astroquery.mast
             an array where each element is the cloud-URI of a product in self.table
         """
-        Observations.enable_cloud_dataset()
-        return np.asarray(
-            Observations.get_cloud_uris(Table.from_pandas(self.table), full_url=True)
-        )
+        if "cloud_uri" not in self.table.columns:
+            self.table = self._add_s3_url_column(self.table)
+
+        return self.table["cloud_uri"]
 
     @property
     def timeseries(self):
@@ -330,8 +329,9 @@ class MASTSearch(object):
     def _mask(self, mask):
         """Masks down the product and observation tables given an input mask, then returns them as a new Search object.
         deepcopy is used to preserve the class metadata stored in class variables"""
+
         new_MASTSearch = deepcopy(self)
-        new_MASTSearch.table = self.table[mask].reset_index()
+        new_MASTSearch.table = new_MASTSearch.table[mask].reset_index(drop=True)
 
         return new_MASTSearch
 
@@ -389,7 +389,7 @@ class MASTSearch(object):
         """
         if isinstance(joint_table.index, pd.MultiIndex):
             # Multi-Index leading to issues, re-index?
-            joint_table = joint_table.reset_index()
+            joint_table = joint_table.reset_index(drop=True)
 
         year = np.floor(Time(joint_table["t_min"], format="mjd").decimalyear)
         # `t_min` is incorrect for Kepler pipeline products, so we extract year from the filename for those
@@ -520,11 +520,14 @@ class MASTSearch(object):
             input dataframe with a column added which countaings the cloud uris of assosciated producs
         """
 
+        logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
+
         Observations.enable_cloud_dataset()
         cloud_uris = Observations.get_cloud_uris(
-            Table.from_pandas(joint_table), full_url=True
+            Table.from_pandas(joint_table.loc[pd.notna(joint_table["dataURI"])]),
+            full_url=True,
         )
-        joint_table["cloud_uri"] = cloud_uris
+        joint_table.loc[pd.notna(joint_table["dataURI"]), "cloud_uri"] = cloud_uris
         return joint_table
 
     def _search_obs(
@@ -952,23 +955,45 @@ class MASTSearch(object):
         """
 
         # Make sure astroquery uses the same level of verbosity
-        print(log.getEffectiveLevel())
         logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
         logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
-        manifest = Observations.download_products(
-            Table().from_pandas(row.to_frame(name=" ").transpose()),
-            download_dir=download_dir,
-            cache=cache,
-            cloud_only=cloud_only,
-        )
-        return manifest.to_pandas()
+
+        # We don't want to query cloud_uri if we don't have to
+        # First check to see if we're not downloading on a cloud platform
+        # If not - cloud_uris should have already been queried - in that case
+        # check to see if a cloud_uri exists, if so we just pass that
+
+        download = True
+        if not conf.DOWNLOAD_CLOUD:
+            if pd.notna(row["cloud_uri"]):
+                download = False
+        if conf.DOWNLOAD_CLOUD or download:
+            print(cloud_only)
+            manifest = Observations.download_products(
+                Table().from_pandas(row.to_frame(name=" ").transpose()),
+                download_dir=download_dir,
+                cache=cache,
+                cloud_only=cloud_only,
+            )
+            manifest = manifest.to_pandas()
+        else:
+            manifest = pd.DataFrame(
+                {
+                    "Local Path": [row["cloud_uri"]],
+                    "Status": ["COMPLETE"],
+                    "Message": ["Link to S3 bucket for remote read"],
+                    "URL": [None],
+                }
+            )
+
+        return manifest
 
     def download(
         self,
-        cloud: bool = PREFER_CLOUD,
-        cloud_only: bool = DOWNLOAD_CLOUD,
-        download_dir: str = default_download_dir,
-        cache=True,
+        cloud: bool = conf.PREFER_CLOUD,
+        cache: bool = True,
+        cloud_only: bool = conf.CLOUD_ONLY,
+        download_dir: str = config.get_cache_dir(),
         remove_incomplete: str = True,
     ) -> pd.DataFrame:
         """downloads products in self.table to the local hard-drive
@@ -981,17 +1006,19 @@ class MASTSearch(object):
             download only products availaible in the cloud, by default False
         download_dir : str, optional
             directory where the products should be downloaded to,
-             by default default_download_dir
+            by default default_download_dir
             cache : bool, optional
         passed to `~astroquery.mast.Observations.download_products`, by default True
             if False, will overwrite the file to be downloaded (for example to replace a corrrupted file)
         remove_incomplete: str, optional
             remove files with a status not "COMPLETE" in the manifest, by default True
+
         Returns
         -------
         ~pandas.DataFrame
             table where each row is an ~astroquery.mast.Observations.download_products()
             manifest
+
         """
 
         if len(self.table) == 0:
@@ -1002,6 +1029,9 @@ class MASTSearch(object):
             logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
             Observations.enable_cloud_dataset()
 
+        if (not conf.DOWNLOAD_CLOUD) and ("cloud_uri" not in self.table.columns):
+            self.table = self._add_s3_url_column(self.table)
+
         manifest = [
             self._download_one(row, cloud_only, cache, download_dir)
             for _, row in tqdm(
@@ -1009,7 +1039,6 @@ class MASTSearch(object):
                 total=self.table.shape[0],
                 desc="pipeline products",
             )
-            # for _, row in self.table.iterrows()
         ]
 
         manifest = pd.concat(manifest)
@@ -1026,5 +1055,5 @@ class MASTSearch(object):
                         warnings.warn(f"Removed {file}", SearchWarning)
                     else:
                         warnings.warn(f"Not a file: {file}", SearchWarning)
-
+        manifest = manifest.reset_index(drop=True)
         return manifest

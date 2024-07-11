@@ -16,11 +16,9 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 from .MASTSearch import MASTSearch
-from . import PACKAGEDIR, config
+from . import PACKAGEDIR, conf, config
 
 pd.options.display.max_rows = 10
-
-default_download_dir = config.get_cache_dir()
 
 log = logging.getLogger(__name__)
 

@@ -4,6 +4,8 @@ import os
 import pytest
 
 from numpy.testing import assert_almost_equal, assert_array_equal
+import numpy as np
+
 import tempfile
 from requests import HTTPError
 
@@ -21,6 +23,7 @@ import shutil
 from lksearch.utils import SearchError, SearchWarning
 
 from lksearch import MASTSearch, TESSSearch, KeplerSearch, K2Search
+from lksearch import conf
 
 
 def test_search_cubedata():
@@ -442,3 +445,34 @@ def test_tesscut():
     assert len(results.cubedata) == 3
     manifest = results.cubedata[2].download()
     assert len(manifest) == 1
+
+
+def test_tess_clouduris():
+    """regression test - do tesscut/nan's in dataURI column break cloud uri fetching"""
+    toi = TESSSearch("TOI 1161", sector=14)
+    # 17 products should be returned
+    assert len(toi.cloud_uris) == 17
+    # 5 of them should have cloud uris
+    assert np.sum((toi.cloud_uris.values != None).astype(int)) == 5
+
+
+def test_tess_return_clouduri_not_download():
+    """Test to see if we return a S3 bucket instead of downloading if
+    `~conf.DOWNLOAD_CLOUD` = False
+    """
+    # reload the config, set download_cloud = False
+    conf.reload()
+    conf.DOWNLOAD_CLOUD = False
+    # Try to download a file without a S3 bucket, and one with
+    # Search for TESS data only. This by default includes both HLSPs and FFI cutouts.
+    toi = TESSSearch("TOI 1161", sector=14)
+    uris = toi.dvreports.cloud_uris
+    not_cloud = pd.isna(uris)
+    # A DV Report is not on the cloud - this should still get downloaded locally
+    dvr = toi.dvreports[not_cloud]
+    dvr_man = dvr[0].download()
+    assert os.path.isfile(dvr_man["Local Path"][0])
+    # A SPOC TPF is on the cloud, this should return a S3 bucket
+    mask = toi.timeseries.pipeline == "SPOC"
+    lc_man = toi.timeseries[mask].download()
+    assert lc_man["Local Path"][0][0:5] == "s3://"
