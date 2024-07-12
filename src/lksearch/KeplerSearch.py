@@ -81,10 +81,17 @@ class KeplerSearch(MASTSearch):
         pipeline: Optional[Union[str, list[str]]] = None,
         quarter: Optional[Union[int, list[int]]] = None,
         month: Optional[int] = None,
+        hlsp: bool = True,
     ):
+        if hlsp is False:
+            pipeline = ["Kepler"]
+            self.mission_search = ["Kepler"]
+        else:
+            self.mission_search = ["Kepler", "HLSP"]
+
         super().__init__(
             target=target,
-            mission=["Kepler"],
+            mission=self.mission_search,
             obs_table=obs_table,
             prod_table=prod_table,
             table=table,

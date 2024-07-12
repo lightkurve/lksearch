@@ -78,10 +78,16 @@ class K2Search(MASTSearch):
         exptime: Optional[Union[str, int, tuple]] = (0, 9999),
         pipeline: Optional[Union[str, list[str]]] = None,
         campaign: Optional[Union[int, list[int]]] = None,
+        hlsp: bool = True,
     ):
+        if hlsp is False:
+            pipeline = ["K2"]
+            self.mission_search = ["K2"]
+        else:
+            self.mission_search = ["K2", "HLSP"]
         super().__init__(
             target=target,
-            mission=["K2"],
+            mission=self.mission_search,
             obs_table=obs_table,
             prod_table=prod_table,
             table=table,
