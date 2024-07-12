@@ -542,7 +542,7 @@ def test_filter():
 
     results = TESSSearch("Kepler 16b")
     filtered = results.filter_table(sector=14)
-    queried = results.filter_table("sector == 14")
+    queried = results.query_table("sector == 14")
     assert len(filtered) == len(queried)
 
 
