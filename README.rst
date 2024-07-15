@@ -110,8 +110,8 @@ Please include a self-contained example that fully demonstrates your problem or 
 
 .. <!-- Changelog content start -->
 
-Changes Include:
-^^^^^^^^^^^^^^^^
+Changelog:
+==========
 
   - The class structure has been modified. The base class is MASTSearch. Users are intended to use mission-specific classes (KeplerSearch/K2Search/TESSSearch) to obtain mission-specific results.
   - Result tables are saved as pandas dataframs
