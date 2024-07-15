@@ -88,10 +88,13 @@ class TESSSearch(MASTSearch):
     ):
         if hlsp is False:
             pipeline = ["SPOC", "TESS-SPOC", "TESScut"]
+            self.mission_search = ["TESS"]
+        else:
+            self.mission_search = ["TESS", "HLSP"]
 
         super().__init__(
             target=target,
-            mission=["TESS"],
+            mission=self.mission_search,
             obs_table=obs_table,
             prod_table=prod_table,
             table=table,
@@ -100,6 +103,7 @@ class TESSSearch(MASTSearch):
             pipeline=pipeline,
             sequence=sector,
         )
+
         if table is None:
             if ("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None)):
                 self._add_tesscut_products(sector)
@@ -289,29 +293,19 @@ class TESSSearch(MASTSearch):
         )
         self.table = df
 
-    def search_individual_ffi(
+    def search_sector_ffis(
         self,
-        tmin: Union[float, Time],
-        tmax: Union[float, Time],
-        search_radius: Union[float, u.Quantity] = 0.0001 * u.arcsec,
-        exptime: Union[str, int, tuple] = (0, 9999),
-        sector: Union[int, type[None]] = None,
+        # tmin: Union[float, Time, tuple] = None,
+        # tmax: Union[float, Time, tuple] = None,
+        # search_radius: Union[float, u.Quantity] = 0.0001 * u.arcsec,
+        # exptime: Union[str, int, tuple] = (0, 9999),
+        sector: Union[int, type[None]],  # = None,
         **extra_query_criteria,
     ):
-        """Search for a particular FFI file given a time range, return the product list
-        of FFIs for that this target and time range
-
+        """Returns a list of the FFIs available in a particular sector
 
         Parameters
         ----------
-        tmin : Union[float,Time]
-            minimum start time of the FFI
-        tmax : Union[float,Time]
-            maximum end time of the ffi
-        search_radius : Union[float, u.Quantity], optional
-            radius around target to search for FFIs, by default 0.0001*u.arcsec
-        exptime : Union[str, int, tuple], optional
-            exposure time of FFI's to search for, by default (0, 9999)
         sector : Union[int, type[None]]
             sector(s) in which to search for FFI files, by default None
 
@@ -325,28 +319,8 @@ class TESSSearch(MASTSearch):
         query_criteria["provenance_name"] = "SPOC"
         query_criteria["dataproduct_type"] = "image"
 
-        if type(tmin) == type(Time):
-            tmin = tmin.mjd
-
-        if type(tmax) == type(Time):
-            tmax = tmax.mjd
-
-        query_criteria["t_min"] = (tmin, tmax)
-        query_criteria["t_max"] = (tmin, tmax)
-
-        if not isinstance(search_radius, u.quantity.Quantity):
-            log.warning(
-                f"Search radius {search_radius} units not specified, assuming arcsec"
-            )
-            search_radius = search_radius * u.arcsec
-
         if sector is not None:
             query_criteria["sequence_number"] = sector
-
-        if exptime is not None:
-            query_criteria["t_exptime"] = exptime
-
-        query_criteria["radius"] = str(search_radius.to(u.deg))
 
         ffi_obs = Observations.query_criteria(
             objectname=self.target_search_string,
@@ -385,46 +359,81 @@ class TESSSearch(MASTSearch):
         new_table.table["sector"] = new_table.table["obs_id"].apply(
             lambda x: int(x.split("-")[1][1:])
         )
+        new_table.table["t_min"] = pd.NA * len(new_table.table)
+        new_table.table["t_max"] = pd.NA * len(new_table.table)
+
         return new_table
 
     def filter_table(
         self,
-        limit: int = None,
-        exptime: Union[int, float, tuple, type(None)] = None,
+        target_name: Union[str, list[str]] = None,
         pipeline: Union[str, list[str]] = None,
-        sector: Union[int, list[int]] = None,
+        mission: Union[str, list[str]] = None,
+        exptime: Union[int, float, tuple[float]] = None,
+        distance: Union[float, tuple[float]] = None,
+        year: Union[int, list[int], tuple[int]] = None,
+        description: Union[str, list[str]] = None,
+        filetype: Union[str, list[str]] = None,
+        limit: int = None,
+        inplace=False,
+        sector: Union[int, list[str]] = None,
+        **kwargs,
     ):
         """
         Filters the search result table by specified parameters
 
         Parameters
         ----------
-        limit : int, optional
-            limit to the number of results, by default None
-        exptime : Union[int, float, tuple, type, optional
-            exposure times to filter by, by default None
-        pipeline : Union[str, list[str]], optional
-            pipeline used for data reduction, by default None
+        target_name : str, optional
+            Name of targets. A list will look for multiple target names.
+        pipeline : str or list[str]], optional
+            Data pipeline.  A list will look for multiple pipelines.
+        mission : str or list[str]], optional
+            Mission. A list will look for muliple missions.
+        exptime : int or float, tuple[float]], optional
+            Exposure Time. A tuple will look for a range of times.
+        distance : float or tuple[float]], optional
+            Distance. A float searches for products with a distance less than the value given,
+            a tuple will search between the given values.
+        year : int or list[int], tuple[int]], optional
+            Year. A list will look for multiple years, a tuple will look in the range of years.
+        description : str or list[str]], optional
+            Description of product. A list will look for descriptions containing any keywords given,
+            a tuple will look for descriptions containing all the keywords.
+        filetype : str or list[str]], optional
+            Type of product. A list will look for multiple filetypes.
         sector : Optional[int], optional
-            TESS observing sector(s), by default None
+            TESS observing sector, by default None
+        limit : int, optional
+            how many rows to return, by default None
+        inplace : bool, optional
+            whether to modify the KeplerSearch inplace, by default False
 
         Returns
         -------
-        TESSSearch object with updated table
+        TESSSearch object with updated table or None if `inplace==True`
         """
-        mask = np.ones(len(self.table), dtype=bool)
+        mask = self._filter(
+            target_name=target_name,
+            filetype=filetype,
+            exptime=exptime,
+            distance=distance,
+            year=year,
+            description=description,
+            pipeline=pipeline,
+            sequence_number=sector,
+            mission=mission,
+        )
 
-        if exptime is not None:
-            mask = mask & self._mask_by_exptime(exptime)
-        if pipeline is not None:
-            mask = mask & self.table["pipeline"].isin(np.atleast_1d(pipeline))
-        if sector is not None:
-            mask = mask & self.table["sequence_number"].isin(np.atleast_1d(sector))
         if limit is not None:
             cusu = np.cumsum(mask)
             if max(cusu) > limit:
                 mask = mask & (cusu <= limit)
-        return self._mask(mask)
+
+        if inplace:
+            self.table = self.table[mask].reset_index()
+        else:
+            return self._mask(mask)
 
     def download(
         self,

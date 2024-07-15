@@ -429,22 +429,118 @@ def test_split_k2_campaigns():
     assert search_c11.table["campaign"][1] == "11b"
 
 
-def test_tesscut():
-    """Can we find TESS tesscut tpfs"""
+def test_FFI_retrieval():
+    """Can we find TESS individual FFI's"""
     target = "Kepler 16b"
-    assert (
-        len(TESSSearch("Kepler 16b").search_individual_ffi(58682, 58710, sector=14))
-        == 1281
-    )
+    assert len(TESSSearch("Kepler 16b").search_sector_ffis(14)) == 1241
 
 
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     results = TESSSearch("Kepler 16b", hlsp=False, sector=14)
-    assert len(results) == 11
-    assert len(results.cubedata) == 3
-    manifest = results.cubedata[2].download()
+    assert len(results) == 9
+    assert len(results.cubedata) == 2
+    manifest = results.cubedata[1].download()
     assert len(manifest) == 1
+
+
+class TestMASTSearchFilter:
+    results = MASTSearch("Kepler 16b")
+
+    @pytest.mark.parametrize(
+        "target_name",
+        (
+            0,
+            299096355,
+            "kplr012644769",
+            [299096355, "kplr012644769"],
+            [299096355, "299096355"],
+        ),
+    )
+    def test_target_name(self, target_name):
+        filter_results = self.results.filter_table(target_name=target_name)
+
+    @pytest.mark.parametrize("limit", (0, 10, 1000))
+    def test_limit(self, limit):
+        filter_results = self.results.filter_table(limit=limit)
+
+    @pytest.mark.parametrize("filetype", (0, "lightcurve"))
+    def test_filetype(self, filetype):
+        filter_results = self.results.filter_table(filetype=filetype)
+
+    @pytest.mark.parametrize(
+        "exptime",
+        (
+            0,
+            20,
+            20.0,
+            [0, 20],
+            [20, 60.0],
+            (0, 100),
+            "fast",
+            "short",
+            "long",
+            "shortest",
+            "longest",
+        ),
+    )
+    def test_exptime(self, exptime):
+        filter_results = self.results.filter_table(exptime=exptime)
+
+    @pytest.mark.parametrize("distance", (0, 0.2, (0.2, 0.4)))
+    def test_distance(self, distance):
+        filter_results = self.results.filter_table(distance=distance)
+
+    @pytest.mark.parametrize("year", (0, 2013, (2000, 2020), [2013, 2019]))
+    def test_year(self, year):
+        filter_results = self.results.filter_table(year=year)
+
+    @pytest.mark.parametrize(
+        "description", (0, "data", ["TPS", "report"], ("TPS", "report"))
+    )
+    def test_description(self, description):
+        filter_results = self.results.filter_table(description=description)
+
+    @pytest.mark.parametrize("pipeline", (0, "Kepler", "spoc", ["kepler", "spoc"]))
+    def test_pipeline(self, pipeline):
+        filter_results = self.results.filter_table(pipeline=pipeline)
+
+    @pytest.mark.parametrize("sequence", (0, 14, [14, 15]))
+    def test_sequence(self, sequence):
+        filter_results = self.results.filter_table(sequence=sequence)
+
+    @pytest.mark.parametrize("mission", (0, "Kepler", "Tess", ["Kepler", "Tess"]))
+    def test_mission(self, mission):
+        filter_results = self.results.filter_table(mission=mission)
+
+    def test_combination(
+        self,
+    ):
+        filter_results = self.results.filter_table(
+            target_name=299096355,
+            pipeline="SPOC",
+            mission="TESS",
+            exptime=120,
+            distance=0.1,
+            year=2022,
+            description="light curves",
+            filetype="lightcurve",
+            sequence=55,
+            limit=10,
+        )
+        assert (
+            filter_results.table.obs_id.values[0]
+            == "tess2022217014003-s0055-0000000299096355-0242-s"
+        )
+
+
+def test_filter():
+    """Can we properly filter the data"""
+
+    results = TESSSearch("Kepler 16b")
+    filtered = results.filter_table(sector=14)
+    queried = results.query_table("sector == 14")
+    assert len(filtered) == len(queried)
 
 
 def test_tess_clouduris():
