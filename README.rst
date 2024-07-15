@@ -1,3 +1,6 @@
+<a href="https://github.com/lightkurve/lksearch/actions/workflows/python-app.yml"><img src="https://github.com/lightkurve/lksearch/workflows/pytest/badge.svg" alt="Test status"/></a>
+[![PyPI version](https://badge.fury.io/py/lksearch.svg)](https://badge.fury.io/py/lksearch)
+
 ########
 lksearch
 ########
@@ -17,7 +20,7 @@ Documentation
 
 Check out the `tutorial notebook <docs/tutorials/Example_searches.ipynb>`_
 
-Read the `documentation <https://tylerapritchard.github.io/lksearch>`_ 
+Read the `documentation <https://lightkurve.github.io/lksearch>`_ 
 
 .. <!-- quickstart content start -->
 
