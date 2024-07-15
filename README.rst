@@ -6,6 +6,10 @@
     :target: https://badge.fury.io/py/lksearch
     :alt: PyPI version
 
+.. image:: https://img.shields.io/badge/documentation-live-blue.svg
+    :target: https://lightkurve.github.io/lksearch/
+    :alt: Documentation
+
 ########
 lksearch
 ########

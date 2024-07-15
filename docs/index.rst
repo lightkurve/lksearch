@@ -2,11 +2,11 @@
 lksearch
 ########
 
-.. include:: README.rst
+.. include:: ../README.rst
    :start-after: <!-- intro content start -->
    :end-before: <!-- intro content end -->
 
-.. include:: README.rst
+.. include:: ../README.rst
    :start-after: <!-- Changelog content start -->
    :end-before: <!-- Changelog content end -->
 

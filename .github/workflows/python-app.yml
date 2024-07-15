@@ -36,7 +36,7 @@ jobs:
         pip install poetry 
         poetry install --with dev
     - name: Test with pytest
-      run: poetry run pytest
+      run: poetry run pytest src tests
 
       
     
