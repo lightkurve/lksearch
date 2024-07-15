@@ -432,10 +432,7 @@ def test_split_k2_campaigns():
 def test_FFI_retrieval():
     """Can we find TESS individual FFI's"""
     target = "Kepler 16b"
-    assert (
-        len(TESSSearch("Kepler 16b").search_individual_ffi(58682, 58710, sector=14))
-        == 1241
-    )
+    assert len(TESSSearch("Kepler 16b").search_sectpr_ffis(14)) == 1241
 
 
 def test_tesscut():

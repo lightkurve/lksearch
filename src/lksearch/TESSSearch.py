@@ -293,29 +293,19 @@ class TESSSearch(MASTSearch):
         )
         self.table = df
 
-    def search_individual_ffi(
+    def search_sector_ffis(
         self,
-        tmin: Union[float, Time],
-        tmax: Union[float, Time],
-        search_radius: Union[float, u.Quantity] = 0.0001 * u.arcsec,
-        exptime: Union[str, int, tuple] = (0, 9999),
-        sector: Union[int, type[None]] = None,
+        # tmin: Union[float, Time, tuple] = None,
+        # tmax: Union[float, Time, tuple] = None,
+        # search_radius: Union[float, u.Quantity] = 0.0001 * u.arcsec,
+        # exptime: Union[str, int, tuple] = (0, 9999),
+        sector: Union[int, type[None]],  # = None,
         **extra_query_criteria,
     ):
-        """Search for a particular FFI file given a time range, return the product list
-        of FFIs for that this target and time range
-
+        """Returns a list of the FFIs available in a particular sector
 
         Parameters
         ----------
-        tmin : Union[float,Time]
-            minimum start time of the FFI
-        tmax : Union[float,Time]
-            maximum end time of the ffi
-        search_radius : Union[float, u.Quantity], optional
-            radius around target to search for FFIs, by default 0.0001*u.arcsec
-        exptime : Union[str, int, tuple], optional
-            exposure time of FFI's to search for, by default (0, 9999)
         sector : Union[int, type[None]]
             sector(s) in which to search for FFI files, by default None
 
@@ -329,28 +319,8 @@ class TESSSearch(MASTSearch):
         query_criteria["provenance_name"] = "SPOC"
         query_criteria["dataproduct_type"] = "image"
 
-        if type(tmin) == type(Time):
-            tmin = tmin.mjd
-
-        if type(tmax) == type(Time):
-            tmax = tmax.mjd
-
-        query_criteria["t_min"] = (tmin, tmax)
-        query_criteria["t_max"] = (tmin, tmax)
-
-        if not isinstance(search_radius, u.quantity.Quantity):
-            log.warning(
-                f"Search radius {search_radius} units not specified, assuming arcsec"
-            )
-            search_radius = search_radius * u.arcsec
-
         if sector is not None:
             query_criteria["sequence_number"] = sector
-
-        if exptime is not None:
-            query_criteria["t_exptime"] = exptime
-
-        query_criteria["radius"] = str(search_radius.to(u.deg))
 
         ffi_obs = Observations.query_criteria(
             objectname=self.target_search_string,
@@ -389,6 +359,9 @@ class TESSSearch(MASTSearch):
         new_table.table["sector"] = new_table.table["obs_id"].apply(
             lambda x: int(x.split("-")[1][1:])
         )
+        new_table.table["t_min"] = pd.NA * len(new_table.table)
+        new_table.table["t_max"] = pd.NA * len(new_table.table)
+
         return new_table
 
     def filter_table(
