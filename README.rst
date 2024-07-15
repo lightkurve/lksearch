@@ -1,5 +1,10 @@
-<a href="https://github.com/lightkurve/lksearch/actions/workflows/python-app.yml"><img src="https://github.com/lightkurve/lksearch/workflows/pytest/badge.svg" alt="Test status"/></a>
-[![PyPI version](https://badge.fury.io/py/lksearch.svg)](https://badge.fury.io/py/lksearch)
+.. image:: https://github.com/lightkurve/lksearch/workflows/pytest/badge.svg
+    :target: https://github.com/lightkurve/lksearch/actions/workflows/python-app.yml
+    :alt: Test status
+
+.. image:: https://badge.fury.io/py/lksearch.svg
+    :target: https://badge.fury.io/py/lksearch
+    :alt: PyPI version
 
 ########
 lksearch
