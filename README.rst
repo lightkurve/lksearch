@@ -1,4 +1,4 @@
-.. image:: https://github.com/lightkurve/lksearch/workflows/pytest/badge.svg
+.. image:: https://github.com/lightkurve/lksearch/actions/workflows/python-app.yml/badge.svg
     :target: https://github.com/lightkurve/lksearch/actions/workflows/python-app.yml
     :alt: Test status
 
