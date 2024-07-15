@@ -55,20 +55,19 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "alabaster"
-
+html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
-
 html_sidebars = {
-    "**": [
-        # "about.html",
-        # "navigation.html",
-        # "localtoc.html",
-        "globaltoc.html",
-        #'relations.html',
-        #'searchbox.html',
-    ]
+    "**": [],
 }
+
+html_theme_options = {
+    "external_links": [],
+    "github_url": "https://github.com/lightkurve/lksearch",
+}
+
+html_title = "lksearch"
+
 
 # -- MyST-parser configuration--------------------------------------------------
 myst_heading_anchors = 3

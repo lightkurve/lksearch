@@ -1,5 +1,5 @@
-API documentation
-===============================================================
+API
+===
 .. automodule:: lksearch
    :members:
 
