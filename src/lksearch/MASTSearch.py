@@ -845,7 +845,7 @@ class MASTSearch(object):
         self,
         criteria: str,
         inplace: bool = False,
-   ):
+    ):
         """Filter the Search Result table using pandas query
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html
 
