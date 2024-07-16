@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
 from . import config as _config
-
+from .version import __version__
 import os
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
-
-from .version import __version__
 
 
 class Conf(_config.ConfigNamespace):

@@ -3,13 +3,11 @@ import pandas as pd
 from typing import Union, Optional
 import re
 import logging
-import warnings
 import os
 
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-from astropy.table import Table
 from astropy.time import Time
 from astroquery.mast import Tesscut
 
@@ -17,9 +15,8 @@ from tqdm import tqdm
 
 from copy import deepcopy
 
-from .utils import SearchError, SearchWarning, suppress_stdout
 from .MASTSearch import MASTSearch
-from . import PACKAGEDIR, conf, config
+from . import conf, config
 
 PREFER_CLOUD = conf.PREFER_CLOUD
 DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
@@ -377,7 +374,6 @@ class TESSSearch(MASTSearch):
         limit: int = None,
         inplace=False,
         sector: Union[int, list[str]] = None,
-        **kwargs,
     ):
         """
         Filters the search result table by specified parameters
@@ -508,7 +504,7 @@ class TESSSearch(MASTSearch):
                 ).to_pandas()
                 # for sector in sector_list
                 for sector in tqdm(
-                    sector_list, total=len(sector_list), desc="TESScut          "
+                    sector_list, total=len(sector_list), desc="Downloading TESScut"
                 )
             ]
         if len(np.atleast_1d(mast_mf)) != 0:

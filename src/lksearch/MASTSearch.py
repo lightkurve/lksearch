@@ -17,7 +17,7 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import PACKAGEDIR, conf, config
+from . import conf, config
 
 pd.options.display.max_rows = 10
 
@@ -845,7 +845,6 @@ class MASTSearch(object):
         self,
         criteria: str,
         inplace: bool = False,
-        **kwargs,
     ):
         """Filter the Search Result table using pandas query
         https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html
@@ -1028,9 +1027,9 @@ class MASTSearch(object):
         year: Union[int, list[int], tuple[int]] = None,
         description: Union[str, list[str]] = None,
         filetype: Union[str, list[str]] = None,
+        sequence: Union[str, list[str]] = None,
         limit: int = None,
         inplace=False,
-        **kwargs,
     ):
         """Filter the search by keywords
 
@@ -1066,10 +1065,6 @@ class MASTSearch(object):
         MASTSearch or None
             Returns a filtered MASTSearch object or None if `inplace=True`
         """
-        if "sequence" in kwargs:
-            sequence = kwargs["sequence"]
-        else:
-            sequence = None
 
         mask = self._filter(
             target_name=target_name,
@@ -1188,7 +1183,7 @@ class MASTSearch(object):
             for _, row in tqdm(
                 self.table.iterrows(),
                 total=self.table.shape[0],
-                desc="pipeline products",
+                desc="Downloading products",
             )
         ]
 

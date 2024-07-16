@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lksearch"
-version = "1.0.0"
+version = "1.0.1"
 description = "A helpful little package to search for TESS/Kepler/K2 data"
 authors = ["TESS Science Support Center <tesshelp@bigbang.gsfc.nasa.gov>"]
 license = "MIT"
@@ -28,6 +28,9 @@ sphinx_rtd_theme = "^2.0.0"
 sphinx_astropy = "^1.9.1"
 sphinx_automodapi = "^0.17.0"
 pydata-sphinx-theme = "^0.15.4"
+jupyterlab = "^4.2.3"
+line-profiler = "^4.1.3"
+ruff = "^0.5.2"
 
 [build-system]
 requires = ["poetry-core"]

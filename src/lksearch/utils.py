@@ -1,12 +1,10 @@
 import os
 import sys
+from functools import wraps
 
 from . import config
 
 default_download_dir = config.get_cache_dir()
-
-
-from functools import wraps
 
 
 class SearchError(Exception):
