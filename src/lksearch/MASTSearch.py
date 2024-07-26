@@ -89,9 +89,9 @@ class MASTSearch(object):
             pipeline = np.atleast_1d(pipeline).tolist()
         self.search_pipeline = pipeline
 
-        if ("kepler" in (m.lower() for m in mission)) & (sequence != None):
+        if ("kepler" in (m.lower() for m in mission)) & (sequence is not None):
             log.warning(
-                f"Sequence not valid when searching for Kepler data. Setting sequence to None"
+                "Sequence not valid when searching for Kepler data. Setting sequence to None"
             )
             sequence = None
 
@@ -213,7 +213,7 @@ class MASTSearch(object):
 
         if conf.PREFER_CLOUD:
             cloud_uris = self.cloud_uris
-            mask = cloud_uris != None
+            mask = cloud_uris is not None
             uris[mask] = cloud_uris[mask]
 
         return uris
@@ -583,7 +583,7 @@ class MASTSearch(object):
 
         if filetype == "ffi":
             raise SearchError(
-                f"FFI search not implemented in MASTSearch. Please use TESSSearch."
+                "FFI search not implemented in MASTSearch. Please use TESSSearch."
             )
 
         # Ensure mission is a list

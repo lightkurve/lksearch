@@ -8,7 +8,7 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 
 from .MASTSearch import MASTSearch
-from . import PACKAGEDIR, log
+from . import PACKAGEDIR
 
 pd.options.display.max_rows = 10
 

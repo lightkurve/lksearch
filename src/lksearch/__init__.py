@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
 from . import config as _config
-from .version import __version__
+from .version import __version__  #noqa
 import os
 import logging
 
@@ -81,8 +81,7 @@ class Conf(_config.ConfigNamespace):
 
 conf = Conf()
 
-from .MASTSearch import MASTSearch
-from .TESSSearch import TESSSearch
-from .KeplerSearch import KeplerSearch
-from .K2Search import K2Search
-from .io import *
+from .MASTSearch import MASTSearch    #noqa
+from .TESSSearch import TESSSearch    #noqa
+from .KeplerSearch import KeplerSearch    #noqa
+from .K2Search import K2Search  #noqa
