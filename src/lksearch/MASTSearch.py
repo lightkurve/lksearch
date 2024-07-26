@@ -17,11 +17,10 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import conf, config
+from . import conf, config, log
 
 pd.options.display.max_rows = 10
 
-log = logging.getLogger(__name__)
 
 
 class MASTSearch(object):
@@ -70,7 +69,7 @@ class MASTSearch(object):
     ]
 
     table = None
-
+    
     def __init__(
         self,
         target: Optional[Union[str, tuple[float], SkyCoord]] = None,
@@ -1141,6 +1140,7 @@ class MASTSearch(object):
         cloud_only: bool = conf.CLOUD_ONLY,
         download_dir: str = config.get_cache_dir(),
         remove_incomplete: str = True,
+        quiet:bool = False,
     ) -> pd.DataFrame:
         """downloads products in self.table to the local hard-drive
 
@@ -1184,6 +1184,7 @@ class MASTSearch(object):
                 self.table.iterrows(),
                 total=self.table.shape[0],
                 desc="Downloading products",
+                disable=quiet,
             )
         ]
 

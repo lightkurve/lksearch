@@ -3,9 +3,11 @@ from __future__ import absolute_import
 from . import config as _config
 from .version import __version__
 import os
+import logging
 
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 
+log = logging.getLogger("lksearch")
 
 class Conf(_config.ConfigNamespace):
     """
@@ -83,3 +85,4 @@ from .MASTSearch import MASTSearch
 from .TESSSearch import TESSSearch
 from .KeplerSearch import KeplerSearch
 from .K2Search import K2Search
+from .io import *
