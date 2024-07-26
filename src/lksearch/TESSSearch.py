@@ -2,7 +2,6 @@ from astroquery.mast import Observations
 import pandas as pd
 from typing import Union, Optional
 import re
-import logging
 import os
 
 import numpy as np
@@ -16,14 +15,14 @@ from tqdm import tqdm
 from copy import deepcopy
 
 from .MASTSearch import MASTSearch
-from . import conf, config
+from . import conf, config, log
 
 PREFER_CLOUD = conf.PREFER_CLOUD
 DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
 
 pd.options.display.max_rows = 10
 
-log = logging.getLogger(__name__)
+
 
 
 class TESSSearch(MASTSearch):
@@ -439,6 +438,7 @@ class TESSSearch(MASTSearch):
         download_dir: str = config.get_cache_dir(),
         # TESScut_product="SPOC",
         TESScut_size: Union[int, tuple] = 10,
+        quiet=False,
     ):
         """downloads products in self.table to the local hard-drive
 
@@ -476,6 +476,7 @@ class TESSSearch(MASTSearch):
                 cache=cache,
                 cloud_only=cloud_only,
                 download_dir=download_dir,
+                quiet=quiet
             )
 
         elif "TESScut" in self.table.provenance_name.unique():
@@ -504,7 +505,7 @@ class TESSSearch(MASTSearch):
                 ).to_pandas()
                 # for sector in sector_list
                 for sector in tqdm(
-                    sector_list, total=len(sector_list), desc="Downloading TESScut"
+                    sector_list, total=len(sector_list), desc="Downloading TESScut data", disable=quiet,
                 )
             ]
         if len(np.atleast_1d(mast_mf)) != 0:
