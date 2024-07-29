@@ -541,7 +541,12 @@ def test_tess_clouduris():
     # 17 products should be returned
     assert len(toi.cloud_uris) == 17
     # 5 of them should have cloud uris
-    assert np.sum((toi.cloud_uris.values is not None).astype(int)) == 5
+    assert (
+        np.sum(
+            ([cloud_uri is not None for cloud_uri in toi.cloud_uris.values]).astype(int)
+        )
+        == 5
+    )
 
 
 def test_tess_return_clouduri_not_download():
