@@ -13,7 +13,6 @@ import astropy.units as u
 import pandas as pd
 
 
-
 from lksearch.utils import SearchError, SearchWarning
 
 from lksearch import MASTSearch, TESSSearch, KeplerSearch, K2Search

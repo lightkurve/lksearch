@@ -81,8 +81,8 @@ class Conf(_config.ConfigNamespace):
 conf = Conf()
 log = logging.getLogger("lksearch")
 
-from .MASTSearch import MASTSearch  #noqa
-from .TESSSearch import TESSSearch  #noqa
-from .KeplerSearch import KeplerSearch  #noqa
-from .K2Search import K2Search  #noqa
-from .catalog import *  #noqa
+from .MASTSearch import MASTSearch  # noqa
+from .TESSSearch import TESSSearch  # noqa
+from .KeplerSearch import KeplerSearch  # noqa
+from .K2Search import K2Search  # noqa
+from .catalog import *  # noqa

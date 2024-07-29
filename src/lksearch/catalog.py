@@ -1,4 +1,5 @@
 """Functions to search various catalogs for missions"""
+
 from typing import Union
 import numpy as np
 from astropy.coordinates import Angle, SkyCoord, Distance
@@ -10,7 +11,7 @@ import pandas as pd
 
 import warnings
 
-__all__ = ['query_KIC', 'query_EPIC', 'query_TIC', 'query_gaia', 'query_catalog']
+__all__ = ["query_KIC", "query_EPIC", "query_TIC", "query_gaia", "query_catalog"]
 
 # This is a lits of VizieR catalogs and their input parameters to be used in the
 # query_skycatalog function
@@ -21,17 +22,17 @@ _Catalog_Dictionary = {
         "column_filters": "kepmag",
         "rename_in": ("KIC", "pmDE", "kepmag"),
         "rename_out": ("ID", "pmDEC", "Kepler_Mag"),
-        "equinox":Time(2000, format="jyear", scale="tt"),
-        "prefix":"KIC"
+        "equinox": Time(2000, format="jyear", scale="tt"),
+        "prefix": "KIC",
     },
     "epic": {
         "catalog": "IV/34/epic",
         "columns": ["ID", "RAJ2000", "DEJ2000", "pmRA", "pmDEC", "plx", "Kpmag"],
         "column_filters": "Kpmag",
         "rename_in": ("Kpmag", "plx"),
-        "rename_out": ("K2_Mag", 'Plx'),
-        "equinox":Time(2000, format="jyear", scale="tt"),
-        "prefix":"EPIC"
+        "rename_out": ("K2_Mag", "Plx"),
+        "equinox": Time(2000, format="jyear", scale="tt"),
+        "prefix": "EPIC",
     },
     "tic": {
         "catalog": "IV/39/tic82",
@@ -39,8 +40,8 @@ _Catalog_Dictionary = {
         "column_filters": "Tmag",
         "rename_in": ("TIC", "pmDE", "Tmag"),
         "rename_out": ("ID", "pmDEC", "TESS_Mag"),
-        "equinox":Time(2000, format="jyear", scale="tt"),
-        "prefix":"TIC"
+        "equinox": Time(2000, format="jyear", scale="tt"),
+        "prefix": "TIC",
     },
     "gaiadr3": {
         "catalog": "I/355/gaiadr3",
@@ -48,13 +49,13 @@ _Catalog_Dictionary = {
         "column_filters": "Gmag",
         "rename_in": ("DR3Name", "pmDE", "Gmag"),
         "rename_out": ("ID", "pmDEC", "Gaia_G_Mag"),
-        "equinox":Time(2016, format="jyear", scale="tt"),
-        "prefix":None,
+        "equinox": Time(2016, format="jyear", scale="tt"),
+        "prefix": None,
     },
 }
 
 
-def _apply_propermotion(table:Table, equinox:Time, epoch:Time):
+def _apply_propermotion(table: Table, equinox: Time, epoch: Time):
     """
     Returns an astropy table of sources with the proper motion correction applied
 
@@ -84,7 +85,7 @@ def _apply_propermotion(table:Table, equinox:Time, epoch:Time):
     # Suppress warning caused by Astropy as noted in issue 111747 (https://github.com/astropy/astropy/issues/11747)
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="negative parallaxes")
-        
+
         # Get the input data from the table
         c = SkyCoord(
             ra=table["RAJ2000"],
@@ -100,7 +101,7 @@ def _apply_propermotion(table:Table, equinox:Time, epoch:Time):
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="ERFA function")
         warnings.filterwarnings("ignore", message="invalid value")
-        
+
         # Calculate the new values
         c1 = c.apply_space_motion(new_obstime=epoch)
 
@@ -117,7 +118,6 @@ def _apply_propermotion(table:Table, equinox:Time, epoch:Time):
     return table
 
 
-
 def query_catalog(
     coord: SkyCoord,
     epoch: Time,
@@ -132,7 +132,7 @@ def query_catalog(
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD. 
+        The time of observation in JD.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
@@ -151,7 +151,7 @@ def query_catalog(
         raise TypeError("Must pass an `astropy.coordinates.SkyCoord` object.")
     if not isinstance(epoch, Time):
         try:
-            epoch = Time(epoch, format='jd')
+            epoch = Time(epoch, format="jd")
         except ValueError:
             raise TypeError("Must pass an `astropy.time.Time object`.")
         raise TypeError("Must pass an `astropy.time.Time object`.")
@@ -176,11 +176,7 @@ def query_catalog(
     # Get the appropriate column names and filters to be applied
     filters = Vizier(
         columns=catalog_meta["columns"],
-        column_filters={
-            catalog_meta[
-                "column_filters"
-            ]: f"<{magnitude_limit}"
-        },
+        column_filters={catalog_meta["column_filters"]: f"<{magnitude_limit}"},
     )
 
     # The catalog can cut off at 50 - we dont want this to happen
@@ -188,8 +184,28 @@ def query_catalog(
     # Now query the catalog
     result = filters.query_region(coord, catalog=catalog_name, radius=Angle(radius))
     if len(result) == 0:
-        return pd.DataFrame(columns=[*catalog_meta["columns"], 'RA', 'DEC', 'Separation', 'Relative_Flux']).rename({i:o for i, o in zip(catalog_meta["rename_in"], catalog_meta["rename_out"])}, axis=1).set_index("ID")
-    
+        return (
+            pd.DataFrame(
+                columns=[
+                    *catalog_meta["columns"],
+                    "RA",
+                    "DEC",
+                    "Separation",
+                    "Relative_Flux",
+                ]
+            )
+            .rename(
+                {
+                    i: o
+                    for i, o in zip(
+                        catalog_meta["rename_in"], catalog_meta["rename_out"]
+                    )
+                },
+                axis=1,
+            )
+            .set_index("ID")
+        )
+
     result = result[catalog_name]
 
     # Rename the columns so that the output is uniform
@@ -198,9 +214,9 @@ def query_catalog(
         catalog_meta["rename_out"],
     )
 
-    if catalog_meta['prefix'] is not None:
+    if catalog_meta["prefix"] is not None:
         prefix = catalog_meta["prefix"]
-        result["ID"] = [f"{prefix} {id}"for id in result['ID']]
+        result["ID"] = [f"{prefix} {id}" for id in result["ID"]]
 
     # Based on the input coordinates pick the object with the mininmum separation as the reference star.
     c1 = SkyCoord(result["RAJ2000"], result["DEJ2000"], unit="deg")
@@ -228,7 +244,7 @@ def query_catalog(
     result["Separation"] = sep_pm_correct
 
     # Calculate the relative flux
-    result["Relative_Flux"] = 10**(
+    result["Relative_Flux"] = 10 ** (
         (
             [value for key, value in result.items() if "_Mag" in key][0]
             - [value for key, value in result.items() if "_Mag" in key][0][ref_index]
@@ -240,7 +256,8 @@ def query_catalog(
     result.sort(["Separation"])
     return result.to_pandas().set_index("ID")
 
-def query_KIC(        
+
+def query_KIC(
     coord: SkyCoord,
     epoch: Time,
     radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
@@ -253,7 +270,7 @@ def query_KIC(
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD. 
+        The time of observation in JD.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
@@ -266,8 +283,15 @@ def query_KIC(
         A pandas dataframe of the sources within radius query, corrected for proper motion
     """
     if radius.unit == u.pixel:
-        radius = (radius * (4 * u.arcsecond/u.pixel)).to(u.arcsecond)
-    return query_catalog(coord=coord, epoch=epoch, catalog='kic', radius=radius, magnitude_limit=magnitude_limit)
+        radius = (radius * (4 * u.arcsecond / u.pixel)).to(u.arcsecond)
+    return query_catalog(
+        coord=coord,
+        epoch=epoch,
+        catalog="kic",
+        radius=radius,
+        magnitude_limit=magnitude_limit,
+    )
+
 
 def query_TIC(
     coord: SkyCoord,
@@ -282,7 +306,7 @@ def query_TIC(
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD. 
+        The time of observation in JD.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
@@ -295,8 +319,15 @@ def query_TIC(
         A pandas dataframe of the sources within radius query, corrected for proper motion
     """
     if radius.unit == u.pixel:
-        radius = (radius * (21 * u.arcsecond/u.pixel)).to(u.arcsecond)
-    return query_catalog(coord=coord, epoch=epoch, catalog='tic', radius=radius, magnitude_limit=magnitude_limit)
+        radius = (radius * (21 * u.arcsecond / u.pixel)).to(u.arcsecond)
+    return query_catalog(
+        coord=coord,
+        epoch=epoch,
+        catalog="tic",
+        radius=radius,
+        magnitude_limit=magnitude_limit,
+    )
+
 
 def query_EPIC(
     coord: SkyCoord,
@@ -311,7 +342,7 @@ def query_EPIC(
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD. 
+        The time of observation in JD.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
@@ -324,8 +355,15 @@ def query_EPIC(
         A pandas dataframe of the sources within radius query, corrected for proper motion
     """
     if radius.unit == u.pixel:
-        radius = (radius * (4 * u.arcsecond/u.pixel)).to(u.arcsecond)
-    return query_catalog(coord=coord, epoch=epoch, catalog='epic', radius=radius, magnitude_limit=magnitude_limit)
+        radius = (radius * (4 * u.arcsecond / u.pixel)).to(u.arcsecond)
+    return query_catalog(
+        coord=coord,
+        epoch=epoch,
+        catalog="epic",
+        radius=radius,
+        magnitude_limit=magnitude_limit,
+    )
+
 
 def query_gaia(
     coord: SkyCoord,
@@ -340,7 +378,7 @@ def query_gaia(
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD. 
+        The time of observation in JD.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
@@ -352,4 +390,10 @@ def query_gaia(
     result: pd.DataFrame
         A pandas dataframe of the sources within radius query, corrected for proper motion
     """
-    return query_catalog(coord=coord, epoch=epoch, catalog='gaiadr3', radius=radius, magnitude_limit=magnitude_limit)
+    return query_catalog(
+        coord=coord,
+        epoch=epoch,
+        catalog="gaiadr3",
+        radius=radius,
+        magnitude_limit=magnitude_limit,
+    )

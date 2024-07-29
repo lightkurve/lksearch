@@ -10,6 +10,7 @@ from .MASTSearch import MASTSearch
 
 pd.options.display.max_rows = 10
 
+
 class K2Search(MASTSearch):
     """
     Search Class that queries mast for observations performed by the K2
