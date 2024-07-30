@@ -181,7 +181,8 @@ def query_catalog(
     if not isinstance(coord, SkyCoord):
         if isinstance(coord, str):
             coord = SkyCoord.from_name(coord)
-        raise TypeError("Must pass an `astropy.coordinates.SkyCoord` object.")
+        else:
+            raise TypeError("Must pass an `astropy.coordinates.SkyCoord` object.")
     if not isinstance(epoch, Time):
         try:
             epoch = Time(epoch, format="jd")
