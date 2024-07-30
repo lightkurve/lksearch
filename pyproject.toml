@@ -17,6 +17,14 @@ tesswcs = "^1.1.2"
 tqdm = "^4.50.0"
 boto3 = "^1.34.25"
 
+
+[tool.poetry.group.cloud]
+optional = true
+
+[tool.poetry.group.cloud.dependencies]
+fsspec = "^2024.6.1"
+s3fs = "^2024.6.1"
+
 [tool.poetry.group.dev]
 optional = true
 

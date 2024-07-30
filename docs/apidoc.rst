@@ -15,5 +15,8 @@ API
 .. autoclass:: lksearch.TESSSearch
    :members:
 
+.. automodule:: lksearch.catalog
+   :members:
+
 .. automodule:: lksearch.config
    :members:

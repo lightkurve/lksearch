@@ -20,64 +20,67 @@ _Catalog_Dictionary = {
         "catalog": "V/133/kic",
         "columns": ["KIC", "RAJ2000", "DEJ2000", "pmRA", "pmDE", "Plx", "kepmag"],
         "column_filters": "kepmag",
-        "rename_in": ("KIC", "pmDE", "kepmag"),
-        "rename_out": ("ID", "pmDEC", "Kepler_Mag"),
+        "rename_in": ["KIC", "kepmag"],
+        "rename_out": ["ID", "Kepmag"],
         "equinox": Time(2000, format="jyear", scale="tt"),
         "prefix": "KIC",
+        "default_mag":"Kepmag"
     },
     "epic": {
         "catalog": "IV/34/epic",
         "columns": ["ID", "RAJ2000", "DEJ2000", "pmRA", "pmDEC", "plx", "Kpmag"],
         "column_filters": "Kpmag",
-        "rename_in": ("Kpmag", "plx"),
-        "rename_out": ("K2_Mag", "Plx"),
+        "rename_in": ["Kpmag", "pmDEC", "plx"],
+        "rename_out": ["K2mag", "pmDE", "Plx"],
         "equinox": Time(2000, format="jyear", scale="tt"),
         "prefix": "EPIC",
+        "default_mag":"K2mag"
     },
     "tic": {
         "catalog": "IV/39/tic82",
         "columns": ["TIC", "RAJ2000", "DEJ2000", "pmRA", "pmDE", "Plx", "Tmag"],
         "column_filters": "Tmag",
-        "rename_in": ("TIC", "pmDE", "Tmag"),
-        "rename_out": ("ID", "pmDEC", "TESS_Mag"),
+        "rename_in": ["TIC", "Tmag"],
+        "rename_out": ["ID", "TESSmag"],
         "equinox": Time(2000, format="jyear", scale="tt"),
         "prefix": "TIC",
+        "default_mag":"TESSmag"
     },
     "gaiadr3": {
         "catalog": "I/355/gaiadr3",
-        "columns": ["DR3Name", "RAJ2000", "DEJ2000", "pmRA", "pmDE", "Plx", "Gmag"],
+        "columns": ["DR3Name", "RAJ2000", "DEJ2000", "pmRA", "pmDE", "Plx", "Gmag", 'BPmag', 'RPmag'],
         "column_filters": "Gmag",
-        "rename_in": ("DR3Name", "pmDE", "Gmag"),
-        "rename_out": ("ID", "pmDEC", "Gaia_G_Mag"),
+        "rename_in": ["DR3Name"],
+        "rename_out": ["ID"],
         "equinox": Time(2016, format="jyear", scale="tt"),
         "prefix": None,
+        "default_mag":"Gmag"
     },
 }
 
 
-def _apply_propermotion(table: Table, equinox: Time, epoch: Time):
+def _table_to_skycoord(table: Table, equinox: Time, epoch: Time):
     """
-    Returns an astropy table of sources with the proper motion correction applied
+    Convert a table input to astropy.coordinates.SkyCoord object
 
-    Parameters:
-    -----------
-    table :
+    Parameters
+    ----------
+    table : astropy.table.Table
         astropy.table.Table which contains the coordinates of targets and proper motion values
     equinox: astropy.time.Time
         The equinox for the catalog
     epoch : astropy.time.Time
-        Time of the observation - This is taken from the table R.A and Dec. values and re-formatted as an astropy.time.Time object
+        Desired time of the observation
 
-    Returns:
-    ------
-    table : astropy.table.Table
-        Returns an astropy table with ID, corrected RA, corrected Dec, and Mag(?Some ppl might find this benifical for contamination reasons?)
+    Returns
+    -------
+    coords : astropy.coordinates.SkyCoord
+       SkyCoord object with RA, Dec, equinox, and proper motion parameters. 
     """
-
     # We need to remove any nan values from our proper  motion list
     # Doing this will allow objects which do not have proper motion to still be displayed
     table["pmRA"] = np.ma.filled(table["pmRA"].astype(float), 0.0)
-    table["pmDEC"] = np.ma.filled(table["pmDEC"].astype(float), 0.0)
+    table["pmDE"] = np.ma.filled(table["pmDE"].astype(float), 0.0)
     # If an object does not have a parallax then we treat it as if the object is an "infinite distance"
     # and set the parallax to 1e-7 arcseconds or 10Mpc.
     table["Plx"] = np.ma.filled(table["Plx"].astype(float), 1e-4)
@@ -92,45 +95,40 @@ def _apply_propermotion(table: Table, equinox: Time, epoch: Time):
             dec=table["DEJ2000"],
             distance=Distance(parallax=table["Plx"].quantity, allow_negative=True),
             pm_ra_cosdec=table["pmRA"],
-            pm_dec=table["pmDEC"],
+            pm_dec=table["pmDE"],
             frame="icrs",
             obstime=equinox,
         )
 
     # Suppress warning caused by Astropy as noted in issue 111747 (https://github.com/astropy/astropy/issues/11747)
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="ERFA function")
-        warnings.filterwarnings("ignore", message="invalid value")
+    if epoch != equinox:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="ERFA function")
+            warnings.filterwarnings("ignore", message="invalid value")
+            c = c.apply_space_motion(new_obstime=epoch)
+    return c
 
-        # Calculate the new values
-        c1 = c.apply_space_motion(new_obstime=epoch)
 
-    # Add new data corrected RA and Dec
-    table["RA"] = c1.ra.to(u.deg)
-    table["DEC"] = c1.dec.to(u.deg)
-
-    # Get the index of the targets with zero proper motions
-    pmzero_index = np.where((table["pmRA"] == 0.0) & (table["pmDEC"] == 0.0))
-
-    # In those instances replace with J2000 values
-    table["RA"][pmzero_index] = table["RAJ2000"][pmzero_index]
-    table["DEC"][pmzero_index] = table["DEJ2000"][pmzero_index]
-    return table
+def _get_return_columns(columns):
+    """Convenience function to reorder columns and remove motion columns."""
+    return ['RA', 'Dec', 'Separation', 'Relative_Flux', *list(set(columns) - set(['RA', 'Dec', 'RAJ2000', 'DEJ2000', 'Plx', 'pmRA', 'pmDE', 'Separation', 'Relative_Flux']))]
 
 
 def query_catalog(
-    coord: SkyCoord,
+    coord: Union[SkyCoord, str],
     epoch: Time,
     catalog: str,
     radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
     magnitude_limit: float = 18.0,
+    return_skycoord: bool = False,
 ):
-    """Query a catalog for a single source location, obtain nearby sources
+    """
+    Query a catalog for a single source location, obtain nearby sources
 
-    Parameters:
-    -----------
-    coord : astropy.coordinates.SkyCoord
-        Coordinates around which to do a radius query
+    Parameters
+    ----------
+    coord : astropy.coordinates.SkyCoord or string
+        Coordinates around which to do a radius query. If passed a string, will resolve using `from_name`.
     epoch: astropy.time.Time
         The time of observation in JD.
     catalog: str
@@ -139,15 +137,19 @@ def query_catalog(
         Radius in arcseconds to query
     magnitude_limit : float
         A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.
+    return_skycoord: bool
+        Whether to return an astropy.coordinates.SkyCoord object. Default is False.
 
-    Returns:
+    Returns
     -------
-    result: pd.DataFrame
-        A pandas dataframe of the sources within radius query, corrected for proper motion
+    result: pd.DataFrame or astropy.coordinates.SkyCoord
+        By default returns a  pandas dataframe of the sources within radius query, corrected for proper motion. Optionally will return astropy.coordinates.SkyCoord object.
     """
 
     # Check to make sure that user input is in the correct format
     if not isinstance(coord, SkyCoord):
+        if isinstance(coord, str):
+            coord = SkyCoord.from_name(coord)
         raise TypeError("Must pass an `astropy.coordinates.SkyCoord` object.")
     if not isinstance(epoch, Time):
         try:
@@ -184,12 +186,12 @@ def query_catalog(
     # Now query the catalog
     result = filters.query_region(coord, catalog=catalog_name, radius=Angle(radius))
     if len(result) == 0:
-        return (
+        result = (
             pd.DataFrame(
                 columns=[
                     *catalog_meta["columns"],
                     "RA",
-                    "DEC",
+                    "Dec",
                     "Separation",
                     "Relative_Flux",
                 ]
@@ -205,6 +207,7 @@ def query_catalog(
             )
             .set_index("ID")
         )
+        return result[_get_return_columns(result.columns)]
 
     result = result[catalog_name]
 
@@ -218,66 +221,53 @@ def query_catalog(
         prefix = catalog_meta["prefix"]
         result["ID"] = [f"{prefix} {id}" for id in result["ID"]]
 
-    # Based on the input coordinates pick the object with the mininmum separation as the reference star.
-    c1 = SkyCoord(result["RAJ2000"], result["DEJ2000"], unit="deg")
-
-    sep = coord.separation(c1)
-
-    # Find the object with the minimum separation - this is our target
-    ref_index = np.argmin(sep)
-
-    # apply_propermotion
-    result = _apply_propermotion(result, equinox=catalog_meta["equinox"], epoch=epoch)
-
-    # Now we want to repete but using the values corrected for proper motion
-    # First get the correct values for target
-    coord_pm_correct = SkyCoord(
-        result["RA"][ref_index], result["DEC"][ref_index], unit="deg"
-    )
-
-    c1_pm_correct = SkyCoord(result["RA"], result["DEC"], unit="deg")
-
-    # Then calculate the separation based on pm corrected values
-    sep_pm_correct = coord_pm_correct.separation(c1_pm_correct)
-
-    # Provide the separation in the output table
-    result["Separation"] = sep_pm_correct
+    c = _table_to_skycoord(table=result, equinox=catalog_meta['equinox'], epoch=epoch)
+    ref_index = np.argmin(coord.separation(c).arcsecond)
+    sep = c[ref_index].separation(c)
+    
+    if return_skycoord:
+        s = np.argsort(sep.deg)
+        return c[s]
+    
+    result["RA"] = c.ra.deg
+    result["Dec"] = c.dec.deg
+    result["Separation"] = sep.arcsecond
 
     # Calculate the relative flux
-    result["Relative_Flux"] = 10 ** (
-        (
-            [value for key, value in result.items() if "_Mag" in key][0]
-            - [value for key, value in result.items() if "_Mag" in key][0][ref_index]
-        )
-        / -2.5
-    )
+    result["Relative_Flux"] = 10 ** ((result[catalog_meta["default_mag"]] - result[catalog_meta["default_mag"]][ref_index])/-2.5)
 
     # Now sort the table based on separation
     result.sort(["Separation"])
-    return result.to_pandas().set_index("ID")
+    result = result.to_pandas().set_index("ID")
+    return result[_get_return_columns(result.columns)]
 
 
 def query_KIC(
     coord: SkyCoord,
-    epoch: Time,
-    radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
+    epoch: Time=Time(2000, format="jyear", scale="tt"),
+    radius: Union[float, u.Quantity] = u.Quantity(2, "pixel"),
     magnitude_limit: float = 18.0,
+    return_skycoord: bool = False,
 ):
-    """Query the Kepler Input Catalog for a single source location, obtain nearby sources
+    """
+    Query the Kepler Input Catalog for a single source location, obtain nearby sources
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD.
+        The time of observation in JD. Defaults to J2000.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
-        Radius in arcseconds to query
+        Radius in arcseconds to query. Defaults to 2 pixels.
     magnitude_limit : float
         A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.
-    Returns:
+    return_skycoord: bool
+        Whether to return an astropy.coordinates.SkyCoord object. Default is False.
+
+    Returns
     -------
     result: pd.DataFrame
         A pandas dataframe of the sources within radius query, corrected for proper motion
@@ -290,30 +280,36 @@ def query_KIC(
         catalog="kic",
         radius=radius,
         magnitude_limit=magnitude_limit,
+        return_skycoord=return_skycoord,
     )
 
 
 def query_TIC(
     coord: SkyCoord,
-    epoch: Time,
-    radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
+    epoch: Time=Time(2000, format="jyear", scale="tt"),
+    radius: Union[float, u.Quantity] = u.Quantity(2, "pixel"),
     magnitude_limit: float = 18.0,
+    return_skycoord: bool = False,
 ):
-    """Query the TESS Input Catalog for a single source location, obtain nearby sources
+    """
+    Query the TESS Input Catalog for a single source location, obtain nearby sources
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD.
+        The time of observation in JD. Defaults to J2000.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
-        Radius in arcseconds to query
+        Radius in arcseconds to query. Defaults to 2 pixels.
     magnitude_limit : float
         A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.
-    Returns:
+    return_skycoord: bool
+        Whether to return an astropy.coordinates.SkyCoord object. Default is False.
+
+    Returns
     -------
     result: pd.DataFrame
         A pandas dataframe of the sources within radius query, corrected for proper motion
@@ -326,30 +322,36 @@ def query_TIC(
         catalog="tic",
         radius=radius,
         magnitude_limit=magnitude_limit,
+        return_skycoord=return_skycoord,
     )
 
 
 def query_EPIC(
     coord: SkyCoord,
-    epoch: Time,
-    radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
+    epoch: Time=Time(2000, format="jyear", scale="tt"),
+    radius: Union[float, u.Quantity] = u.Quantity(2, "pixel"),
     magnitude_limit: float = 18.0,
+    return_skycoord: bool = False,
 ):
-    """Query the Ecliptic Plane Input Catalog for a single source location, obtain nearby sources
+    """
+    Query the Ecliptic Plane Input Catalog for a single source location, obtain nearby sources
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD.
+        The time of observation in JD. Defaults to J2000.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
-        Radius in arcseconds to query
+        Radius in arcseconds to query. Defaults to 2 pixels.
     magnitude_limit : float
         A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.
-    Returns:
+    return_skycoord: bool
+        Whether to return an astropy.coordinates.SkyCoord object. Default is False.
+
+    Returns
     -------
     result: pd.DataFrame
         A pandas dataframe of the sources within radius query, corrected for proper motion
@@ -362,30 +364,36 @@ def query_EPIC(
         catalog="epic",
         radius=radius,
         magnitude_limit=magnitude_limit,
+        return_skycoord=return_skycoord,
     )
 
 
 def query_gaia(
     coord: SkyCoord,
-    epoch: Time,
-    radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
+    epoch: Time=Time(2016, format="jyear", scale="tt"),
+    radius: Union[float, u.Quantity] = u.Quantity(10, "arcsecond"),
     magnitude_limit: float = 18.0,
+    return_skycoord: bool = False,
 ):
-    """Query the Gaia EDR3 catalog for a single source location, obtain nearby sources
+    """
+    Query the Gaia EDR3 catalog for a single source location, obtain nearby sources
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     coord : astropy.coordinates.SkyCoord
         Coordinates around which to do a radius query
     epoch: astropy.time.Time
-        The time of observation in JD.
+        The time of observation in JD. Defaults to the epoch of Gaia DR3 (J2016).
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
     radius : float or astropy quantity
-        Radius in arcseconds to query
+        Radius in arcseconds to query. Defaults to 10 arcseconds.
     magnitude_limit : float
         A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.
-    Returns:
+    return_skycoord: bool
+        Whether to return an astropy.coordinates.SkyCoord object. Default is False.
+
+    Returns
     -------
     result: pd.DataFrame
         A pandas dataframe of the sources within radius query, corrected for proper motion
@@ -396,4 +404,5 @@ def query_gaia(
         catalog="gaiadr3",
         radius=radius,
         magnitude_limit=magnitude_limit,
+        return_skycoord=return_skycoord,
     )

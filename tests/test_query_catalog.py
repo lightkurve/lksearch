@@ -29,7 +29,7 @@ def test_tic():
     # Test that the proper motion works
 
     assert np.isclose(catalog.iloc[0]["RA"], 194.10075230969787, atol=1e-6)
-    assert np.isclose(catalog.iloc[0]["DEC"], -27.390340343480744, atol=1e-6)
+    assert np.isclose(catalog.iloc[0]["Dec"], -27.390340343480744, atol=1e-6)
 
     # Test different epochs
     catalog_new = query_catalog(
@@ -41,7 +41,7 @@ def test_tic():
     )
 
     assert np.isclose(catalog_new.iloc[0]["RA"], 194.10052070792756, atol=1e-6)
-    assert np.isclose(catalog_new.iloc[0]["DEC"], -27.390254988629433, atol=1e-6)
+    assert np.isclose(catalog_new.iloc[0]["Dec"], -27.390254988629433, atol=1e-6)
 
     # Test different epochs
     catalog_new = query_TIC(
