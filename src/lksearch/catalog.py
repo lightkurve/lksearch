@@ -24,7 +24,7 @@ _Catalog_Dictionary = {
         "rename_out": ["ID", "Kepmag"],
         "equinox": Time(2000, format="jyear", scale="tt"),
         "prefix": "KIC",
-        "default_mag":"Kepmag"
+        "default_mag": "Kepmag",
     },
     "epic": {
         "catalog": "IV/34/epic",
@@ -34,7 +34,7 @@ _Catalog_Dictionary = {
         "rename_out": ["K2mag", "pmDE", "Plx"],
         "equinox": Time(2000, format="jyear", scale="tt"),
         "prefix": "EPIC",
-        "default_mag":"K2mag"
+        "default_mag": "K2mag",
     },
     "tic": {
         "catalog": "IV/39/tic82",
@@ -44,17 +44,27 @@ _Catalog_Dictionary = {
         "rename_out": ["ID", "TESSmag"],
         "equinox": Time(2000, format="jyear", scale="tt"),
         "prefix": "TIC",
-        "default_mag":"TESSmag"
+        "default_mag": "TESSmag",
     },
     "gaiadr3": {
         "catalog": "I/355/gaiadr3",
-        "columns": ["DR3Name", "RAJ2000", "DEJ2000", "pmRA", "pmDE", "Plx", "Gmag", 'BPmag', 'RPmag'],
+        "columns": [
+            "DR3Name",
+            "RAJ2000",
+            "DEJ2000",
+            "pmRA",
+            "pmDE",
+            "Plx",
+            "Gmag",
+            "BPmag",
+            "RPmag",
+        ],
         "column_filters": "Gmag",
         "rename_in": ["DR3Name"],
         "rename_out": ["ID"],
         "equinox": Time(2016, format="jyear", scale="tt"),
         "prefix": None,
-        "default_mag":"Gmag"
+        "default_mag": "Gmag",
     },
 }
 
@@ -75,7 +85,7 @@ def _table_to_skycoord(table: Table, equinox: Time, epoch: Time):
     Returns
     -------
     coords : astropy.coordinates.SkyCoord
-       SkyCoord object with RA, Dec, equinox, and proper motion parameters. 
+       SkyCoord object with RA, Dec, equinox, and proper motion parameters.
     """
     # We need to remove any nan values from our proper  motion list
     # Doing this will allow objects which do not have proper motion to still be displayed
@@ -111,7 +121,28 @@ def _table_to_skycoord(table: Table, equinox: Time, epoch: Time):
 
 def _get_return_columns(columns):
     """Convenience function to reorder columns and remove motion columns."""
-    return ['RA', 'Dec', 'Separation', 'Relative_Flux', *list(set(columns) - set(['RA', 'Dec', 'RAJ2000', 'DEJ2000', 'Plx', 'pmRA', 'pmDE', 'Separation', 'Relative_Flux']))]
+    return [
+        "RA",
+        "Dec",
+        "Separation",
+        "Relative_Flux",
+        *list(
+            set(columns)
+            - set(
+                [
+                    "RA",
+                    "Dec",
+                    "RAJ2000",
+                    "DEJ2000",
+                    "Plx",
+                    "pmRA",
+                    "pmDE",
+                    "Separation",
+                    "Relative_Flux",
+                ]
+            )
+        ),
+    ]
 
 
 def query_catalog(
@@ -221,20 +252,26 @@ def query_catalog(
         prefix = catalog_meta["prefix"]
         result["ID"] = [f"{prefix} {id}" for id in result["ID"]]
 
-    c = _table_to_skycoord(table=result, equinox=catalog_meta['equinox'], epoch=epoch)
+    c = _table_to_skycoord(table=result, equinox=catalog_meta["equinox"], epoch=epoch)
     ref_index = np.argmin(coord.separation(c).arcsecond)
     sep = c[ref_index].separation(c)
-    
+
     if return_skycoord:
         s = np.argsort(sep.deg)
         return c[s]
-    
+
     result["RA"] = c.ra.deg
     result["Dec"] = c.dec.deg
     result["Separation"] = sep.arcsecond
 
     # Calculate the relative flux
-    result["Relative_Flux"] = 10 ** ((result[catalog_meta["default_mag"]] - result[catalog_meta["default_mag"]][ref_index])/-2.5)
+    result["Relative_Flux"] = 10 ** (
+        (
+            result[catalog_meta["default_mag"]]
+            - result[catalog_meta["default_mag"]][ref_index]
+        )
+        / -2.5
+    )
 
     # Now sort the table based on separation
     result.sort(["Separation"])
@@ -244,7 +281,7 @@ def query_catalog(
 
 def query_KIC(
     coord: SkyCoord,
-    epoch: Time=Time(2000, format="jyear", scale="tt"),
+    epoch: Time = Time(2000, format="jyear", scale="tt"),
     radius: Union[float, u.Quantity] = u.Quantity(2, "pixel"),
     magnitude_limit: float = 18.0,
     return_skycoord: bool = False,
@@ -286,7 +323,7 @@ def query_KIC(
 
 def query_TIC(
     coord: SkyCoord,
-    epoch: Time=Time(2000, format="jyear", scale="tt"),
+    epoch: Time = Time(2000, format="jyear", scale="tt"),
     radius: Union[float, u.Quantity] = u.Quantity(2, "pixel"),
     magnitude_limit: float = 18.0,
     return_skycoord: bool = False,
@@ -328,7 +365,7 @@ def query_TIC(
 
 def query_EPIC(
     coord: SkyCoord,
-    epoch: Time=Time(2000, format="jyear", scale="tt"),
+    epoch: Time = Time(2000, format="jyear", scale="tt"),
     radius: Union[float, u.Quantity] = u.Quantity(2, "pixel"),
     magnitude_limit: float = 18.0,
     return_skycoord: bool = False,
@@ -370,7 +407,7 @@ def query_EPIC(
 
 def query_gaia(
     coord: SkyCoord,
-    epoch: Time=Time(2016, format="jyear", scale="tt"),
+    epoch: Time = Time(2016, format="jyear", scale="tt"),
     radius: Union[float, u.Quantity] = u.Quantity(10, "arcsecond"),
     magnitude_limit: float = 18.0,
     return_skycoord: bool = False,
