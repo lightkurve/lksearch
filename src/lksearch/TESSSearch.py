@@ -2,7 +2,6 @@ from astroquery.mast import Observations
 import pandas as pd
 from typing import Union, Optional
 import re
-import logging
 import os
 
 import numpy as np
@@ -16,14 +15,12 @@ from tqdm import tqdm
 from copy import deepcopy
 
 from .MASTSearch import MASTSearch
-from . import conf, config
+from . import conf, config, log
 
 PREFER_CLOUD = conf.PREFER_CLOUD
 DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
 
 pd.options.display.max_rows = 10
-
-log = logging.getLogger(__name__)
 
 
 class TESSSearch(MASTSearch):
