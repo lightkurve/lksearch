@@ -18,7 +18,18 @@ __all__ = ["query_KIC", "query_EPIC", "query_TIC", "query_gaia", "query_catalog"
 _Catalog_Dictionary = {
     "kic": {
         "catalog": "V/133/kic",
-        "columns": ["KIC", "RAJ2000", "DEJ2000", "pmRA", "pmDE", "Plx", "kepmag"],
+        "columns": [
+            "KIC",
+            "RAJ2000",
+            "DEJ2000",
+            "pmRA",
+            "pmDE",
+            "Plx",
+            "kepmag",
+            "Radius",
+            "Teff",
+            "logg",
+        ],
         "column_filters": "kepmag",
         "rename_in": ["KIC", "kepmag"],
         "rename_out": ["ID", "Kepmag"],
@@ -28,7 +39,19 @@ _Catalog_Dictionary = {
     },
     "epic": {
         "catalog": "IV/34/epic",
-        "columns": ["ID", "RAJ2000", "DEJ2000", "pmRA", "pmDEC", "plx", "Kpmag"],
+        "columns": [
+            "ID",
+            "RAJ2000",
+            "DEJ2000",
+            "pmRA",
+            "pmDEC",
+            "plx",
+            "Kpmag",
+            "logg",
+            "Teff",
+            "Rad",
+            "Mass",
+        ],
         "column_filters": "Kpmag",
         "rename_in": ["Kpmag", "pmDEC", "plx"],
         "rename_out": ["K2mag", "pmDE", "Plx"],
@@ -38,7 +61,19 @@ _Catalog_Dictionary = {
     },
     "tic": {
         "catalog": "IV/39/tic82",
-        "columns": ["TIC", "RAJ2000", "DEJ2000", "pmRA", "pmDE", "Plx", "Tmag"],
+        "columns": [
+            "TIC",
+            "RAJ2000",
+            "DEJ2000",
+            "pmRA",
+            "pmDE",
+            "Plx",
+            "Tmag",
+            "logg",
+            "Teff",
+            "Rad",
+            "Mass",
+        ],
         "column_filters": "Tmag",
         "rename_in": ["TIC", "Tmag"],
         "rename_out": ["ID", "TESSmag"],
@@ -58,6 +93,8 @@ _Catalog_Dictionary = {
             "Gmag",
             "BPmag",
             "RPmag",
+            "logg",
+            "Teff",
         ],
         "column_filters": "Gmag",
         "rename_in": ["DR3Name"],
@@ -121,28 +158,40 @@ def _table_to_skycoord(table: Table, equinox: Time, epoch: Time):
 
 def _get_return_columns(columns):
     """Convenience function to reorder columns and remove motion columns."""
-    return [
+
+    downselect_columns = list(
+        set(columns)
+        - set(
+            [
+                "RA",
+                "Dec",
+                "RAJ2000",
+                "DEJ2000",
+                "Plx",
+                "pmRA",
+                "pmDE",
+                "Separation",
+                "Relative_Flux",
+            ]
+        )
+    )
+
+    downselect_columns = np.hstack(
+        [
+            np.sort([i for i in downselect_columns if i.endswith("mag")]),
+            np.sort([i for i in downselect_columns if not i.endswith("mag")]),
+        ]
+    )
+
+    new_columns = [
         "RA",
         "Dec",
         "Separation",
         "Relative_Flux",
-        *list(
-            set(columns)
-            - set(
-                [
-                    "RA",
-                    "Dec",
-                    "RAJ2000",
-                    "DEJ2000",
-                    "Plx",
-                    "pmRA",
-                    "pmDE",
-                    "Separation",
-                    "Relative_Flux",
-                ]
-            )
-        ),
+        *downselect_columns,
     ]
+
+    return new_columns
 
 
 def query_catalog(
