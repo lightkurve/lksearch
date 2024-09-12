@@ -493,7 +493,9 @@ class MASTSearch(object):
 
         elif isinstance(search_input, str):
             self.SkyCoord = MastClass().resolve_object(search_input)
-            self.target_search_string = f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
+            self.target_search_string = (
+                f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
+            )
 
             target_lower = str(search_input).lower()
             target_str = self._check_exact(target_lower)
