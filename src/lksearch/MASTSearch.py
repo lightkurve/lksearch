@@ -1,4 +1,5 @@
 from astroquery.mast import Observations
+from astroquery.mast import MastClass
 import pandas as pd
 from typing import Union, Optional
 import re
@@ -467,7 +468,7 @@ class MASTSearch(object):
             - If tuple, assumes RA dec - sets search string based on coordinates &
                 creates self.SkyCoord
             - if str, assumes target name - sets search string to input string &
-                creates self.SkyCoord from SkyCoord.from_name
+                creates self.SkyCoord from `MastClass().resolve_object()`
 
         Parameters
         ----------
@@ -491,8 +492,10 @@ class MASTSearch(object):
             self.SkyCoord = SkyCoord(*search_input, frame="icrs", unit="deg")
 
         elif isinstance(search_input, str):
-            self.target_search_string = search_input
-            self.SkyCoord = SkyCoord.from_name(search_input, frame="icrs")
+            self.SkyCoord = MastClass().resolve_object(search_input)
+            self.target_search_string = (
+                f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
+            )
 
             target_lower = str(search_input).lower()
             target_str = self._check_exact(target_lower)

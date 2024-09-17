@@ -112,7 +112,9 @@ Please include a self-contained example that fully demonstrates your problem or 
 
 Changelog:
 ==========
-
+v1.0.1
+  - Now resolving target search strings with MastClass [#27]
+v1.0
   - The class structure has been modified. The base class is MASTSearch. Users are intended to use mission-specific classes (KeplerSearch/K2Search/TESSSearch) to obtain mission-specific results.
   - Result tables are saved as pandas dataframs
   - The TESScut search functionality now uses tesswcs to identify observed sectors
