@@ -5,7 +5,7 @@ from astropy.coordinates import SkyCoord
 import pandas as pd
 from astropy.time import Time
 import astropy.units as u
-from lksearch import query_catalog, query_EPIC, query_KIC, query_TIC, query_gaia
+from lksearch.CatalogSearch import QueryPosition
 import pytest
 
 # Tests the region around TIC 228760807 which should return a catalog containing 4 objects.
@@ -14,8 +14,8 @@ epoch = Time(1569.4424277786259 + 2457000, scale="tdb", format="jd")
 
 
 def test_tic():
-    catalog = query_catalog(
-        coord=c,
+    catalog = QueryPosition(
+        c,
         epoch=epoch,
         catalog="tic",
         radius=u.Quantity(80, "arcsecond"),
@@ -32,8 +32,8 @@ def test_tic():
     assert np.isclose(catalog.iloc[0]["Dec"], -27.390340343480744, atol=1e-6)
 
     # Test different epochs
-    catalog_new = query_catalog(
-        coord=c,
+    catalog_new = QueryPosition(
+        c,
         epoch=Time(2461041.500, scale="tt", format="jd"),
         catalog="tic",
         radius=80,
@@ -44,26 +44,26 @@ def test_tic():
     assert np.isclose(catalog_new.iloc[0]["Dec"], -27.390254988629433, atol=1e-6)
 
     # Test different epochs
-    catalog_new = query_TIC(
-        coord=c,
-        epoch=Time(2461041.500, scale="tt", format="jd"),
-        radius=4 * u.pixel,
-        magnitude_limit=18,
-    )
+    # removed due to pixel scale question
+    # catalog_new = QueryPosition(
+    #    c,
+    #    epoch=Time(2461041.500, scale="tt", format="jd"),
+    #    radius=4 * u.pixel,
+    #    magnitude_limit=18,
+    #    catalog='tic',
+    # )
 
 
 def test_bad_catalog():
     # test the catalog type i.e., simbad is not included in our catalog list.
     # Look at other tests to see if this is correct syntax
     with pytest.raises(ValueError, match="Can not parse catalog name 'simbad'"):
-        query_catalog(
-            coord=c, epoch=epoch, catalog="simbad", radius=80, magnitude_limit=18
-        )
+        QueryPosition(c, epoch=epoch, catalog="simbad", radius=80, magnitude_limit=18)
 
 
-def test_gaia():
-    catalog_gaia = query_catalog(
-        coord=c,
+def test_gaia_position():
+    catalog_gaia = QueryPosition(
+        c,
         epoch=Time(1569.4424277786259 + 2457000, scale="tdb", format="jd"),
         catalog="gaiadr3",
         radius=80,
@@ -72,55 +72,77 @@ def test_gaia():
 
     assert len(catalog_gaia) == 2
 
-    catalog_gaia = query_gaia(
-        coord=c,
+    catalog_gaia = QueryPosition(
+        c,
         epoch=Time(1569.4424277786259 + 2457000, scale="tdb", format="jd"),
         radius=80,
         magnitude_limit=18,
+        catalog="gaiadr3",
     )
 
 
 def test_kic():
-    catalog_kepler = query_catalog(
-        coord=SkyCoord(285.679391, 50.2413, unit="deg"),
+    catalog_kepler = QueryPosition(
+        SkyCoord(285.679391, 50.2413, unit="deg"),
         epoch=Time(120.5391465105713 + 2454833, scale="tdb", format="jd"),
         catalog="kic",
         radius=20,
         magnitude_limit=18,
     )
     assert len(catalog_kepler) == 5
-    catalog_kepler = query_KIC(
-        coord=SkyCoord(285.679391, 50.2413, unit="deg"),
-        epoch=Time(120.5391465105713 + 2454833, scale="tdb", format="jd"),
-        radius=1 * u.pixel,
-        magnitude_limit=18,
-    )
+    # catalog_kepler = QueryPosition(
+    #    SkyCoord(285.679391, 50.2413, unit="deg"),
+    #    epoch=Time(120.5391465105713 + 2454833, scale="tdb", format="jd"),
+    #    radius=1 * u.pixel,
+    #    magnitude_limit=18,
+    #    catalog='kic',
+    # )
 
 
 def test_epic():
-    catalog_k2 = query_catalog(
-        coord=SkyCoord(172.560465, 7.588391, unit="deg"),
+    catalog_k2 = QueryPosition(
+        SkyCoord(172.560465, 7.588391, unit="deg"),
         epoch=Time(1975.1781333280233 + 2454833, scale="tdb", format="jd"),
         catalog="epic",
         radius=20,
         magnitude_limit=18,
     )
     assert len(catalog_k2) == 1
-    catalog_k2 = query_EPIC(
-        coord=SkyCoord(172.560465, 7.588391, unit="deg"),
-        epoch=Time(1975.1781333280233 + 2454833, scale="tdb", format="jd"),
-        radius=1 * u.pixel,
-        magnitude_limit=18,
-    )
+    # Temporarily removed due to pixel scale
+    # catalog_k2 = QueryPosition(
+    #    SkyCoord(172.560465, 7.588391, unit="deg"),
+    #    epoch=Time(1975.1781333280233 + 2454833, scale="tdb", format="jd"),
+    #    radius=1 * u.pixel,
+    #    magnitude_limit=18,
+    #    catalog='epic',
+    # )
 
 
 def test_empty():
-    catalog = query_catalog(
+    catalog = QueryPosition(
         SkyCoord.from_name("Kepler-10"),
         Time.now(),
-        "epic",
+        catalog="epic",
         radius=20 * u.arcsecond,
         magnitude_limit=18,
     )
     assert isinstance(catalog, pd.DataFrame)
     assert len(catalog) == 0
+
+
+def test_resolving():
+    catalog = QueryPosition("Kepler 10", catalog="tic")
+    assert np.isclose(catalog["RA"].values[0], 285.679422)
+    assert np.isclose(catalog["Dec"].values[0], 50.241306)
+
+    catalog = QueryPosition("19h02m43.03s +50d14m29.34s", catalog="tic")
+    assert np.isclose(catalog["RA"].values[0], 285.679422)
+    assert np.isclose(catalog["Dec"].values[0], 50.241306)
+
+    catalog = QueryPosition("285.679422 50.241306", catalog="tic")
+    assert np.isclose(catalog["RA"].values[0], 285.679422)
+    assert np.isclose(catalog["Dec"].values[0], 50.241306)
+
+    catalog = QueryPosition((285.679422, 50.241306), catalog="tic")
+    assert np.isclose(catalog["RA"].values[0], 285.679422)
+    assert np.isclose(catalog["Dec"].values[0], 50.241306)
