@@ -112,11 +112,20 @@ def test_search_timeseries(caplog):
         )
         == 1
     )
-    # Should be able to resolve an ra/dec
+    # Should be able to resolve an ra/dec from a string
     assert (
         len(
             KeplerSearch(
                 "297.5835, 40.98339", quarter=6, pipeline="Kepler"
+            ).timeseries.table
+        )
+        == 1
+    )
+    # Should be able to resolve an ra/dec from a tuple
+    assert (
+        len(
+            KeplerSearch(
+                (297.5835, 40.98339), quarter=6, pipeline="Kepler"
             ).timeseries.table
         )
         == 1
