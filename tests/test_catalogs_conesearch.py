@@ -43,16 +43,6 @@ def test_tic():
     assert np.isclose(catalog_new.iloc[0]["RA"], 194.10052070792756, atol=1e-6)
     assert np.isclose(catalog_new.iloc[0]["Dec"], -27.390254988629433, atol=1e-6)
 
-    # Test different epochs
-    # removed due to pixel scale question
-    # catalog_new = QueryPosition(
-    #    c,
-    #    epoch=Time(2461041.500, scale="tt", format="jd"),
-    #    radius=4 * u.pixel,
-    #    magnitude_limit=18,
-    #    catalog='tic',
-    # )
-
 
 def test_bad_catalog():
     # test the catalog type i.e., simbad is not included in our catalog list.
@@ -90,13 +80,6 @@ def test_kic():
         magnitude_limit=18,
     )
     assert len(catalog_kepler) == 5
-    # catalog_kepler = QueryPosition(
-    #    SkyCoord(285.679391, 50.2413, unit="deg"),
-    #    epoch=Time(120.5391465105713 + 2454833, scale="tdb", format="jd"),
-    #    radius=1 * u.pixel,
-    #    magnitude_limit=18,
-    #    catalog='kic',
-    # )
 
 
 def test_epic():
@@ -108,14 +91,6 @@ def test_epic():
         magnitude_limit=18,
     )
     assert len(catalog_k2) == 1
-    # Temporarily removed due to pixel scale
-    # catalog_k2 = QueryPosition(
-    #    SkyCoord(172.560465, 7.588391, unit="deg"),
-    #    epoch=Time(1975.1781333280233 + 2454833, scale="tdb", format="jd"),
-    #    radius=1 * u.pixel,
-    #    magnitude_limit=18,
-    #    catalog='epic',
-    # )
 
 
 def test_empty():

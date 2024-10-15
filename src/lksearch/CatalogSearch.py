@@ -17,7 +17,6 @@ import warnings
 
 # This is a lits of VizieR catalogs and their input parameters to be used in the
 # query_skycatalog function
-# TODO Should this be a Configuration Parameter?
 _Catalog_Dictionary = {
     "kic": {
         "catalog": "V/133/kic",
@@ -40,7 +39,10 @@ _Catalog_Dictionary = {
         "prefix": "KIC",
         "default_mag": "Kepmag",
         "default_id_column": "KIC",
-        "crossmatch_catalogs": "tic",  # gaia->tess->Kepler? possible but convoluted
+        "crossmatch_catalogs": [
+            "tic",
+            "gaiadr3",
+        ],  # gaia->tess->Kepler? possible but convoluted
         "crossmatch_type": "tic",
         "crossmatch_columns": None,
     },
@@ -92,7 +94,7 @@ _Catalog_Dictionary = {
         "default_id_column": "TIC",
         "crossmatch_catalogs": ["gaiadr3", "kic"],  # WISE, TYCHO2
         "crossmatch_type": "column",
-        "crossmatch_column_id": {"kic": "KIC", "gaiadr3": "GAIA"},
+        "crossmatch_column_id": {"kic": "KIC", "gaiadr3": "GAIA", "tic": "TIC"},
     },
     "gaiadr3": {
         "catalog": "I/355/gaiadr3",
@@ -120,6 +122,14 @@ _Catalog_Dictionary = {
         "crossmatch_type": "tic",
         "crossmatch_column_id": None,
     },
+    "short": {
+        "SkyCoordDict": {
+            "ra": "RA",
+            "dec": "Dec",
+            "pmRA": "pmRA",
+            "pmDE": "pmDE",
+        }
+    },
 }
 
 # Connect to the Vizier TAP server here so that we only do this once
@@ -127,6 +137,7 @@ VizTap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap/")
 
 # TODO Swap this out with a configuration parameter maybe?
 # Or None and Raise Exception
+# Make this an optional keword argument for debugging/doc
 _default_catalog = "tic"
 
 
@@ -144,26 +155,6 @@ def _get_TAP_Query(catalog: str, ID: str, max_results: int = None, id_column=Non
     WHERE {id_column} IN({ID}) """
 
     return query_model
-
-
-def Query(
-    search_input: Union[str, SkyCoord, tuple, list[str, SkyCoord, tuple]],
-    catalog: str = None,
-    radius: Union[float, str] = None,
-    epoch: Time = None,
-) -> None:
-    search_result = None
-    search_object, search_catalog = _parse_search_input(search_input, catalog=catalog)
-    if isinstance(search_object, SkyCoord):
-        search_result = QueryPosition(
-            search_object, catalog=search_catalog, radius=radius, epoch=epoch
-        )
-    elif isinstance(search_object, str):
-        search_result = QueryID(search_object, catalog=search_catalog)
-    else:
-        raise TypeError("Unable to resolve catalog search type")
-
-    return search_result
 
 
 def _parse_search_input(search_input, catalog: str = None):
@@ -253,6 +244,8 @@ def QueryID(
     catalog: Union[str, int, list[str, int]] = None,
     input_catalog: str = None,
     max_results: int = None,
+    return_skycoord: bool = False,
+    epoch: Union[str, Time] = None,
 ):
     id_column = None
 
@@ -280,10 +273,13 @@ def QueryID(
             ):
                 if _Catalog_Dictionary[catalog]["crossmatch_type"] == "tic":
                     # TIC is is crossmatched with gaiadr3/kic
-                    # If KIC/gaia Info for a TIC Object is desired - search TIC to get KIC/gaia ids
-                    # Then Search KIC
+                    # If KIC data for a gaia source or vice versa is desired
+                    # search TIC to get KIC/gaia ids then Search KIC /GAIA
+                    source_id_column = _Catalog_Dictionary["tic"][
+                        "crossmatch_column_id"
+                    ][input_catalog]
                     new_id_table = _QueryID(
-                        "tic", id_list, max_results, id_column=id_column
+                        "tic", id_list, max_results, id_column=source_id_column
                     )
                     id_list = ", ".join(
                         new_id_table[
@@ -307,7 +303,10 @@ def QueryID(
             catalog = _default_catalog
 
     results_table = _QueryID(catalog, id_list, max_results, id_column=id_column)
-    return results_table
+    if return_skycoord:
+        _table_to_skycoord(results_table, epoch=epoch, catalog=catalog)
+    else:
+        return CatalogResult(results_table)
 
 
 def _QueryID(catalog: str, id_list: str, max_results: int, id_column: str = None):
@@ -327,7 +326,7 @@ def _QueryID(catalog: str, id_list: str, max_results: int, id_column: str = None
 def QueryPosition(
     search_input: Union[str, SkyCoord, tuple, list[str, SkyCoord, tuple]],
     epoch: Union[str, Time] = None,
-    catalog: str = None,
+    catalog: str = "tic",
     radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
     magnitude_limit: float = 18.0,
     return_skycoord: bool = False,
@@ -355,10 +354,6 @@ def QueryPosition(
     """
 
     coord, search_catalog = _parse_search_input(search_input, catalog=catalog)
-    if search_catalog is None:
-        search_catalog = _default_catalog
-        # TODO this was made optional so we could try and intuit a catalog
-        # if we don't want a default we could raise an exception here instead
 
     # Check to make sure that user input is in the correct format
     if not isinstance(coord, SkyCoord):
@@ -382,7 +377,6 @@ def QueryPosition(
 
     # Here we check to make sure that the radius entered is in arcseconds
     # This also means we do not need to specify arcseconds in our catalog query
-    # TODO The tests had pixscale in them - do we want this?
     try:
         radius = u.Quantity(radius, "arcsecond")
     except u.UnitConversionError:
@@ -439,7 +433,12 @@ def QueryPosition(
         result["ID"] = [f"{prefix} {id}" for id in result["ID"]]
     if epoch is None:
         epoch = catalog_meta["equinox"]
-    c = _table_to_skycoord(table=result, equinox=catalog_meta["equinox"], epoch=epoch)
+    c = _table_to_skycoord(
+        table=result,
+        equinox=catalog_meta["equinox"],
+        epoch=epoch,
+        catalog=search_catalog,
+    )
     ref_index = np.argmin(coord.separation(c).arcsecond)
     sep = c[ref_index].separation(c)
     if return_skycoord:
@@ -459,7 +458,7 @@ def QueryPosition(
     # Now sort the table based on separation
     result.sort(["Separation"])
     result = result.to_pandas().set_index("ID")
-    return result[_get_return_columns(result.columns)]
+    return CatalogResult(result[_get_return_columns(result.columns)])
 
 
 def _get_return_columns(columns):
@@ -496,7 +495,9 @@ def _get_return_columns(columns):
     return new_columns
 
 
-def _table_to_skycoord(table: Table, equinox: Time, epoch: Time):
+def _table_to_skycoord(
+    table: Table, equinox: Time = None, epoch: Time = None, catalog=None
+):
     """
     Convert a table input to astropy.coordinates.SkyCoord object
 
@@ -514,6 +515,19 @@ def _table_to_skycoord(table: Table, equinox: Time, epoch: Time):
     coords : astropy.coordinates.SkyCoord
        SkyCoord object with RA, Dec, equinox, and proper motion parameters.
     """
+
+    if equinox is None and catalog is not None:
+        equinox = _Catalog_Dictionary[catalog]["equinox"]
+    if epoch is None and catalog is not None:
+        epoch = equinox
+
+    catlist = ["short", "tic", "kic", "epic", "gaiadr3"]
+
+    RA_Keys = ["RA", "RAJ2000", "RA_ICRS"]
+    Dec_Keys = ["Dec", "DEJ2000", "DE_ICRS"]
+    pmRA_Keys = ["pmRA"]
+    pmDec_Keys = ["pmDE"]
+
     # We need to remove any nan values from our proper  motion list
     # Doing this will allow objects which do not have proper motion to still be displayed
     table["pmRA"] = np.ma.filled(table["pmRA"].astype(float), 0.0)
@@ -547,5 +561,5 @@ def _table_to_skycoord(table: Table, equinox: Time, epoch: Time):
 
 
 class CatalogResult(pd.DataFrame):
-    def to_SkyCoord(self, equinox: Time, epoch: Time):
-        _table_to_skycoord(Table.from_pandas(self), equinox, epoch)
+    def to_SkyCoord(self, equinox: Time = None, epoch: Time = None):
+        return _table_to_skycoord(Table.from_pandas(self), equinox=equinox, epoch=epoch)

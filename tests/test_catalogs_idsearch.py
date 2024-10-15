@@ -85,3 +85,5 @@ def test_crossmatch():
     result = CatalogSearch.QueryID(f"KIC 12644769", catalog="tic")
     assert len(result) == 1
     assert result["TIC"].values == 299096355
+
+    # TODO Add KIC->GAIA vice versa
