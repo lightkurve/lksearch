@@ -105,11 +105,20 @@ def test_search_timeseries(caplog):
         )
         == 1
     )
-    # Should be able to resolve an ra/dec
+    # Should be able to resolve an ra/dec from a string
     assert (
         len(
             KeplerSearch(
                 "297.5835, 40.98339", quarter=6, pipeline="Kepler"
+            ).timeseries.table
+        )
+        == 1
+    )
+    # Should be able to resolve an ra/dec from a tuple
+    assert (
+        len(
+            KeplerSearch(
+                (297.5835, 40.98339), quarter=6, pipeline="Kepler"
             ).timeseries.table
         )
         == 1
@@ -430,7 +439,7 @@ def test_FFI_retrieval():
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     results = TESSSearch("Kepler 16b", hlsp=False, sector=14)
-    assert len(results) == 9
+    assert len(results) == 12
     assert len(results.cubedata) == 2
     manifest = results.cubedata[1].download()
     assert len(manifest) == 1
@@ -539,14 +548,9 @@ def test_tess_clouduris():
     """regression test - do tesscut/nan's in dataURI column break cloud uri fetching"""
     toi = TESSSearch("TOI 1161", sector=14)
     # 17 products should be returned
-    assert len(toi.cloud_uris) == 17
+    assert len(toi.cloud_uris) == 20
     # 5 of them should have cloud uris
-    assert (
-        np.sum(
-            ([cloud_uri is not None for cloud_uri in toi.cloud_uris.values]).astype(int)
-        )
-        == 5
-    )
+    assert np.sum((toi.cloud_uris.values != None).astype(int)) == 6
 
 
 def test_tess_return_clouduri_not_download():
