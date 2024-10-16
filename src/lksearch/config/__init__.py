@@ -2,11 +2,12 @@ import os
 import warnings
 import glob
 import shutil
+import logging 
 
 import astropy.config as _config
 
 ROOTNAME = "lksearch"
-
+log = logging.getLogger(ROOTNAME)
 
 class ConfigNamespace(_config.ConfigNamespace):
     rootname = ROOTNAME

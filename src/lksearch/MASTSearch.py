@@ -18,11 +18,10 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import conf, config
+from . import conf, config, log
 
 pd.options.display.max_rows = 10
 
-log = logging.getLogger(__name__)
 
 
 class MASTSearch(object):
@@ -71,7 +70,7 @@ class MASTSearch(object):
     ]
 
     table = None
-
+    
     def __init__(
         self,
         target: Optional[Union[str, tuple[float], SkyCoord]] = None,
@@ -91,9 +90,9 @@ class MASTSearch(object):
             pipeline = np.atleast_1d(pipeline).tolist()
         self.search_pipeline = pipeline
 
-        if ("kepler" in (m.lower() for m in mission)) & (sequence != None):
+        if ("kepler" in (m.lower() for m in mission)) & (sequence is not None):
             log.warning(
-                f"Sequence not valid when searching for Kepler data. Setting sequence to None"
+                "Sequence not valid when searching for Kepler data. Setting sequence to None"
             )
             sequence = None
 
@@ -215,7 +214,7 @@ class MASTSearch(object):
 
         if conf.PREFER_CLOUD:
             cloud_uris = self.cloud_uris
-            mask = cloud_uris != None
+            mask = cloud_uris is not None
             uris[mask] = cloud_uris[mask]
 
         return uris
@@ -587,7 +586,7 @@ class MASTSearch(object):
 
         if filetype == "ffi":
             raise SearchError(
-                f"FFI search not implemented in MASTSearch. Please use TESSSearch."
+                "FFI search not implemented in MASTSearch. Please use TESSSearch."
             )
 
         # Ensure mission is a list
@@ -1144,6 +1143,7 @@ class MASTSearch(object):
         cloud_only: bool = conf.CLOUD_ONLY,
         download_dir: str = config.get_cache_dir(),
         remove_incomplete: str = True,
+        quiet:bool = False,
     ) -> pd.DataFrame:
         """downloads products in self.table to the local hard-drive
 
@@ -1187,6 +1187,7 @@ class MASTSearch(object):
                 self.table.iterrows(),
                 total=self.table.shape[0],
                 desc="Downloading products",
+                disable=quiet,
             )
         ]
 

@@ -1,7 +1,6 @@
 import pandas as pd
 from typing import Union, Optional
 import re
-import logging
 
 import numpy as np
 from astropy import units as u
@@ -11,7 +10,7 @@ from .MASTSearch import MASTSearch
 
 pd.options.display.max_rows = 10
 
-log = logging.getLogger(__name__)
+
 
 
 class K2Search(MASTSearch):
