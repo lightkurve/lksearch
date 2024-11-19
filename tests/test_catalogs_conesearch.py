@@ -2,7 +2,7 @@
 
 import numpy as np
 from astropy.coordinates import SkyCoord
-import pandas as pd
+from astropy.table import Table
 from astropy.time import Time
 import astropy.units as u
 from lksearch.CatalogSearch import QueryPosition
@@ -24,7 +24,7 @@ def test_tic():
     assert len(catalog) == 4
 
     # Checks that an astropy Table is returned
-    assert isinstance(catalog, pd.DataFrame)
+    assert isinstance(catalog, Table)
 
     # Test that the proper motion works
 
@@ -101,7 +101,7 @@ def test_empty():
         radius=20 * u.arcsecond,
         magnitude_limit=18,
     )
-    assert isinstance(catalog, pd.DataFrame)
+    assert isinstance(catalog, Table)
     assert len(catalog) == 0
 
 
