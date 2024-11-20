@@ -316,7 +316,7 @@ def QueryID(
                     ]
             else:
                 raise ValueError(
-                    f"{input_catalog} does not have crossmatched IDs with {catalog}. {catalog} can be crossmatched with {_Catalog_Dictionary[catalog]["crossmatch_catalogs"]}"
+                    f"{input_catalog} does not have crossmatched IDs with {catalog}. {catalog} can be crossmatched with {_Catalog_Dictionary[catalog]['crossmatch_catalogs']}"
                 )
     else:
         if catalog is None:
