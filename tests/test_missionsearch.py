@@ -430,10 +430,10 @@ def test_split_k2_campaigns():
     assert search_c11.table["campaign"][0] == "11a"
     assert search_c11.table["campaign"][1] == "11b"
 
-
-def test_FFI_retrieval():
-    """Can we find TESS individual FFI's"""
-    assert len(TESSSearch("Kepler 16b").search_sector_ffis(14)) == 1241
+#   MAST is deprecating FFI search and retrieval through astroquery.  How should we handle this?
+#def test_FFI_retrieval():
+#    """Can we find TESS individual FFI's"""
+#    assert len(TESSSearch("Kepler 16b").search_sector_ffis(14)) == 1241
 
 
 def test_tesscut():
