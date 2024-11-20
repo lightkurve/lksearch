@@ -20,128 +20,22 @@ import time
 import json
 
 from . import log
+from . import PACKAGEDIR
+
 
 # This is a lits of VizieR catalogs and their input parameters to be used in the
 # query_skycatalog function
 def _load_cat_config():
-    with open('src/lksearch/data/catalog_config.json', 'r') as j:
+    with open(f"{PACKAGEDIR}/data/catalog_config.json", "r") as j:
         cat_dict = json.loads(j.read())
     for key in cat_dict.keys():
-        cat_dict[key]['equinox'] = Time(cat_dict[key]['equinox'], format="jyear", scale="tt")
+        cat_dict[key]["equinox"] = Time(
+            cat_dict[key]["equinox"], format="jyear", scale="tt"
+        )
     return cat_dict
 
+
 _Catalog_Dictionary = _load_cat_config()
-#{
-#    "kic": {
-#        "catalog": "V/133/kic",
-#        "columns": [
-#            "KIC",
-#            "RAJ2000",
-#            "DEJ2000",
-#            "pmRA",
-#            "pmDE",
-#            "Plx",
-#            "kepmag",
-#            "Radius",
-#            "Teff",
-#            "logg",
-#        ],
-#        "column_filters": "kepmag",
-#        "rename_in": ["KIC", "kepmag"],
-#        "rename_out": ["ID", "Kepmag"],
-#        "equinox": 2000,#Time(2000, format="jyear", scale="tt"),
-#        "prefix": "KIC",
-#        "default_mag": "Kepmag",
-#        "default_id_column": "KIC",
-#        "crossmatch_catalogs": [
-#            "tic",
-#            "gaiadr3",
-#        ],  # gaia->tess->Kepler? possible but convoluted
-#        "crossmatch_type": "tic",
-#        "crossmatch_columns": None,
-##        "SIMBAD_match_like": "ident.id LIKE KIC%",
-#    },
-#    "epic": {
-#        "catalog": "IV/34/epic",
-#        "columns": [
-#            "ID",
-#            "RAJ2000",
-#            "DEJ2000",
-#            "pmRA",
-#            "pmDEC",
-#            "plx",
-#            "Kpmag",
-#            "logg",
-#            "Teff",
-#            "Rad",
-#            "Mass",
-#        ],
-#        "column_filters": "Kpmag",
-#        "rename_in": ["Kpmag", "pmDEC", "plx"],
-#        "rename_out": ["K2mag", "pmDE", "Plx"],
-#        "equinox": 2000,#Time(2000, format="jyear", scale="tt"),
-#        "prefix": "EPIC",
-#        "default_mag": "K2mag",
-#        "default_id_column": "ID",
-#        "crossmatch_catalogs": None,
-##        "SIMBAD_match_like": "ident.id LIKE EPIC%",
-#
-#    },
-#    "tic": {
-#        "catalog": "IV/39/tic82",
-#        "columns": [
-#            "TIC",
-#            "RAJ2000",
-#            "DEJ2000",
-#            "pmRA",
-#            "pmDE",
-#            "Plx",
-#            "Tmag",
-#            "logg",
-#            "Teff",
-#            "Rad",
-#            "Mass",
-#        ],
-#        "column_filters": "Tmag",
-#        "rename_in": ["TIC", "Tmag"],
-#        "rename_out": ["ID", "TESSmag"],
-#        "equinox": 2000,#Time(2000, format="jyear", scale="tt"),
-#        "prefix": "TIC",
-#        "default_mag": "TESSmag",
-#        "default_id_column": "TIC",
-#        "crossmatch_catalogs": ["gaiadr3", "kic"],  # WISE, TYCHO2
-#        "crossmatch_type": "column",
-#        "crossmatch_column_id": {"kic": "KIC", "gaiadr3": "GAIA", "tic": "TIC"},
-##        "SIMBAD_match_like": "ident.id LIKE TIC%",
-#    },
-#    "gaiadr3": {
-#        "catalog": "I/355/gaiadr3",
-#        "columns": [
-#            "DR3Name",
-#            "RAJ2000",
-#            "DEJ2000",
-#            "pmRA",
-#            "pmDE",
-#            "Plx",
-#            "Gmag",
-#            "BPmag",
-#            "RPmag",
-#            "logg",
-#            "Teff",
-#        ],
-#        "column_filters": "Gmag",
-#        "rename_in": ["DR3Name"],
-#        "rename_out": ["ID"],
-#        "equinox": 2016,#Time(2016, format="jyear", scale="tt"),
-#        "prefix": None,
-#        "default_mag": "Gmag",
-#        "default_id_column": "Source",
-#        "crossmatch_catalogs": ["tic", "kic"],
-#        "crossmatch_type": "tic",
-#        "crossmatch_column_id": None,
-##        "SIMBAD_match_like": "ident.id LIKE Gaia DR3%",
-#    },
-#}
 
 # Connect to the Vizier TAP server here so that we only do this once
 VizTap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap/")
@@ -151,32 +45,51 @@ VizTap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap/")
 # Make this an optional keword argument for debugging/doc
 _default_catalog = "tic"
 
+
 # use simbad to get name/ID crossmatches
 def IDLookup(search_input: Union[str, list[str]], match_catalog: str = None):
-    match_list = _Catalog_Dictionary.keys() - 'short'
-#    match_str = None only usable in bleeding edge astroquery
+    match_list = _Catalog_Dictionary.keys()
+    """Uses the Simbad name resolver and ids to disambiguate the search_input string or list. 
 
-    if (match_catalog is not None):
-        if(match_catalog.lower() in match_list):
+    Parameters
+    ----------
+    search_input: Union[str, list[str]]
+        A string or list of strings to query simbad for ID disambiguation
+    
+    match_catalog: str = None
+        Short name of catalog to parse the simbad id results for 
+
+    Returns
+    -------
+    result: Table, list[Table]
+        Results from the `~astroquery.simbad.Simbad` ID query in `~astropy.table.Table` format. 
+
+    """
+    #    match_str = None only usable in bleeding edge astroquery
+
+    if match_catalog is not None:
+        if match_catalog.lower() in match_list:
             match_str = _Catalog_Dictionary[match_catalog.lower()]["SIMBAD_match_like"]
 
-    if(isinstance(search_input, list)):
-        result=[]
+    if isinstance(search_input, list):
+        result = []
         for item in search_input:
-            log.warning("Throttling query limit to Simbad's: max 5/s")   
+            log.warning("Throttling query limit to Simbad's: max 5/s")
             result_iter = _IDLookup(item)
             time.sleep(0.2)
             result.append(result_iter)
     else:
         result = _IDLookup(search_input)
-    
+
     return result
 
-def _IDLookup(search_item, match_str):
-# Construct exact ID TAP queries for various surveys
-#    result_table = Simbad.query_objectids(search_item, criteria = match_str)
+
+def _IDLookup(search_item):
+    # Construct exact ID TAP queries for various surveys
+    #    result_table = Simbad.query_objectids(search_item, criteria = match_str)
     result_table = Simbad.query_objectids(search_item)
     return result_table
+
 
 def _get_TAP_Query(catalog: str, ID: str, max_results: int = None, id_column=None):
     if catalog not in _Catalog_Dictionary.keys():
@@ -221,33 +134,34 @@ def _parse_search_input(search_input, catalog: str = None):
 
 
 def _match_target_catalog(search_input):
+    search = search_input.strip().replace(" ", "").lower()
     if search_input.isnumeric():
         # If string is purelt numbers, make no assumptions
         search_string = search_input
         search_catalog = None
-    elif search_input[0:3].strip().replace(' ','').lower() == "tic":
+    elif search[0:3] == "tic":
         search_catalog = "tic"
-        search_string = search_input[3:]
-    elif search_input[0:4].strip().replace(' ','').lower() == "tess":
+        search_string = search[3:]
+    elif search[0:4] == "tess":
         search_catalog = "tic"
-        search_string = search_input[4:]
-    elif search_input[0:3].strip().replace(' ','').lower() == "kic":
+        search_string = search[4:]
+    elif search[0:3] == "kic":
         search_catalog = "kic"
-        search_string = search_input[3:]
-    elif search_input[0:4].strip().replace(' ','').lower() == "kplr":
+        search_string = search[3:]
+    elif search[0:4] == "kplr":
         search_catalog = "kic"
-        search_string = search_input[4:]
-    elif search_input[0:4].strip().replace(' ','').lower() == "epic":
+        search_string = search[4:]
+    elif search[0:4] == "epic":
         search_catalog = "epic"
-        search_string = search_input[4:]
-    elif search_input[0:4].strip().replace(' ','').lower() == "ktwo":
+        search_string = search[4:]
+    elif search[0:4] == "ktwo":
         search_catalog = "epic"
-        search_string = search_input[4:]
-    elif search_input[0:7].strip().replace(' ','').lower() == "gaiadr3":
+        search_string = search[4:]
+    elif search[0:7] == "gaiadr3":
         search_catalog = "gaiadr3"
-        search_string = search_input[7:]
-    elif search_input[0:4].strip().replace(' ','').lower() == "gaia" and search_input[4:6].strip().replace(' ','').lower() != "dr":
-        search_string = search_input[4:]
+        search_string = search[7:]
+    elif search[0:4] == "gaia" and search_input[4:6] != "dr":
+        search_string = search[4:]
         search_catalog = "gaiadr3"
     else:
         # If we cannot parse a catalog, make no assumptions
@@ -277,12 +191,46 @@ def _parse_id(search_item):
 
 def QueryID(
     search_object: Union[str, int, list[str, int]],
-    catalog: Union[str, int, list[str, int]] = None,
+    catalog: str = None,
     input_catalog: str = None,
     max_results: int = None,
     return_skycoord: bool = False,
     epoch: Union[str, Time] = None,
 ):
+    """Searches a catalog (TIC, KIC, EPIC, or GAIA DR3) for an exact ID match and
+    returns the assosciated catalog rows.  A limited cross-match between the TIC, KIC, and gaiadr3
+    catalogs is possible using the catalog, and input_catalog optional parameters.
+
+    Parameters
+    ----------
+    search_object : Union[str, int, list[str, int]]
+        A string or integer, or list of strings or integers, that represents
+        a list of IDs from a single catalog to match.  If an integer is supplied the
+        catalog optional parameter must be specified.
+    catalog : str, optional
+        Catalog to search for an ID match to.  If no input_catalog is
+        specified catalog and input_catalog are assumed to be the same.
+        If search_object is a string and catalog and is None, search_object is
+        parsed to try and determine the catalog, by default None
+    input_catalog : str, optional
+        _description_, by default None
+    max_results : int, optional
+        limits the maximum rows to return, by default None
+    return_skycoord : bool, optional
+        If true, an `~astropy.coordinates.SkyCoord` objects is returned for each
+        row in the result table, by default False
+    epoch : Union[str, Time], optional
+        If a return_skycoord is True, epoch can be used to specify the epoch for the
+        returned SkyCoord object, by default None
+
+    Returns
+    -------
+    results_table: Union[Table, SkyCoord, list[SkyCoord]]
+        `~astropy.table.Table` object containing the rows of the catalog with IDs matching the search_input.
+        If return_skycoord is set to True, a `~astropy.coordinates.SkyCoord` object or list of `~astropy.coordinates.SkyCoord` objects
+        is instead returned.
+
+    """
     id_column = None
 
     if isinstance(search_object, list):
@@ -320,9 +268,8 @@ def QueryID(
                     id_list = ", ".join(
                         new_id_table[
                             _Catalog_Dictionary["tic"]["crossmatch_column_id"][catalog]
-                        ]
-                        .astype(str)
-                        #.values
+                        ].astype(str)
+                        # .values
                     )
                 if _Catalog_Dictionary[catalog]["crossmatch_type"] == "column":
                     # TIC is is crossmatched with gaiadr3/kic
@@ -340,7 +287,7 @@ def QueryID(
 
     results_table = _QueryID(catalog, id_list, max_results, id_column=id_column)
     if return_skycoord:
-        _table_to_skycoord(results_table, epoch=epoch, catalog=catalog)
+        return _table_to_skycoord(results_table, epoch=epoch, catalog=catalog)
     else:
         return CatalogResult(results_table)
 
@@ -352,14 +299,16 @@ def _QueryID(catalog: str, id_list: str, max_results: int, id_column: str = None
     async_limit = 1e3
     if max_results > async_limit:
         # we should chex max_results and if low do a synchronous query, if large async
-        log.warn(f"Warning: Queries over {async_limit} will be done asynchronously, and may take some time")
+        log.warn(
+            f"Warning: Queries over {async_limit} will be done asynchronously, and may take some time"
+        )
         job = VizTap.launch_job_async(query)
         job.wait_for_job_end()
         results_table = job.get_data()
     else:
         job = VizTap.launch_job(query)
         results_table = job.get_data()
-    return results_table#.to_pandas()
+    return results_table  # .to_pandas()
 
 
 def QueryPosition(
@@ -368,6 +317,7 @@ def QueryPosition(
     catalog: str = "tic",
     radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
     magnitude_limit: float = 18.0,
+    max_results: int = None,
     return_skycoord: bool = False,
 ):
     """
@@ -375,8 +325,7 @@ def QueryPosition(
     Parameters
     ----------
     coord : astropy.coordinates.SkyCoord, string, tuple, or list thereof
-        Coordinates around which to do a radius query. If passed a string, will first try to resolve string as a coordinate using `~astropy.coordinates.SkyCoord`, 
-        if this fails then tries to resolve the string as a name using '~astroquery.mast.MastClass.resolve_object'.
+        Coordinates around which to do a radius query. If passed a string, will first try to resolve string as a coordinate using `~astropy.coordinates.SkyCoord`, if this fails then tries to resolve the string as a name using '~astroquery.mast.MastClass.resolve_object'.
     epoch: astropy.time.Time
         The time of observation in JD.
     catalog: str
@@ -389,8 +338,9 @@ def QueryPosition(
         Whether to return an astropy.coordinates.SkyCoord object. Default is False.
     Returns
     -------
-    result: pd.DataFrame or astropy.coordinates.SkyCoord
+    result: Table or astropy.coordinates.SkyCoord
         By default returns a  pandas dataframe of the sources within radius query, corrected for proper motion. Optionally will return astropy.coordinates.SkyCoord object.
+
     """
 
     coord, search_catalog = _parse_search_input(search_input, catalog=catalog)
@@ -436,32 +386,37 @@ def QueryPosition(
         column_filters={catalog_meta["column_filters"]: f"<{magnitude_limit}"},
     )
     # The catalog can cut off at 50 - we dont want this to happen
-    filters.ROW_LIMIT = -1
+    if max_results is not None:
+        filters.ROW_LIMIT = max_results
+    else:
+        filters.ROW_LIMIT = -1
     # Now query the catalog
     result = filters.query_region(coord, catalog=catalog_name, radius=Angle(radius))
     if len(result) == 0:
-        result = (
-            Table(
-                columns=[
-                    *catalog_meta["columns"],
-                    "RA",
-                    "Dec",
-                    "Separation",
-                    "Relative_Flux",
-                ]
-            )
-            .rename(
-                {
-                    i: o
-                    for i, o in zip(
-                        catalog_meta["rename_in"], catalog_meta["rename_out"]
-                    )
-                },
-                axis=1,
-            )
-            .set_index("ID")
+        # Make an empty Table
+        empty_table = pd.DataFrame(
+            columns=[
+                *catalog_meta["columns"],
+                "ID",
+                "RA",
+                "Dec",
+                "Separation",
+                "Relative_Flux",
+            ]
         )
-        return result[_get_return_columns(result.columns)]
+        # Make Sure Columns are consistently renamed for the catalog
+        empty_table = empty_table.rename(
+            {
+                i: o
+                for i, o in zip(catalog_meta["rename_in"], catalog_meta["rename_out"])
+            },
+            axis=1,
+        )
+        # Make sure we have an index set
+        empty_table = empty_table.set_index("ID")
+        empty_table = Table.from_pandas(empty_table)
+        return empty_table
+
     result = result[catalog_name]
     # Rename the columns so that the output is uniform
     result.rename_columns(
@@ -497,8 +452,8 @@ def QueryPosition(
     )
     # Now sort the table based on separation
     result.sort(["Separation"])
-    #return result
-    #result = result.to_pandas().set_index("ID")
+    # return result
+    # result = result.to_pandas().set_index("ID")
     return CatalogResult(result[_get_return_columns(result.columns)])
 
 
@@ -508,6 +463,7 @@ def _get_return_columns(columns):
         set(columns)
         - set(
             [
+                "ID",
                 "RA",
                 "Dec",
                 "RAJ2000",
@@ -527,10 +483,13 @@ def _get_return_columns(columns):
         ]
     )
     new_columns = [
+        "ID",
         "RA",
         "Dec",
         "Separation",
         "Relative_Flux",
+        "pmRA",
+        "pmDE",
         *downselect_columns,
     ]
     return new_columns
@@ -538,7 +497,7 @@ def _get_return_columns(columns):
 
 def _table_to_skycoord(
     table: Table, equinox: Time = None, epoch: Time = None, catalog=None
-):
+) -> SkyCoord:
     """
     Convert a table input to astropy.coordinates.SkyCoord object
 
@@ -566,20 +525,39 @@ def _table_to_skycoord(
 
     # We need to remove any nan values from our proper  motion list
     # Doing this will allow objects which do not have proper motion to still be displayed
-    table["pmRA"] = np.ma.filled(table["pmRA"].astype(float), 0.0)
-    table["pmDE"] = np.ma.filled(table["pmDE"].astype(float), 0.0)
+    if "pmRA" in table.keys():
+        table["pmRA"] = np.ma.filled(table["pmRA"].astype(float), 0.0)
+    else:
+        table["pmRA"] = 0.0 * u.mas / u.yr
+
+    if "pmDE" in table.keys():
+        table["pmDE"] = np.ma.filled(table["pmDE"].astype(float), 0.0)
+    else:
+        table["pmDE"] = 0.0 * u.mas / u.yr
+
     # If an object does not have a parallax then we treat it as if the object is an "infinite distance"
     # and set the parallax to 1e-7 arcseconds or 10Mpc.
-    table["Plx"] = np.ma.filled(table["Plx"].astype(float), 1e-4)
+    if "Plx" in table.keys():
+        table["Plx"] = np.ma.filled(table["Plx"].astype(float), 1e-4)
+    else:
+        table["Plx"] = 1e-4 * u.mas
 
+    if "RAJ2000" in table.keys() and "DEJ2000" in table.keys():
+        ra = table["RAJ2000"]
+        dec = table["DEJ2000"]
+    elif "RA" in table.keys() and "Dec" in table.keys():
+        ra = table["RA"] * u.deg
+        dec = table["Dec"] * u.deg
+    else:
+        raise KeyError("RA, DEC Disambiguation failed")
     # Suppress warning caused by Astropy as noted in issue 111747 (https://github.com/astropy/astropy/issues/11747)
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="negative parallaxes")
 
         # Get the input data from the table
         c = SkyCoord(
-            ra=table["RAJ2000"],
-            dec=table["DEJ2000"],
+            ra=ra,
+            dec=dec,
             distance=Distance(parallax=table["Plx"].quantity, allow_negative=True),
             pm_ra_cosdec=table["pmRA"],
             pm_dec=table["pmDE"],

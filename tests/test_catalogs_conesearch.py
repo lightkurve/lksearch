@@ -28,8 +28,8 @@ def test_tic():
 
     # Test that the proper motion works
 
-    assert np.isclose(catalog.iloc[0]["RA"], 194.10075230969787, atol=1e-6)
-    assert np.isclose(catalog.iloc[0]["Dec"], -27.390340343480744, atol=1e-6)
+    assert np.isclose(catalog[0]["RA"], 194.10075230969787, atol=1e-6)
+    assert np.isclose(catalog[0]["Dec"], -27.390340343480744, atol=1e-6)
 
     # Test different epochs
     catalog_new = QueryPosition(
@@ -40,8 +40,8 @@ def test_tic():
         magnitude_limit=18,
     )
 
-    assert np.isclose(catalog_new.iloc[0]["RA"], 194.10052070792756, atol=1e-6)
-    assert np.isclose(catalog_new.iloc[0]["Dec"], -27.390254988629433, atol=1e-6)
+    assert np.isclose(catalog_new[0]["RA"], 194.10052070792756, atol=1e-6)
+    assert np.isclose(catalog_new[0]["Dec"], -27.390254988629433, atol=1e-6)
 
 
 def test_bad_catalog():
@@ -107,17 +107,39 @@ def test_empty():
 
 def test_resolving():
     catalog = QueryPosition("Kepler 10", catalog="tic")
-    assert np.isclose(catalog["RA"].values[0], 285.679422)
-    assert np.isclose(catalog["Dec"].values[0], 50.241306)
+    assert np.isclose(catalog["RA"][0], 285.679422)
+    assert np.isclose(catalog["Dec"][0], 50.241306)
 
     catalog = QueryPosition("19h02m43.03s +50d14m29.34s", catalog="tic")
-    assert np.isclose(catalog["RA"].values[0], 285.679422)
-    assert np.isclose(catalog["Dec"].values[0], 50.241306)
+    assert np.isclose(catalog["RA"][0], 285.679422)
+    assert np.isclose(catalog["Dec"][0], 50.241306)
 
     catalog = QueryPosition("285.679422 50.241306", catalog="tic")
-    assert np.isclose(catalog["RA"].values[0], 285.679422)
-    assert np.isclose(catalog["Dec"].values[0], 50.241306)
+    assert np.isclose(catalog["RA"][0], 285.679422)
+    assert np.isclose(catalog["Dec"][0], 50.241306)
 
     catalog = QueryPosition((285.679422, 50.241306), catalog="tic")
-    assert np.isclose(catalog["RA"].values[0], 285.679422)
-    assert np.isclose(catalog["Dec"].values[0], 50.241306)
+    assert np.isclose(catalog["RA"][0], 285.679422)
+    assert np.isclose(catalog["Dec"][0], 50.241306)
+
+
+def test_skycoord():
+    sc = QueryPosition(
+        c,
+        epoch=epoch,
+        catalog="tic",
+        radius=u.Quantity(80, "arcsecond"),
+        magnitude_limit=18,
+        return_skycoord=True,
+    )
+    assert isinstance(sc, SkyCoord)
+
+    sc = QueryPosition(
+        c,
+        epoch=epoch,
+        catalog="tic",
+        radius=u.Quantity(80, "arcsecond"),
+        magnitude_limit=18,
+    ).to_SkyCoord()
+
+    assert isinstance(sc, SkyCoord)
