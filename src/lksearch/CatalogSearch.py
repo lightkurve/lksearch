@@ -47,39 +47,76 @@ _default_catalog = "tic"
 
 
 # use simbad to get name/ID crossmatches
-def IDLookup(search_input: Union[str, list[str]], match_catalog: str = None):
-    match_list = _Catalog_Dictionary.keys()
-    """Uses the Simbad name resolver and ids to disambiguate the search_input string or list. 
+def IDLookup(search_input: Union[str, list[str]], match: Union[str, list[str]] = None):
+    """Uses the Simbad name resolver and ids to disambiguate the search_input string or list.
 
     Parameters
     ----------
     search_input: Union[str, list[str]]
         A string or list of strings to query simbad for ID disambiguation
-    
-    match_catalog: str = None
-        Short name of catalog to parse the simbad id results for 
+
+    match: Union[str, list[str]] = None
+        Short name of catalog to parse the simbad id results for.  If this is passed the list of ids are not
+        reported and a column per item in the match list is added and the ids with that match str contained in the id are listed.
 
     Returns
     -------
     result: Table, list[Table]
-        Results from the `~astroquery.simbad.Simbad` ID query in `~astropy.table.Table` format. 
+        Results from the `~astroquery.simbad.Simbad` ID query in `~astropy.table.Table` format.
 
     """
-    #    match_str = None only usable in bleeding edge astroquery
+    # match_str = None only usable in bleeding edge astroquery
+    # match_list = _Catalog_Dictionary.keys()
 
-    if match_catalog is not None:
-        if match_catalog.lower() in match_list:
-            match_str = _Catalog_Dictionary[match_catalog.lower()]["SIMBAD_match_like"]
+    # if match_catalog is not None:
+    #    if match_catalog.lower() in match_list:
+    #        match_str = _Catalog_Dictionary[match_catalog.lower()]["SIMBAD_match_like"]
 
     if isinstance(search_input, list):
         result = []
+        log.warning("Throttling query limit to Simbad's: max 5/s")
         for item in search_input:
-            log.warning("Throttling query limit to Simbad's: max 5/s")
             result_iter = _IDLookup(item)
             time.sleep(0.2)
             result.append(result_iter)
     else:
         result = _IDLookup(search_input)
+
+    if match is not None:
+        # Make an Empty table with # columns = 1(the search input) + len(match)
+        # This will provide the ids that match each search input given the match criteria
+        col = ["search"]
+        for item in np.atleast_1d(match):
+            col.append(item)
+        dt = ["str"] * (len(np.atleast_1d(match)) + 1)
+
+        final_result = Table(names=col, dtype=dt)
+
+        # Iterate through the search inputs, returned ids, and match criteria
+        i = 0
+        for item in np.atleast_1d(search_input):
+            row = [item]
+            # make sure we're in a list in the event we have a single result
+            if not isinstance(result, list):
+                result = [result]
+            # For each item in the match terms, see if it is contained in ID
+            for cat in np.atleast_1d(match):
+                mcat = cat.strip().replace(" ", "").lower()
+                cmatch = None
+                for sid in result[i]["id"]:
+                    id = sid.strip().replace(" ", "").lower()
+                    if mcat in id:
+                        if cmatch is None:
+                            cmatch = sid
+                        else:
+                            cmatch.append(sid)
+                if cmatch is None:
+                    cmatch = ""
+                row.append(cmatch)
+            final_result.add_row(row)
+            i += 1
+        # get rid of our old list of tables result and return the matching results
+        result = final_result
 
     return result
 
