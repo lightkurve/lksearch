@@ -6,7 +6,6 @@ import pandas as pd
 from astropy.time import Time
 import astropy.units as u
 from lksearch.catalogsearch import query_id
-import pytest
 
 
 def test_id_query():

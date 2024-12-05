@@ -4,7 +4,7 @@ from . import config as _config
 import logging
 import os
 
-__version__ = "1.1.1"
+__version__ = "1.1.0"
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 
 

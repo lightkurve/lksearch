@@ -1,9 +1,6 @@
-""" Tests alternate name lookups and matching """
-from lksearch.catalogsearch import (
-    query_names,
-    match_names_catalogs,
-)
-import pytest
+"""Tests alternate name lookups and matching"""
+
+from lksearch.catalogsearch import query_names, match_names_catalogs
 
 
 def test_query_names():
