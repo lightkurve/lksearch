@@ -150,8 +150,16 @@ def _query_names(search_item):
     #    result_table = Simbad.query_objectids(search_item, criteria = match_str)
     result_table = Simbad.query_objectids(search_item)
     result_table = result_table.to_pandas()
+
+    # Older astroquery versions return bytes-like objects, lets make sure things are strings
+    for col, dtype in result_table.dtypes.items():
+        if dtype == object and col == "ID":  # Only process byte object columns
+            result_table[col] = result_table[col].str.decode("utf-8")
+
+    # older astroquery versions use "ID" not 'id', lets be backwards compatible
     if "ID" in result_table.keys():
         result_table.rename(columns={"ID": "id"}, inplace=True)
+
     return result_table
 
 
