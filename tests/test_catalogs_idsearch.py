@@ -5,34 +5,34 @@ from astropy.coordinates import SkyCoord
 import pandas as pd
 from astropy.time import Time
 import astropy.units as u
-from lksearch import CatalogSearch
+from lksearch.catalogsearch import query_id
 import pytest
 
 
 def test_id_query():
     tic = 299096513
-    tic_result = CatalogSearch.QueryID(tic, catalog="tic")
+    tic_result = query_id(tic, output_catalog="tic")
     assert len(tic_result) == 1
-    assert tic_result["TIC"] == tic
+    assert tic_result["TIC"].values == tic
 
     kic = 12644769
-    kic_result = CatalogSearch.QueryID(kic, catalog="kic")
+    kic_result = query_id(kic, output_catalog="kic")
     assert len(kic_result) == 1
-    assert kic_result["KIC"] == kic
+    assert kic_result["KIC"].values == kic
 
     epic = 201563164
-    epic_result = CatalogSearch.QueryID(epic, catalog="epic")
+    epic_result = query_id(epic, output_catalog="epic")
     assert len(epic_result) == 1
-    assert epic_result["ID"] == epic
+    assert epic_result["ID"].values == epic
 
     gaia = 2133452475178900736
-    gaia_result = CatalogSearch.QueryID(gaia, catalog="gaiadr3")
+    gaia_result = query_id(gaia, output_catalog="gaiadr3")
     assert len(gaia_result) == 1
-    assert gaia_result["Source"] == gaia
+    assert gaia_result["Source"].values == gaia
 
 
 def name_disambiguation(string, key, target):
-    result = CatalogSearch.QueryID(string)
+    result = query_id(string)
     return (len(result) == 1) and result[key][0] == target
 
 
@@ -64,36 +64,33 @@ def test_name_disambiguation():
 
 def test_lists():
     sources = [2133452475178900736, 3201680999981276544]
-    assert len(CatalogSearch.QueryID(sources, catalog="gaiadr3")) == 2
+    assert len(query_id(sources, output_catalog="gaiadr3")) == 2
 
 
 def test_crossmatch():
-    result = CatalogSearch.QueryID("GAIA 2133452475178900736", catalog="tic")
+    result = query_id("GAIA 2133452475178900736", output_catalog="tic")
     assert len(result) == 1
-    assert result["TIC"] == 299096513
+    assert result["TIC"].values == 299096513
 
     sources = [2133452475178900736, 3201680999981276544]
-    result = CatalogSearch.QueryID(sources, catalog="tic", input_catalog="gaiadr3")
+    result = query_id(sources, output_catalog="tic", input_catalog="gaiadr3")
     assert len(result) == 2
-    assert 299096513 in result["TIC"]
-    assert 299096514 in result["TIC"]
+    assert 299096513 in result["TIC"].values
+    assert 299096514 in result["TIC"].values
 
-    result = CatalogSearch.QueryID("TIC 299096513", catalog="gaiadr3")
+    result = query_id("TIC 299096513", output_catalog="gaiadr3")
     assert len(result) == 1
-    assert result["Source"] == 2133452475178900736
+    assert result["Source"].values == 2133452475178900736
 
-    result = CatalogSearch.QueryID(f"KIC 12644769", catalog="tic")
+    result = query_id(f"KIC 12644769", output_catalog="tic")
     assert len(result) == 1
-    assert result["TIC"] == 299096355
+    assert result["TIC"].values == 299096355
 
     # TODO Add KIC->GAIA vice versa
 
 
 def test_skycoord():
     tic = 299096513
-    tic_result = CatalogSearch.QueryID(tic, catalog="tic")
-    sc = tic_result.to_SkyCoord()
-    assert isinstance(sc, SkyCoord)
 
-    sc = CatalogSearch.QueryID(tic, catalog="tic", return_skycoord=True)
+    sc = query_id(tic, output_catalog="tic", return_skycoord=True)
     assert isinstance(sc, SkyCoord)

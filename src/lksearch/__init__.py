@@ -85,7 +85,4 @@ from .MASTSearch import MASTSearch  # noqa
 from .TESSSearch import TESSSearch  # noqa
 from .KeplerSearch import KeplerSearch  # noqa
 from .K2Search import K2Search  # noqa
-
-# from .catalog import *  # noqa
-# from .CatalogSearch import CatalogSearch  # noqa
-from . import CatalogSearch  # noqa
+from . import catalogsearch  # noqa

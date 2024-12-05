@@ -1,4 +1,4 @@
-"""Catalog class to search various catalogs for missions"""
+"""Catalog module to search various catalogs for missions"""
 
 from typing import Union
 import numpy as np
@@ -47,7 +47,7 @@ _default_catalog = "tic"
 
 
 # use simbad to get name/ID crossmatches
-def IDLookup(search_input: Union[str, list[str]], match: Union[str, list[str]] = None):
+def query_names(search_input: Union[str, list[str]]):
     """Uses the Simbad name resolver and ids to disambiguate the search_input string or list.
 
     Parameters
@@ -55,14 +55,10 @@ def IDLookup(search_input: Union[str, list[str]], match: Union[str, list[str]] =
     search_input: Union[str, list[str]]
         A string or list of strings to query simbad for ID disambiguation
 
-    match: Union[str, list[str]] = None
-        Short name of catalog to parse the simbad id results for.  If this is passed the list of ids are not
-        reported and a column per item in the match list is added and the ids with that match str contained in the id are listed.
-
     Returns
     -------
-    result: Table, list[Table]
-        Results from the `~astroquery.simbad.Simbad` ID query in `~astropy.table.Table` format.
+    result: DataFrame, list[DataFrame]
+        Results from the `~astroquery.simbad.Simbad` ID query in `~pandas.DataFrame` format.
 
     """
     # match_str = None only usable in bleeding edge astroquery
@@ -76,55 +72,86 @@ def IDLookup(search_input: Union[str, list[str]], match: Union[str, list[str]] =
         result = []
         log.warning("Throttling query limit to Simbad's: max 5/s")
         for item in search_input:
-            result_iter = _IDLookup(item)
+            result_iter = _query_names(item)
             time.sleep(0.2)
             result.append(result_iter)
     else:
-        result = _IDLookup(search_input)
-
-    if match is not None:
-        # Make an Empty table with # columns = 1(the search input) + len(match)
-        # This will provide the ids that match each search input given the match criteria
-        col = ["search"]
-        for item in np.atleast_1d(match):
-            col.append(item)
-        dt = ["str"] * (len(np.atleast_1d(match)) + 1)
-
-        final_result = Table(names=col, dtype=dt)
-
-        # Iterate through the search inputs, returned ids, and match criteria
-        i = 0
-        for item in np.atleast_1d(search_input):
-            row = [item]
-            # make sure we're in a list in the event we have a single result
-            if not isinstance(result, list):
-                result = [result]
-            # For each item in the match terms, see if it is contained in ID
-            for cat in np.atleast_1d(match):
-                mcat = cat.strip().replace(" ", "").lower()
-                cmatch = None
-                for sid in result[i]["id"]:
-                    id = sid.strip().replace(" ", "").lower()
-                    if mcat in id:
-                        if cmatch is None:
-                            cmatch = sid
-                        else:
-                            cmatch.append(sid)
-                if cmatch is None:
-                    cmatch = ""
-                row.append(cmatch)
-            final_result.add_row(row)
-            i += 1
-        # get rid of our old list of tables result and return the matching results
-        result = final_result
+        result = _query_names(search_input)
 
     return result
 
 
-def _IDLookup(search_item):
+def match_names_catalogs(
+    search_input: Union[str, list[str]], match: Union[str, list[str]]
+):
+    """Uses the Simbad name resolver and ids to disambiguate the search_input string or list, and compare the disambiguated names with a list to match against.
+
+    Parameters
+    ----------
+    search_input: Union[str, list[str]]
+        A string or list of strings to query simbad for ID disambiguation
+
+    match: Union[str, list[str]]
+        Short name of catalog to parse the simbad id results for.  If this is passed the list of ids are not
+        reported and a column per item in the match list is added and the ids with that match str contained in the id are listed.
+
+    Returns
+    -------
+    result: DataFrame, list[DataFrame]
+        Results from the `~astroquery.simbad.Simbad` ID query in `~pandas.DataFrame` format.
+
+    """
+    result = query_names(search_input)
+
+    # Make an Empty DataFrame with # columns = 1(the search input) + len(match)
+    # This will provide the ids that match each search input given the match criteria
+    col = ["search"]
+    for item in np.atleast_1d(match):
+        col.append(item)
+    final_result = pd.DataFrame(columns=col, dtype=str)
+
+    # Iterate through the search inputs, returned ids, and match criteria
+    i = 0
+    for item in np.atleast_1d(search_input):
+        row = [item]
+        # make sure we're in a list in the event we have a single result
+        if not isinstance(result, list):
+            result = [result]
+        # For each item in the match terms, see if it is contained in ID
+        for cat in np.atleast_1d(match):
+            mcat = cat.strip().replace(" ", "").lower()
+            cmatch = None
+            for sid in result[i]["id"]:
+                id = sid.strip().replace(" ", "").lower()
+                if mcat in id:
+                    if cmatch is None:
+                        cmatch = sid
+                    else:
+                        cmatch.append(sid)
+            if cmatch is None:
+                cmatch = ""
+            row.append(cmatch)
+
+        row_result = pd.DataFrame(np.array([row]), columns=col, dtype=str)
+        final_result = pd.concat(
+            [final_result, row_result],
+            ignore_index=True,
+            axis=0,
+        )
+        i += 1
+    # get rid of our old list of tables result and return the matching results
+    result = final_result
+
+    return result
+
+
+def _query_names(search_item):
     # Construct exact ID TAP queries for various surveys
     #    result_table = Simbad.query_objectids(search_item, criteria = match_str)
     result_table = Simbad.query_objectids(search_item)
+    result_table = result_table.to_pandas()
+    if "ID" in result_table.keys():
+        result_table.rename(columns={"ID": "id"}, inplace=True)
     return result_table
 
 
@@ -226,13 +253,13 @@ def _parse_id(search_item):
     return id, scat
 
 
-def QueryID(
+def query_id(
     search_object: Union[str, int, list[str, int]],
-    catalog: str = None,
+    output_catalog: str = None,
     input_catalog: str = None,
     max_results: int = None,
     return_skycoord: bool = False,
-    epoch: Union[str, Time] = None,
+    output_epoch: Union[str, Time] = None,
 ):
     """Searches a catalog (TIC, KIC, EPIC, or GAIA DR3) for an exact ID match and
     returns the assosciated catalog rows.  A limited cross-match between the TIC, KIC, and gaiadr3
@@ -256,8 +283,8 @@ def QueryID(
     return_skycoord : bool, optional
         If true, an `~astropy.coordinates.SkyCoord` objects is returned for each
         row in the result table, by default False
-    epoch : Union[str, Time], optional
-        If a return_skycoord is True, epoch can be used to specify the epoch for the
+    output_epoch : Union[str, Time], optional
+        If a return_skycoord is True, output_epoch can be used to specify the output_epoch for the
         returned SkyCoord object, by default None
 
     Returns
@@ -277,8 +304,8 @@ def QueryID(
         # IF we can figure out the soruce catalog from context -
         # EG TIC Blah, assume the catalog to search is the catalog detected
         # And th
-        if catalog is None and scat is not None:
-            catalog = scat
+        if output_catalog is None and scat is not None:
+            output_catalog = scat
         if input_catalog is None and scat is not None:
             input_catalog = scat
 
@@ -286,50 +313,54 @@ def QueryID(
     if max_results is None:
         max_results = len(np.atleast_1d(search_object))
 
-    if catalog is not None and input_catalog is not None:
-        if catalog != input_catalog:
+    if output_catalog is not None and input_catalog is not None:
+        if output_catalog != input_catalog:
             max_results = max_results * 10
             if input_catalog in np.atleast_1d(
-                _Catalog_Dictionary[catalog]["crossmatch_catalogs"]
+                _Catalog_Dictionary[output_catalog]["crossmatch_catalogs"]
             ):
-                if _Catalog_Dictionary[catalog]["crossmatch_type"] == "tic":
+                if _Catalog_Dictionary[output_catalog]["crossmatch_type"] == "tic":
                     # TIC is is crossmatched with gaiadr3/kic
                     # If KIC data for a gaia source or vice versa is desired
                     # search TIC to get KIC/gaia ids then Search KIC /GAIA
                     source_id_column = _Catalog_Dictionary["tic"][
                         "crossmatch_column_id"
                     ][input_catalog]
-                    new_id_table = _QueryID(
+                    new_id_table = _query_id(
                         "tic", id_list, max_results, id_column=source_id_column
                     )
                     id_list = ", ".join(
                         new_id_table[
-                            _Catalog_Dictionary["tic"]["crossmatch_column_id"][catalog]
+                            _Catalog_Dictionary["tic"]["crossmatch_column_id"][
+                                output_catalog
+                            ]
                         ].astype(str)
                         # .values
                     )
-                if _Catalog_Dictionary[catalog]["crossmatch_type"] == "column":
+                if _Catalog_Dictionary[output_catalog]["crossmatch_type"] == "column":
                     # TIC is is crossmatched with gaiadr3/kic
                     # If we want TIC Info for a gaiadr3/KIC source - match appropriate column in TIC
-                    id_column = _Catalog_Dictionary[catalog]["crossmatch_column_id"][
-                        input_catalog
-                    ]
+                    id_column = _Catalog_Dictionary[output_catalog][
+                        "crossmatch_column_id"
+                    ][input_catalog]
             else:
                 raise ValueError(
-                    f"{input_catalog} does not have crossmatched IDs with {catalog}. {catalog} can be crossmatched with {_Catalog_Dictionary[catalog]['crossmatch_catalogs']}"
+                    f"{input_catalog} does not have crossmatched IDs with {output_catalog}. {output_catalog} can be crossmatched with {_Catalog_Dictionary[catalog]['crossmatch_catalogs']}"
                 )
     else:
-        if catalog is None:
-            catalog = _default_catalog
+        if output_catalog is None:
+            output_catalog = _default_catalog
 
-    results_table = _QueryID(catalog, id_list, max_results, id_column=id_column)
+    results_table = _query_id(output_catalog, id_list, max_results, id_column=id_column)
     if return_skycoord:
-        return _table_to_skycoord(results_table, epoch=epoch, catalog=catalog)
+        return _table_to_skycoord(
+            results_table, output_epoch=output_epoch, catalog=output_catalog
+        )
     else:
-        return CatalogResult(results_table)
+        return results_table.to_pandas()
 
 
-def _QueryID(catalog: str, id_list: str, max_results: int, id_column: str = None):
+def _query_id(catalog: str, id_list: str, max_results: int, id_column: str = None):
     query = _get_TAP_Query(
         catalog, id_list, max_results=max_results, id_column=id_column
     )
@@ -348,9 +379,9 @@ def _QueryID(catalog: str, id_list: str, max_results: int, id_column: str = None
     return results_table  # .to_pandas()
 
 
-def QueryPosition(
+def query_region(
     search_input: Union[str, SkyCoord, tuple, list[str, SkyCoord, tuple]],
-    epoch: Union[str, Time] = None,
+    output_epoch: Union[str, Time] = None,
     catalog: str = "tic",
     radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
     magnitude_limit: float = 18.0,
@@ -363,7 +394,7 @@ def QueryPosition(
     ----------
     coord : astropy.coordinates.SkyCoord, string, tuple, or list thereof
         Coordinates around which to do a radius query. If passed a string, will first try to resolve string as a coordinate using `~astropy.coordinates.SkyCoord`, if this fails then tries to resolve the string as a name using '~astroquery.mast.MastClass.resolve_object'.
-    epoch: astropy.time.Time
+    output_epoch: astropy.time.Time
         The time of observation in JD.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
@@ -388,10 +419,10 @@ def QueryPosition(
             coord = MastClass().resolve_object(coord)
         else:
             raise TypeError(f"could not resolve {coord} to SkyCoord")
-    if epoch is not None:
-        if not isinstance(epoch, Time):
+    if output_epoch is not None:
+        if not isinstance(output_epoch, Time):
             try:
-                epoch = Time(epoch, format="jd")
+                output_epoch = Time(output_epoch, format="jd")
             except ValueError:
                 raise TypeError(
                     "Must pass an `astropy.time.Time object` or parsable object."
@@ -451,7 +482,6 @@ def QueryPosition(
         )
         # Make sure we have an index set
         empty_table = empty_table.set_index("ID")
-        empty_table = Table.from_pandas(empty_table)
         return empty_table
 
     result = result[catalog_name]
@@ -463,12 +493,12 @@ def QueryPosition(
     if catalog_meta["prefix"] is not None:
         prefix = catalog_meta["prefix"]
         result["ID"] = [f"{prefix} {id}" for id in result["ID"]]
-    if epoch is None:
-        epoch = catalog_meta["equinox"]
+    if output_epoch is None:
+        output_epoch = catalog_meta["equinox"]
     c = _table_to_skycoord(
         table=result,
         equinox=catalog_meta["equinox"],
-        epoch=epoch,
+        output_epoch=output_epoch,
         catalog=search_catalog,
     )
     ref_index = np.argmin(coord.separation(c).arcsecond)
@@ -491,7 +521,7 @@ def QueryPosition(
     result.sort(["Separation"])
     # return result
     # result = result.to_pandas().set_index("ID")
-    return CatalogResult(result[_get_return_columns(result.columns)])
+    return result[_get_return_columns(result.columns)].to_pandas()
 
 
 def _get_return_columns(columns):
@@ -533,7 +563,7 @@ def _get_return_columns(columns):
 
 
 def _table_to_skycoord(
-    table: Table, equinox: Time = None, epoch: Time = None, catalog=None
+    table: Table, equinox: Time = None, output_epoch: Time = None, catalog=None
 ) -> SkyCoord:
     """
     Convert a table input to astropy.coordinates.SkyCoord object
@@ -544,7 +574,7 @@ def _table_to_skycoord(
         astropy.table.Table which contains the coordinates of targets and proper motion values
     equinox: astropy.time.Time
         The equinox for the catalog
-    epoch : astropy.time.Time
+    output_epoch : astropy.time.Time
         Desired time of the observation
 
     Returns
@@ -557,8 +587,8 @@ def _table_to_skycoord(
         _, catalog = _parse_id(table[0][0])
     if equinox is None and catalog is not None:
         equinox = _Catalog_Dictionary[catalog]["equinox"]
-    if epoch is None and catalog is not None:
-        epoch = equinox
+    if output_epoch is None and catalog is not None:
+        output_epoch = equinox
 
     # We need to remove any nan values from our proper  motion list
     # Doing this will allow objects which do not have proper motion to still be displayed
@@ -603,14 +633,9 @@ def _table_to_skycoord(
         )
 
     # Suppress warning caused by Astropy as noted in issue 111747 (https://github.com/astropy/astropy/issues/11747)
-    if epoch != equinox:
+    if output_epoch != equinox:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", message="ERFA function")
             warnings.filterwarnings("ignore", message="invalid value")
-            c = c.apply_space_motion(new_obstime=epoch)
+            c = c.apply_space_motion(new_obstime=output_epoch)
     return c
-
-
-class CatalogResult(Table):
-    def to_SkyCoord(self, equinox: Time = None, epoch: Time = None):
-        return _table_to_skycoord(Table(self), equinox=equinox, epoch=epoch)
