@@ -45,6 +45,278 @@ VizTap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap/")
 # Make this an optional keword argument for debugging/doc
 _default_catalog = "tic"
 
+def query_region(
+    search_input: Union[str, SkyCoord, tuple, list[str, SkyCoord, tuple]],
+    output_epoch: Union[str, Time] = None,
+    catalog: str = "tic",
+    radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
+    magnitude_limit: float = 18.0,
+    max_results: int = None,
+    return_skycoord: bool = False,
+):
+    """
+    Query a catalog for a single source location, obtain nearby sources
+
+    Parameters
+    ----------
+    coord : `~astropy.coordinates.SkyCoord`, string, tuple, or list thereof
+        Coordinates around which to do a radius query. If passed a string, will first try to resolve string as a coordinate using `~astropy.coordinates.SkyCoord`, if this fails then tries to resolve the string as a name using `~astroquery.mast.MastClass.resolve_object`.
+    output_epoch: `~astropy.time.Time`
+        The time of observation in JD.
+    catalog: str
+        The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
+    radius : float or `~astropy.units.quantity.Quantity`
+        Radius in arcseconds to query
+    magnitude_limit : float
+        A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.
+    return_skycoord: bool
+        Whether to return an `~astropy.coordinates.SkyCoord` object. Default is False.
+
+    Returns
+    -------
+    result: `~astropy.table.Table` or `~astropy.coordinates.SkyCoord`
+        By default returns a  pandas dataframe of the sources within radius query, corrected for proper motion. Optionally will return astropy.coordinates.SkyCoord object.
+
+    """
+
+    coord, search_catalog = _parse_search_input(search_input, catalog=catalog)
+
+    # Check to make sure that user input is in the correct format
+    if not isinstance(coord, SkyCoord):
+        if isinstance(coord, str):
+            coord = MastClass().resolve_object(coord)
+        else:
+            raise TypeError(f"could not resolve {coord} to SkyCoord")
+    if output_epoch is not None:
+        if not isinstance(output_epoch, Time):
+            try:
+                output_epoch = Time(output_epoch, format="jd")
+            except ValueError:
+                raise TypeError(
+                    "Must pass an `astropy.time.Time object` or parsable object."
+                )
+            raise TypeError(
+                "Must pass an `astropy.time.Time object` or parsable object."
+            )
+    if not coord.isscalar:
+        raise ValueError("must pass one target only.")
+
+    # Here we check to make sure that the radius entered is in arcseconds
+    # This also means we do not need to specify arcseconds in our catalog query
+    try:
+        radius = u.Quantity(radius, "arcsecond")
+    except u.UnitConversionError:
+        raise
+
+    # Check to make sure that the catalog provided by the user is valid for this function
+    if search_catalog.lower() not in _Catalog_Dictionary.keys():
+        raise ValueError(f"Can not parse catalog name '{catalog}'")
+    catalog_meta = _Catalog_Dictionary[search_catalog.lower()]
+
+    # Get the Vizier catalog name
+    catalog_name = catalog_meta["catalog"]
+
+    # Get the appropriate column names and filters to be applied
+    filters = Vizier(
+        columns=catalog_meta["columns"],
+        column_filters={catalog_meta["column_filters"]: f"<{magnitude_limit}"},
+    )
+    # The catalog can cut off at 50 - we dont want this to happen
+    if max_results is not None:
+        filters.ROW_LIMIT = max_results
+    else:
+        filters.ROW_LIMIT = -1
+    # Now query the catalog
+    result = filters.query_region(coord, catalog=catalog_name, radius=Angle(radius))
+    if len(result) == 0:
+        # Make an empty Table
+        empty_table = pd.DataFrame(
+            columns=[
+                *catalog_meta["columns"],
+                "ID",
+                "RA",
+                "Dec",
+                "Separation",
+                "Relative_Flux",
+            ]
+        )
+        # Make Sure Columns are consistently renamed for the catalog
+        empty_table = empty_table.rename(
+            {
+                i: o
+                for i, o in zip(catalog_meta["rename_in"], catalog_meta["rename_out"])
+            },
+            axis=1,
+        )
+        # Make sure we have an index set
+        empty_table = empty_table.set_index("ID")
+        return empty_table
+
+    result = result[catalog_name]
+    # Rename the columns so that the output is uniform
+    result.rename_columns(
+        catalog_meta["rename_in"],
+        catalog_meta["rename_out"],
+    )
+    if catalog_meta["prefix"] is not None:
+        prefix = catalog_meta["prefix"]
+        result["ID"] = [f"{prefix} {id}" for id in result["ID"]]
+    if output_epoch is None:
+        output_epoch = catalog_meta["equinox"]
+    c = _table_to_skycoord(
+        table=result,
+        equinox=catalog_meta["equinox"],
+        output_epoch=output_epoch,
+        catalog=search_catalog,
+    )
+    ref_index = np.argmin(coord.separation(c).arcsecond)
+    sep = c[ref_index].separation(c)
+    if return_skycoord:
+        s = np.argsort(sep.deg)
+        return c[s]
+    result["RA"] = c.ra.deg
+    result["Dec"] = c.dec.deg
+    result["Separation"] = sep.arcsecond
+    # Calculate the relative flux
+    result["Relative_Flux"] = 10 ** (
+        (
+            result[catalog_meta["default_mag"]]
+            - result[catalog_meta["default_mag"]][ref_index]
+        )
+        / -2.5
+    )
+    # Now sort the table based on separation
+    result.sort(["Separation"])
+    # return result
+    # result = result.to_pandas().set_index("ID")
+    return result[_get_return_columns(result.columns)].to_pandas()
+
+
+def query_id(
+    search_object: Union[str, int, list[str, int]],
+    output_catalog: str = None,
+    input_catalog: str = None,
+    max_results: int = None,
+    return_skycoord: bool = False,
+    output_epoch: Union[str, Time] = None,
+):
+    """Searches a catalog (TIC, KIC, EPIC, or GAIA DR3) for an exact ID match and
+    returns the assosciated catalog rows.  A limited cross-match between the TIC, KIC, and gaiadr3
+    catalogs is possible using the catalog, and input_catalog optional parameters.
+
+    Parameters
+    ----------
+    search_object : Union[str, int, list[str, int]]
+        A string or integer, or list of strings or integers, that represents
+        a list of IDs from a single catalog to match.  If an integer is supplied the
+        catalog optional parameter must be specified.
+    catalog : str, optional
+        Catalog to search for an ID match to.  If no input_catalog is
+        specified catalog and input_catalog are assumed to be the same.
+        If search_object is a string and catalog and is None, search_object is
+        parsed to try and determine the catalog, by default None
+    input_catalog : str, optional
+        _description_, by default None
+    max_results : int, optional
+        limits the maximum rows to return, by default None
+    return_skycoord : bool, optional
+        If true, an `~astropy.coordinates.SkyCoord` objects is returned for each
+        row in the result table, by default False
+    output_epoch : Union[str, Time], optional
+        If a return_skycoord is True, output_epoch can be used to specify the output_epoch for the
+        returned SkyCoord object, by default None
+
+    Returns
+    -------
+    results_table: Union[Table, SkyCoord, list[SkyCoord]]
+        `~astropy.table.Table` object containing the rows of the catalog with IDs matching the search_input.
+        If return_skycoord is set to True, a `~astropy.coordinates.SkyCoord` object or list of `~astropy.coordinates.SkyCoord` objects
+        is instead returned.
+
+    """
+    id_column = None
+
+    if isinstance(search_object, list):
+        id_list = _parse_id_list(search_object)
+    else:
+        id_list, scat = _parse_id(search_object)
+        # IF we can figure out the soruce catalog from context -
+        # EG TIC Blah, assume the catalog to search is the catalog detected
+        # And th
+        if output_catalog is None and scat is not None:
+            output_catalog = scat
+        if input_catalog is None and scat is not None:
+            input_catalog = scat
+
+    # Assuming a 1:1 match.  TODO is this a bad assumption?
+    if max_results is None:
+        max_results = len(np.atleast_1d(search_object))
+
+    if output_catalog is not None and input_catalog is not None:
+        if output_catalog != input_catalog:
+            max_results = max_results * 10
+            if input_catalog in np.atleast_1d(
+                _Catalog_Dictionary[output_catalog]["crossmatch_catalogs"]
+            ):
+                if _Catalog_Dictionary[output_catalog]["crossmatch_type"] == "tic":
+                    # TIC is is crossmatched with gaiadr3/kic
+                    # If KIC data for a gaia source or vice versa is desired
+                    # search TIC to get KIC/gaia ids then Search KIC /GAIA
+                    source_id_column = _Catalog_Dictionary["tic"][
+                        "crossmatch_column_id"
+                    ][input_catalog]
+                    new_id_table = _query_id(
+                        "tic", id_list, max_results, id_column=source_id_column
+                    )
+                    id_list = ", ".join(
+                        new_id_table[
+                            _Catalog_Dictionary["tic"]["crossmatch_column_id"][
+                                output_catalog
+                            ]
+                        ].astype(str)
+                        # .values
+                    )
+                if _Catalog_Dictionary[output_catalog]["crossmatch_type"] == "column":
+                    # TIC is is crossmatched with gaiadr3/kic
+                    # If we want TIC Info for a gaiadr3/KIC source - match appropriate column in TIC
+                    id_column = _Catalog_Dictionary[output_catalog][
+                        "crossmatch_column_id"
+                    ][input_catalog]
+            else:
+                raise ValueError(
+                    f"{input_catalog} does not have crossmatched IDs with {output_catalog}. {output_catalog} can be crossmatched with {_Catalog_Dictionary[catalog]['crossmatch_catalogs']}"
+                )
+    else:
+        if output_catalog is None:
+            output_catalog = _default_catalog
+
+    results_table = _query_id(output_catalog, id_list, max_results, id_column=id_column)
+    if return_skycoord:
+        return _table_to_skycoord(
+            results_table, output_epoch=output_epoch, catalog=output_catalog
+        )
+    else:
+        return results_table.to_pandas()
+
+
+def _query_id(catalog: str, id_list: str, max_results: int, id_column: str = None):
+    query = _get_TAP_Query(
+        catalog, id_list, max_results=max_results, id_column=id_column
+    )
+    async_limit = 1e3
+    if max_results > async_limit:
+        # we should chex max_results and if low do a synchronous query, if large async
+        log.warn(
+            f"Warning: Queries over {async_limit} will be done asynchronously, and may take some time"
+        )
+        job = VizTap.launch_job_async(query)
+        job.wait_for_job_end()
+        results_table = job.get_data()
+    else:
+        job = VizTap.launch_job(query)
+        results_table = job.get_data()
+    return results_table  # .to_pandas()
+
 
 # use simbad to get name/ID crossmatches
 def query_names(search_input: Union[str, list[str]]):
@@ -259,279 +531,6 @@ def _parse_id(search_item):
         scat = None
 
     return id, scat
-
-
-def query_id(
-    search_object: Union[str, int, list[str, int]],
-    output_catalog: str = None,
-    input_catalog: str = None,
-    max_results: int = None,
-    return_skycoord: bool = False,
-    output_epoch: Union[str, Time] = None,
-):
-    """Searches a catalog (TIC, KIC, EPIC, or GAIA DR3) for an exact ID match and
-    returns the assosciated catalog rows.  A limited cross-match between the TIC, KIC, and gaiadr3
-    catalogs is possible using the catalog, and input_catalog optional parameters.
-
-    Parameters
-    ----------
-    search_object : Union[str, int, list[str, int]]
-        A string or integer, or list of strings or integers, that represents
-        a list of IDs from a single catalog to match.  If an integer is supplied the
-        catalog optional parameter must be specified.
-    catalog : str, optional
-        Catalog to search for an ID match to.  If no input_catalog is
-        specified catalog and input_catalog are assumed to be the same.
-        If search_object is a string and catalog and is None, search_object is
-        parsed to try and determine the catalog, by default None
-    input_catalog : str, optional
-        _description_, by default None
-    max_results : int, optional
-        limits the maximum rows to return, by default None
-    return_skycoord : bool, optional
-        If true, an `~astropy.coordinates.SkyCoord` objects is returned for each
-        row in the result table, by default False
-    output_epoch : Union[str, Time], optional
-        If a return_skycoord is True, output_epoch can be used to specify the output_epoch for the
-        returned SkyCoord object, by default None
-
-    Returns
-    -------
-    results_table: Union[Table, SkyCoord, list[SkyCoord]]
-        `~astropy.table.Table` object containing the rows of the catalog with IDs matching the search_input.
-        If return_skycoord is set to True, a `~astropy.coordinates.SkyCoord` object or list of `~astropy.coordinates.SkyCoord` objects
-        is instead returned.
-
-    """
-    id_column = None
-
-    if isinstance(search_object, list):
-        id_list = _parse_id_list(search_object)
-    else:
-        id_list, scat = _parse_id(search_object)
-        # IF we can figure out the soruce catalog from context -
-        # EG TIC Blah, assume the catalog to search is the catalog detected
-        # And th
-        if output_catalog is None and scat is not None:
-            output_catalog = scat
-        if input_catalog is None and scat is not None:
-            input_catalog = scat
-
-    # Assuming a 1:1 match.  TODO is this a bad assumption?
-    if max_results is None:
-        max_results = len(np.atleast_1d(search_object))
-
-    if output_catalog is not None and input_catalog is not None:
-        if output_catalog != input_catalog:
-            max_results = max_results * 10
-            if input_catalog in np.atleast_1d(
-                _Catalog_Dictionary[output_catalog]["crossmatch_catalogs"]
-            ):
-                if _Catalog_Dictionary[output_catalog]["crossmatch_type"] == "tic":
-                    # TIC is is crossmatched with gaiadr3/kic
-                    # If KIC data for a gaia source or vice versa is desired
-                    # search TIC to get KIC/gaia ids then Search KIC /GAIA
-                    source_id_column = _Catalog_Dictionary["tic"][
-                        "crossmatch_column_id"
-                    ][input_catalog]
-                    new_id_table = _query_id(
-                        "tic", id_list, max_results, id_column=source_id_column
-                    )
-                    id_list = ", ".join(
-                        new_id_table[
-                            _Catalog_Dictionary["tic"]["crossmatch_column_id"][
-                                output_catalog
-                            ]
-                        ].astype(str)
-                        # .values
-                    )
-                if _Catalog_Dictionary[output_catalog]["crossmatch_type"] == "column":
-                    # TIC is is crossmatched with gaiadr3/kic
-                    # If we want TIC Info for a gaiadr3/KIC source - match appropriate column in TIC
-                    id_column = _Catalog_Dictionary[output_catalog][
-                        "crossmatch_column_id"
-                    ][input_catalog]
-            else:
-                raise ValueError(
-                    f"{input_catalog} does not have crossmatched IDs with {output_catalog}. {output_catalog} can be crossmatched with {_Catalog_Dictionary[catalog]['crossmatch_catalogs']}"
-                )
-    else:
-        if output_catalog is None:
-            output_catalog = _default_catalog
-
-    results_table = _query_id(output_catalog, id_list, max_results, id_column=id_column)
-    if return_skycoord:
-        return _table_to_skycoord(
-            results_table, output_epoch=output_epoch, catalog=output_catalog
-        )
-    else:
-        return results_table.to_pandas()
-
-
-def _query_id(catalog: str, id_list: str, max_results: int, id_column: str = None):
-    query = _get_TAP_Query(
-        catalog, id_list, max_results=max_results, id_column=id_column
-    )
-    async_limit = 1e3
-    if max_results > async_limit:
-        # we should chex max_results and if low do a synchronous query, if large async
-        log.warn(
-            f"Warning: Queries over {async_limit} will be done asynchronously, and may take some time"
-        )
-        job = VizTap.launch_job_async(query)
-        job.wait_for_job_end()
-        results_table = job.get_data()
-    else:
-        job = VizTap.launch_job(query)
-        results_table = job.get_data()
-    return results_table  # .to_pandas()
-
-
-def query_region(
-    search_input: Union[str, SkyCoord, tuple, list[str, SkyCoord, tuple]],
-    output_epoch: Union[str, Time] = None,
-    catalog: str = "tic",
-    radius: Union[float, u.Quantity] = u.Quantity(100, "arcsecond"),
-    magnitude_limit: float = 18.0,
-    max_results: int = None,
-    return_skycoord: bool = False,
-):
-    """
-    Query a catalog for a single source location, obtain nearby sources
-
-    Parameters
-    ----------
-    coord : `~astropy.coordinates.SkyCoord`, string, tuple, or list thereof
-        Coordinates around which to do a radius query. If passed a string, will first try to resolve string as a coordinate using `~astropy.coordinates.SkyCoord`, if this fails then tries to resolve the string as a name using `~astroquery.mast.MastClass.resolve_object`.
-    output_epoch: `~astropy.time.Time`
-        The time of observation in JD.
-    catalog: str
-        The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
-    radius : float or `~astropy.units.quantity.Quantity`
-        Radius in arcseconds to query
-    magnitude_limit : float
-        A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.
-    return_skycoord: bool
-        Whether to return an `~astropy.coordinates.SkyCoord` object. Default is False.
-
-    Returns
-    -------
-    result: `~astropy.table.Table` or `~astropy.coordinates.SkyCoord`
-        By default returns a  pandas dataframe of the sources within radius query, corrected for proper motion. Optionally will return astropy.coordinates.SkyCoord object.
-
-    """
-
-    coord, search_catalog = _parse_search_input(search_input, catalog=catalog)
-
-    # Check to make sure that user input is in the correct format
-    if not isinstance(coord, SkyCoord):
-        if isinstance(coord, str):
-            coord = MastClass().resolve_object(coord)
-        else:
-            raise TypeError(f"could not resolve {coord} to SkyCoord")
-    if output_epoch is not None:
-        if not isinstance(output_epoch, Time):
-            try:
-                output_epoch = Time(output_epoch, format="jd")
-            except ValueError:
-                raise TypeError(
-                    "Must pass an `astropy.time.Time object` or parsable object."
-                )
-            raise TypeError(
-                "Must pass an `astropy.time.Time object` or parsable object."
-            )
-    if not coord.isscalar:
-        raise ValueError("must pass one target only.")
-
-    # Here we check to make sure that the radius entered is in arcseconds
-    # This also means we do not need to specify arcseconds in our catalog query
-    try:
-        radius = u.Quantity(radius, "arcsecond")
-    except u.UnitConversionError:
-        raise
-
-    # Check to make sure that the catalog provided by the user is valid for this function
-    if search_catalog.lower() not in _Catalog_Dictionary.keys():
-        raise ValueError(f"Can not parse catalog name '{catalog}'")
-    catalog_meta = _Catalog_Dictionary[search_catalog.lower()]
-
-    # Get the Vizier catalog name
-    catalog_name = catalog_meta["catalog"]
-
-    # Get the appropriate column names and filters to be applied
-    filters = Vizier(
-        columns=catalog_meta["columns"],
-        column_filters={catalog_meta["column_filters"]: f"<{magnitude_limit}"},
-    )
-    # The catalog can cut off at 50 - we dont want this to happen
-    if max_results is not None:
-        filters.ROW_LIMIT = max_results
-    else:
-        filters.ROW_LIMIT = -1
-    # Now query the catalog
-    result = filters.query_region(coord, catalog=catalog_name, radius=Angle(radius))
-    if len(result) == 0:
-        # Make an empty Table
-        empty_table = pd.DataFrame(
-            columns=[
-                *catalog_meta["columns"],
-                "ID",
-                "RA",
-                "Dec",
-                "Separation",
-                "Relative_Flux",
-            ]
-        )
-        # Make Sure Columns are consistently renamed for the catalog
-        empty_table = empty_table.rename(
-            {
-                i: o
-                for i, o in zip(catalog_meta["rename_in"], catalog_meta["rename_out"])
-            },
-            axis=1,
-        )
-        # Make sure we have an index set
-        empty_table = empty_table.set_index("ID")
-        return empty_table
-
-    result = result[catalog_name]
-    # Rename the columns so that the output is uniform
-    result.rename_columns(
-        catalog_meta["rename_in"],
-        catalog_meta["rename_out"],
-    )
-    if catalog_meta["prefix"] is not None:
-        prefix = catalog_meta["prefix"]
-        result["ID"] = [f"{prefix} {id}" for id in result["ID"]]
-    if output_epoch is None:
-        output_epoch = catalog_meta["equinox"]
-    c = _table_to_skycoord(
-        table=result,
-        equinox=catalog_meta["equinox"],
-        output_epoch=output_epoch,
-        catalog=search_catalog,
-    )
-    ref_index = np.argmin(coord.separation(c).arcsecond)
-    sep = c[ref_index].separation(c)
-    if return_skycoord:
-        s = np.argsort(sep.deg)
-        return c[s]
-    result["RA"] = c.ra.deg
-    result["Dec"] = c.dec.deg
-    result["Separation"] = sep.arcsecond
-    # Calculate the relative flux
-    result["Relative_Flux"] = 10 ** (
-        (
-            result[catalog_meta["default_mag"]]
-            - result[catalog_meta["default_mag"]][ref_index]
-        )
-        / -2.5
-    )
-    # Now sort the table based on separation
-    result.sort(["Separation"])
-    # return result
-    # result = result.to_pandas().set_index("ID")
-    return result[_get_return_columns(result.columns)].to_pandas()
 
 
 def _get_return_columns(columns):
