@@ -45,6 +45,7 @@ VizTap = TapPlus(url="http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap/")
 # Make this an optional keword argument for debugging/doc
 _default_catalog = "tic"
 
+
 def query_region(
     search_input: Union[str, SkyCoord, tuple, list[str, SkyCoord, tuple]],
     output_epoch: Union[str, Time] = None,
