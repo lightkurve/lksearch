@@ -15,7 +15,7 @@ lksearch
    :hidden:
 
    Quickstart
-   tutorials/Example_searches
+   tutorials/index
    apidoc
    GetInvolved
    HowtoCite

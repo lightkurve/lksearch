@@ -112,6 +112,16 @@ Please include a self-contained example that fully demonstrates your problem or 
 
 Changelog:
 ==========
+v1.1.0
+  - Added ability to query catalogs using the catalogsearch module. This includes:
+    - querying vizier for a region for sources using query_region
+    - querying vizier for a catlog for rows corresponding to ids using query_id
+    - querying simbad for alternative names for a given name using query_names
+    - matching alternative names for sources to catalog stings using match_names_catalogs
+  - Added documentation for catalogsearch in docs/tutorials/catalog-searches.ipynb
+  - Broke previous tutorial doucmentation into multiple files:
+    - mission-search focussed data-searches.ipynb
+    - cloud-searches and configuration options in cloud-data-searches.ipynb
 v1.0.1
   - Now resolving target search strings with MastClass [#27]
 v1.0

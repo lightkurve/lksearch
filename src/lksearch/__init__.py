@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
 from . import config as _config
-from .version import __version__
+import logging
 import os
 
+__version__ = "1.1.0"
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -78,8 +79,12 @@ class Conf(_config.ConfigNamespace):
 
 
 conf = Conf()
+log = logging.getLogger("lksearch")
 
-from .MASTSearch import MASTSearch
-from .TESSSearch import TESSSearch
-from .KeplerSearch import KeplerSearch
-from .K2Search import K2Search
+from .MASTSearch import MASTSearch  # noqa
+from .TESSSearch import TESSSearch  # noqa
+from .KeplerSearch import KeplerSearch  # noqa
+from .K2Search import K2Search  # noqa
+
+# from .catalogsearch import *  # noqa
+from . import catalogsearch  # noqa

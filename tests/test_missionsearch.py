@@ -6,19 +6,12 @@ import pytest
 from numpy.testing import assert_almost_equal, assert_array_equal
 import numpy as np
 
-import tempfile
-from requests import HTTPError
 
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-from astropy.table import Table
 
 import pandas as pd
 
-from pathlib import Path
-from astropy.utils.data import get_pkg_data_filename
-
-import shutil
 
 from lksearch.utils import SearchError, SearchWarning
 
@@ -438,10 +431,10 @@ def test_split_k2_campaigns():
     assert search_c11.table["campaign"][1] == "11b"
 
 
-def test_FFI_retrieval():
-    """Can we find TESS individual FFI's"""
-    target = "Kepler 16b"
-    assert len(TESSSearch("Kepler 16b").search_sector_ffis(14)) == 1241
+#   MAST is deprecating FFI search and retrieval through astroquery.  How should we handle this?
+# def test_FFI_retrieval():
+#    """Can we find TESS individual FFI's"""
+#    assert len(TESSSearch("Kepler 16b").search_sector_ffis(14)) == 1241
 
 
 def test_tesscut():
@@ -467,15 +460,15 @@ class TestMASTSearchFilter:
         ),
     )
     def test_target_name(self, target_name):
-        filter_results = self.results.filter_table(target_name=target_name)
+        self.results.filter_table(target_name=target_name)
 
     @pytest.mark.parametrize("limit", (0, 10, 1000))
     def test_limit(self, limit):
-        filter_results = self.results.filter_table(limit=limit)
+        self.results.filter_table(limit=limit)
 
     @pytest.mark.parametrize("filetype", (0, "lightcurve"))
     def test_filetype(self, filetype):
-        filter_results = self.results.filter_table(filetype=filetype)
+        self.results.filter_table(filetype=filetype)
 
     @pytest.mark.parametrize(
         "exptime",
@@ -494,33 +487,33 @@ class TestMASTSearchFilter:
         ),
     )
     def test_exptime(self, exptime):
-        filter_results = self.results.filter_table(exptime=exptime)
+        self.results.filter_table(exptime=exptime)
 
     @pytest.mark.parametrize("distance", (0, 0.2, (0.2, 0.4)))
     def test_distance(self, distance):
-        filter_results = self.results.filter_table(distance=distance)
+        self.results.filter_table(distance=distance)
 
     @pytest.mark.parametrize("year", (0, 2013, (2000, 2020), [2013, 2019]))
     def test_year(self, year):
-        filter_results = self.results.filter_table(year=year)
+        self.results.filter_table(year=year)
 
     @pytest.mark.parametrize(
         "description", (0, "data", ["TPS", "report"], ("TPS", "report"))
     )
     def test_description(self, description):
-        filter_results = self.results.filter_table(description=description)
+        self.results.filter_table(description=description)
 
     @pytest.mark.parametrize("pipeline", (0, "Kepler", "spoc", ["kepler", "spoc"]))
     def test_pipeline(self, pipeline):
-        filter_results = self.results.filter_table(pipeline=pipeline)
+        self.results.filter_table(pipeline=pipeline)
 
     @pytest.mark.parametrize("sequence", (0, 14, [14, 15]))
     def test_sequence(self, sequence):
-        filter_results = self.results.filter_table(sequence=sequence)
+        self.results.filter_table(sequence=sequence)
 
     @pytest.mark.parametrize("mission", (0, "Kepler", "Tess", ["Kepler", "Tess"]))
     def test_mission(self, mission):
-        filter_results = self.results.filter_table(mission=mission)
+        self.results.filter_table(mission=mission)
 
     def test_combination(
         self,

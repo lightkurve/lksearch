@@ -1,0 +1,140 @@
+{
+    "kic": {
+        "catalog": "V/133/kic",
+        "columns": [
+            "KIC",
+            "RAJ2000",
+            "DEJ2000",
+            "pmRA",
+            "pmDE",
+            "Plx",
+            "kepmag",
+            "Radius",
+            "Teff",
+            "logg"
+        ],
+        "column_filters": "kepmag",
+        "rename_in": [
+            "KIC",
+            "kepmag"
+        ],
+        "rename_out": [
+            "ID",
+            "Kepmag"
+        ],
+        "equinox": 2000,
+        "prefix": "KIC",
+        "default_mag": "Kepmag",
+        "default_id_column": "KIC",
+        "crossmatch_catalogs": [
+            "tic",
+            "gaiadr3"
+        ],
+        "crossmatch_type": "tic",
+        "crossmatch_columns": null
+    },
+    "epic": {
+        "catalog": "IV/34/epic",
+        "columns": [
+            "ID",
+            "RAJ2000",
+            "DEJ2000",
+            "pmRA",
+            "pmDEC",
+            "plx",
+            "Kpmag",
+            "logg",
+            "Teff",
+            "Rad",
+            "Mass"
+        ],
+        "column_filters": "Kpmag",
+        "rename_in": [
+            "Kpmag",
+            "pmDEC",
+            "plx"
+        ],
+        "rename_out": [
+            "K2mag",
+            "pmDE",
+            "Plx"
+        ],
+        "equinox": 2000,
+        "prefix": "EPIC",
+        "default_mag": "K2mag",
+        "default_id_column": "ID",
+        "crossmatch_catalogs": null
+    },
+    "tic": {
+        "catalog": "IV/39/tic82",
+        "columns": [
+            "TIC",
+            "RAJ2000",
+            "DEJ2000",
+            "pmRA",
+            "pmDE",
+            "Plx",
+            "Tmag",
+            "logg",
+            "Teff",
+            "Rad",
+            "Mass"
+        ],
+        "column_filters": "Tmag",
+        "rename_in": [
+            "TIC",
+            "Tmag"
+        ],
+        "rename_out": [
+            "ID",
+            "TESSmag"
+        ],
+        "equinox": 2000,
+        "prefix": "TIC",
+        "default_mag": "TESSmag",
+        "default_id_column": "TIC",
+        "crossmatch_catalogs": [
+            "gaiadr3",
+            "kic"
+        ],
+        "crossmatch_type": "column",
+        "crossmatch_column_id": {
+            "kic": "KIC",
+            "gaiadr3": "GAIA",
+            "tic": "TIC"
+        }
+    },
+    "gaiadr3": {
+        "catalog": "I/355/gaiadr3",
+        "columns": [
+            "DR3Name",
+            "RAJ2000",
+            "DEJ2000",
+            "pmRA",
+            "pmDE",
+            "Plx",
+            "Gmag",
+            "BPmag",
+            "RPmag",
+            "logg",
+            "Teff"
+        ],
+        "column_filters": "Gmag",
+        "rename_in": [
+            "DR3Name"
+        ],
+        "rename_out": [
+            "ID"
+        ],
+        "equinox": 2016,
+        "prefix": null,
+        "default_mag": "Gmag",
+        "default_id_column": "Source",
+        "crossmatch_catalogs": [
+            "tic",
+            "kic"
+        ],
+        "crossmatch_type": "tic",
+        "crossmatch_column_id": null
+    }
+}
