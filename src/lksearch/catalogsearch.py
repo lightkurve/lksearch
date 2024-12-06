@@ -398,23 +398,25 @@ def query_region(
 ):
     """
     Query a catalog for a single source location, obtain nearby sources
+
     Parameters
     ----------
-    coord : astropy.coordinates.SkyCoord, string, tuple, or list thereof
-        Coordinates around which to do a radius query. If passed a string, will first try to resolve string as a coordinate using `~astropy.coordinates.SkyCoord`, if this fails then tries to resolve the string as a name using '~astroquery.mast.MastClass.resolve_object'.
+    coord : `~astropy.coordinates.SkyCoord`, string, tuple, or list thereof
+        Coordinates around which to do a radius query. If passed a string, will first try to resolve string as a coordinate using `~astropy.coordinates.SkyCoord`, if this fails then tries to resolve the string as a name using `~astroquery.mast.MastClass.resolve_object`.
     output_epoch: astropy.time.Time
         The time of observation in JD.
     catalog: str
         The catalog to query, either 'kepler', 'k2', or 'tess', 'gaia'
-    radius : float or astropy quantity
+    radius : float or `~astropy.quantity`
         Radius in arcseconds to query
     magnitude_limit : float
         A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.
     return_skycoord: bool
-        Whether to return an astropy.coordinates.SkyCoord object. Default is False.
+        Whether to return an `~astropy.coordinates.SkyCoord` object. Default is False.
+
     Returns
     -------
-    result: Table or astropy.coordinates.SkyCoord
+    result: `~astropy.table.Table` or `~astropy.coordinates.SkyCoord`
         By default returns a  pandas dataframe of the sources within radius query, corrected for proper motion. Optionally will return astropy.coordinates.SkyCoord object.
 
     """
