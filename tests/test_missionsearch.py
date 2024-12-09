@@ -432,6 +432,14 @@ def test_split_k2_campaigns():
     assert search_c11.table["campaign"][1] == "11b"
 
 
+@pytest.mark.skip(
+    reason="MAST has deprecated FFI search and retrieval through astroquery"
+)
+def test_FFI_retrieval():
+    """Can we find TESS individual FFI's"""
+    assert len(TESSSearch("Kepler 16b").search_sector_ffis(14)) == 1241
+
+
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     results = TESSSearch("Kepler 16b", hlsp=False, sector=14)
