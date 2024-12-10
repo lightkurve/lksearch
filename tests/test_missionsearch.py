@@ -13,8 +13,7 @@ import astropy.units as u
 import pandas as pd
 
 
-from lksearch.utils import SearchError, SearchWarning
-
+from lksearch.utils import SearchError, SearchWarning, SearchDeprecationError
 from lksearch import MASTSearch, TESSSearch, KeplerSearch, K2Search
 from lksearch import conf
 import warnings
@@ -432,12 +431,11 @@ def test_split_k2_campaigns():
     assert search_c11.table["campaign"][1] == "11b"
 
 
-@pytest.mark.skip(
-    reason="MAST has deprecated FFI search and retrieval through astroquery"
-)
 def test_FFI_retrieval():
-    """Can we find TESS individual FFI's"""
-    assert len(TESSSearch("Kepler 16b").search_sector_ffis(14)) == 1241
+    """MAST has deprecated FFI search and retrieval through astroquery, so this function is now deprecated"""
+    with pytest.raises(SearchDeprecationError) as exc:
+        results = TESSSearch("Kepler 16b").search_sector_ffis(14)
+    assert "deprecated" in exc.value.args[0]
 
 
 def test_tesscut():
