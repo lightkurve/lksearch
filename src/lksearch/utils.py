@@ -15,6 +15,12 @@ class SearchWarning(Warning):
     pass
 
 
+class SearchDeprecationError(SearchError):
+    """Class for all lksearch deprecation warnings."""
+
+    pass
+
+
 def suppress_stdout(f, *args, **kwargs):
     """A simple decorator to suppress function print outputs."""
 

@@ -8,6 +8,8 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
+
+# from astropy.utils.decorators import deprecated
 from astroquery.mast import Tesscut
 
 from tqdm import tqdm
@@ -16,6 +18,7 @@ from copy import deepcopy
 
 from .MASTSearch import MASTSearch
 from . import conf, config, log
+from .utils import SearchDeprecationError
 
 PREFER_CLOUD = conf.PREFER_CLOUD
 DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
@@ -296,67 +299,14 @@ class TESSSearch(MASTSearch):
         sector: Union[int, type[None]],  # = None,
         **extra_query_criteria,
     ):
-        """Returns a list of the FFIs available in a particular sector
-
-        Parameters
-        ----------
-        sector : Union[int, type[None]]
-            sector(s) in which to search for FFI files, by default None
-
-        Returns
-        -------
-        TESSSearch
-            TESSSearch object that contains a joint table of FFI info
         """
+        DEPRECATED
+        Returns a list of the FFIs available in a particular sector
 
-        query_criteria = {"project": "TESS", **extra_query_criteria}
-        query_criteria["provenance_name"] = "SPOC"
-        query_criteria["dataproduct_type"] = "image"
-
-        if sector is not None:
-            query_criteria["sequence_number"] = sector
-
-        ffi_obs = Observations.query_criteria(
-            objectname=self.target_search_string,
-            **query_criteria,
+        """
+        raise SearchDeprecationError(
+            "The search_sector_ffis method has been deprecated as astroquery no longer supports querying individual FFI files."
         )
-
-        ffi_products = Observations.get_product_list(ffi_obs)
-        # filter out uncalibrated FFIs & theoretical potential HLSP
-        prod_mask = ffi_products["calib_level"] == 2
-        ffi_products = ffi_products[prod_mask]
-
-        new_table = deepcopy(self)
-
-        # Unlike the other products, ffis don't map cleanly via obs_id as advertised, so we invert and add specific column info
-        new_table.obs_table = ffi_products.to_pandas()
-        new_table.obs_table["year"] = np.nan
-
-        new_table.prod_table = ffi_obs.to_pandas()
-        new_table.table = None
-
-        test_table = new_table._join_tables()
-        test_table.reset_index(inplace=True)
-        new_table.table = new_table._update_table(test_table)
-        new_table.table.reset_index(inplace=True)
-        new_table.table["target_name"] = new_table.obs_table["obs_id"]
-        new_table.table["obs_collection"] = ["TESS"] * len(new_table.table)
-        new_table.table["pipeline"] = [
-            new_table.prod_table["provenance_name"].values[0]
-        ] * len(new_table.table)
-        new_table.table["exptime"] = new_table.table["obs_id"].apply(
-            (lambda x: self._sector2ffiexptime(int(x.split("-")[1][1:])))
-        )
-        new_table.table["year"] = new_table.table["obs_id"].apply(
-            (lambda x: int(x.split("-")[0][4:8]))
-        )
-        new_table.table["sector"] = new_table.table["obs_id"].apply(
-            lambda x: int(x.split("-")[1][1:])
-        )
-        new_table.table["t_min"] = pd.NA * len(new_table.table)
-        new_table.table["t_max"] = pd.NA * len(new_table.table)
-
-        return new_table
 
     def filter_table(
         self,
