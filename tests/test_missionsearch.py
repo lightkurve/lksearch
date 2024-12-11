@@ -16,7 +16,6 @@ import pandas as pd
 from lksearch.utils import SearchError, SearchWarning, SearchDeprecationError
 from lksearch import MASTSearch, TESSSearch, KeplerSearch, K2Search
 from lksearch import conf
-import warnings
 
 
 def test_search_cubedata():
