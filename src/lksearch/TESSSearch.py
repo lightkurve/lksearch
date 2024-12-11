@@ -8,7 +8,8 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
-#from astropy.utils.decorators import deprecated
+
+# from astropy.utils.decorators import deprecated
 from astroquery.mast import Tesscut
 
 from tqdm import tqdm
@@ -289,15 +290,14 @@ class TESSSearch(MASTSearch):
         )
         self.table = df
 
-
     def search_sector_ffis(
         self,
         # tmin: Union[float, Time, tuple] = None,
         # tmax: Union[float, Time, tuple] = None,
         # search_radius: Union[float, u.Quantity] = 0.0001 * u.arcsec,
         # exptime: Union[str, int, tuple] = (0, 9999),
-         sector: Union[int, type[None]],  # = None,
-         **extra_query_criteria,
+        sector: Union[int, type[None]],  # = None,
+        **extra_query_criteria,
     ):
         """
         DEPRECATED
@@ -306,8 +306,7 @@ class TESSSearch(MASTSearch):
         """
         raise SearchDeprecationError(
             "The search_sector_ffis method has been deprecated as astroquery no longer supports querying individual FFI files."
-            )
-
+        )
 
     def filter_table(
         self,

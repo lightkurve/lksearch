@@ -15,7 +15,6 @@ class SearchWarning(Warning):
     pass
 
 
-
 class SearchDeprecationError(SearchError):
     """Class for all lksearch deprecation warnings."""
 
