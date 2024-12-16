@@ -112,6 +112,8 @@ Please include a self-contained example that fully demonstrates your problem or 
 
 Changelog:
 ==========
+v1.1.1
+  - Deprecated TESSSearch.search_sector_ffis due to changes in astroquery functionality
 v1.1.0
   - Added ability to query catalogs using the catalogsearch module. This includes:
     - querying vizier for a region for sources using query_region
@@ -122,7 +124,6 @@ v1.1.0
   - Broke previous tutorial doucmentation into multiple files:
     - mission-search focussed data-searches.ipynb
     - cloud-searches and configuration options in cloud-data-searches.ipynb
-  - Deprecated TESSSearch.search_sector_ffis due to changes in astroquery functionality
 v1.0.1
   - Now resolving target search strings with MastClass [#27]
 v1.0
