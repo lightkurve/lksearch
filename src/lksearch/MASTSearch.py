@@ -212,8 +212,11 @@ class MASTSearch(object):
         uris = self.table["dataURI"].values
 
         if conf.PREFER_CLOUD:
+            # Could optionally suppress warnings for no cloud data. Leave for now
+            #with warnings.catch_warnings():
+            #    warnings.filterwarnings("ignore", category=NoResultsWarning)
             cloud_uris = self.cloud_uris
-            mask = cloud_uris is not None
+            mask = pd.notna(cloud_uris)
             uris[mask] = cloud_uris[mask]
 
         return uris
@@ -534,10 +537,13 @@ class MASTSearch(object):
         logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
 
         Observations.enable_cloud_dataset()
-        cloud_uris = Observations.get_cloud_uris(
-            Table.from_pandas(joint_table.loc[pd.notna(joint_table["dataURI"])]),
-            full_url=True,
-        )
+
+        cloud_uris = [
+            Observations.get_cloud_uris(Table.from_pandas(joint_table[ii:ii+1]), full_url=True)[0] 
+            for ii in joint_table.loc[pd.notna(joint_table['dataURI'])].index
+            ]
+        
+
         joint_table.loc[pd.notna(joint_table["dataURI"]), "cloud_uri"] = cloud_uris
         return joint_table
 
