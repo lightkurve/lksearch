@@ -213,7 +213,7 @@ class MASTSearch(object):
 
         if conf.PREFER_CLOUD:
             # Could optionally suppress warnings for no cloud data. Leave for now
-            #with warnings.catch_warnings():
+            # with warnings.catch_warnings():
             #    warnings.filterwarnings("ignore", category=NoResultsWarning)
             cloud_uris = self.cloud_uris
             mask = pd.notna(cloud_uris)
@@ -539,10 +539,11 @@ class MASTSearch(object):
         Observations.enable_cloud_dataset()
 
         cloud_uris = [
-            Observations.get_cloud_uris(Table.from_pandas(joint_table[ii:ii+1]), full_url=True)[0] 
-            for ii in joint_table.loc[pd.notna(joint_table['dataURI'])].index
-            ]
-        
+            Observations.get_cloud_uris(
+                Table.from_pandas(joint_table[ii : ii + 1]), full_url=True
+            )[0]
+            for ii in joint_table.loc[pd.notna(joint_table["dataURI"])].index
+        ]
 
         joint_table.loc[pd.notna(joint_table["dataURI"]), "cloud_uri"] = cloud_uris
         return joint_table
