@@ -88,6 +88,17 @@ class TESSSearch(MASTSearch):
             self.mission_search = ["TESS"]
         else:
             self.mission_search = ["TESS", "HLSP"]
+        pipeline = np.atleast_1d(pipeline)
+
+        # Sending 'pipeline' to MASTSearch init causes a SearchError, so handle that separately
+        if (type(pipeline) is type(None)) or (
+            "tesscut" in [p.lower() for p in pipeline]
+        ):
+            add_tesscut = True
+            if pipeline:
+                pipeline = np.delete(
+                    pipeline, [p.lower() for p in pipeline].index("tesscut")
+                )
 
         super().__init__(
             target=target,
@@ -102,7 +113,7 @@ class TESSSearch(MASTSearch):
         )
 
         if table is None:
-            if ("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None)):
+            if add_tesscut:
                 self._add_tesscut_products(sector)
             self._add_TESS_mission_product()
             self._sort_TESS()
@@ -144,7 +155,7 @@ class TESSSearch(MASTSearch):
         return f"{target.group(2)}"
 
     def _add_TESS_mission_product(self):
-        """Determine whick products are HLSPs and which are mission products"""
+        """Determine which products are HLSPs and which are mission products"""
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "SPOC"] = True
         self.table["mission_product"] = mission_product
