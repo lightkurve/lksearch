@@ -126,8 +126,9 @@ class TESSSearch(MASTSearch):
         )
 
         if table is None:
-            # if table == None or [pself.search_pipelineadd_tesscut:
-            self._add_tesscut_products(sector)
+            # Do not append tesscut products if pipeline = 'TESScut' (it's already been done!)
+            if not obs_table:
+                self._add_tesscut_products(sector)
             self._add_TESS_mission_product()
             self._sort_TESS()
 
