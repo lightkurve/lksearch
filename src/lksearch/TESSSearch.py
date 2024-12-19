@@ -8,6 +8,7 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
+from astroquery.mast import MastClass
 
 # from astropy.utils.decorators import deprecated
 from astroquery.mast import Tesscut
@@ -88,14 +89,26 @@ class TESSSearch(MASTSearch):
             self.mission_search = ["TESS"]
         else:
             self.mission_search = ["TESS", "HLSP"]
-        pipeline = np.atleast_1d(pipeline)
+        if pipeline != None:
+            pipeline = np.atleast_1d(pipeline).tolist()
 
-        # Sending 'pipeline' to MASTSearch init causes a SearchError, so handle that separately
-        if (type(pipeline) is type(None)) or (
-            "tesscut" in [p.lower() for p in pipeline]
-        ):
-            add_tesscut = True
-            if pipeline:
+        # Sending 'tesscut' as a pipeline options returns a SearchError to the mast search
+        # If only tesscut is desired, we can just do the search on its own.
+        if isinstance(pipeline, list):
+            if [p.lower() for p in pipeline] == ["tesscut"]:
+                if isinstance(target, SkyCoord):
+                    self.target_search_string = f"{target.ra.deg}, {target.dec.deg}"
+                    self.SkyCoord = target
+                elif isinstance(target, tuple):
+                    self.target_search_string = f"{target[0]}, {target[1]}"
+                    self.SkyCoord = SkyCoord(*target, frame="icrs", unit="deg")
+                elif isinstance(target, str):
+                    self.SkyCoord = MastClass().resolve_object(target)
+                    self.target_search_string = (
+                        f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
+                    )
+                obs_table = self._get_tesscut_info(sector_list=sector)
+            if "tesscut" in [p.lower() for p in pipeline]:
                 pipeline = np.delete(
                     pipeline, [p.lower() for p in pipeline].index("tesscut")
                 )
@@ -113,8 +126,8 @@ class TESSSearch(MASTSearch):
         )
 
         if table is None:
-            if add_tesscut:
-                self._add_tesscut_products(sector)
+            # if table == None or [pself.search_pipelineadd_tesscut:
+            self._add_tesscut_products(sector)
             self._add_TESS_mission_product()
             self._sort_TESS()
 
