@@ -95,9 +95,10 @@ class TESSSearch(MASTSearch):
             "tesscut" in [p.lower() for p in pipeline]
         ):
             add_tesscut = True
-            pipeline = np.delete(
-                pipeline, [p.lower() for p in pipeline].index("tesscut")
-            )
+            if pipeline:
+                pipeline = np.delete(
+                    pipeline, [p.lower() for p in pipeline].index("tesscut")
+                )
 
         super().__init__(
             target=target,
