@@ -94,10 +94,9 @@ class TESSSearch(MASTSearch):
 
         # Sending 'tesscut' as a pipeline options returns a SearchError to the mast search
         # If only tesscut is desired, we can just do the search on its own.
-        add_tesscut = False
+        add_tesscut = True
         if isinstance(pipeline, list):
             if "tesscut" in [p.lower() for p in pipeline]:
-                add_tesscut = True
                 # If only tesscut is requested, we can skip the regular MAST search
                 if [p.lower() for p in pipeline] == ["tesscut"]:
                     log.debug(f"Only performing TESScut search")
@@ -121,6 +120,9 @@ class TESSSearch(MASTSearch):
                 pipeline = np.delete(
                     pipeline, [p.lower() for p in pipeline].index("tesscut")
                 )
+            else:
+                # If pipeline is a list without 'tesscut', don't add it.
+                add_tesscut = False
 
         super().__init__(
             target=target,
