@@ -440,9 +440,12 @@ def test_FFI_retrieval():
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     results = TESSSearch("Kepler 16b", hlsp=False, sector=14)
+    results2 = TESSSearch("Kepler 16b", pipeline="TESScut", sector=14)
     assert len(results) == 12
     assert len(results.cubedata) == 2
-    manifest = results.cubedata[1].download()
+    assert len(results.tesscut) == 1
+    assert len(results.tesscut) == len(results2)
+    manifest = results.tesscut.download()
     assert len(manifest) == 1
 
 
@@ -548,9 +551,9 @@ def test_filter():
 def test_tess_clouduris():
     """regression test - do tesscut/nan's in dataURI column break cloud uri fetching"""
     toi = TESSSearch("TOI 1161", sector=14)
-    # 17 products should be returned
+    # 20 products should be returned
     assert len(toi.cloud_uris) == 20
-    # 5 of them should have cloud uris
+    # 6 of them should have cloud uris
     assert np.sum((toi.cloud_uris.values != None).astype(int)) == 6
 
 

@@ -106,7 +106,11 @@ class MASTSearch(object):
 
         self.target = target
 
-        if isinstance(table, type(None)):
+        if (
+            isinstance(table, type(None))
+            and isinstance(obs_table, type(None))
+            and isinstance(prod_table, type(None))
+        ):
             self._searchtable_from_target(target)
             self.table = self._fix_table_times(self.table)
 
@@ -320,15 +324,15 @@ class MASTSearch(object):
         # see if function was passed a joint table
         if isinstance(table, pd.DataFrame):
             self.table = table
-
         # If we don't have a name or a joint table,
         # check to see if tables were passed
+
         elif isinstance(obs_table, pd.DataFrame):
             # If we have an obs table and no name, use it
             self.obs_table = obs_table
             if isinstance(prod_table, type(None)):
                 # get the prod table if we don't have it
-                prod_table = self._search_products(self)
+                prod_table = self._search_prod()
             self.prod_table = prod_table
             self.table = self._join_tables()
         else:
