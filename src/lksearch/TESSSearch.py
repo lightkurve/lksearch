@@ -19,7 +19,7 @@ from copy import deepcopy
 
 from .MASTSearch import MASTSearch
 from . import conf, config, log
-from .utils import SearchDeprecationError
+from .utils import SearchDeprecationError, table_keys
 
 PREFER_CLOUD = conf.PREFER_CLOUD
 DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
@@ -94,21 +94,30 @@ class TESSSearch(MASTSearch):
 
         # Sending 'tesscut' as a pipeline options returns a SearchError to the mast search
         # If only tesscut is desired, we can just do the search on its own.
+        add_tesscut = False
         if isinstance(pipeline, list):
-            if [p.lower() for p in pipeline] == ["tesscut"]:
-                if isinstance(target, SkyCoord):
-                    self.target_search_string = f"{target.ra.deg}, {target.dec.deg}"
-                    self.SkyCoord = target
-                elif isinstance(target, tuple):
-                    self.target_search_string = f"{target[0]}, {target[1]}"
-                    self.SkyCoord = SkyCoord(*target, frame="icrs", unit="deg")
-                elif isinstance(target, str):
-                    self.SkyCoord = MastClass().resolve_object(target)
-                    self.target_search_string = (
-                        f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
-                    )
-                obs_table = self._get_tesscut_info(sector_list=sector)
             if "tesscut" in [p.lower() for p in pipeline]:
+                add_tesscut = True
+                # If only tesscut is requested, we can skip the regular MAST search
+                if [p.lower() for p in pipeline] == ["tesscut"]:
+                    log.debug(f"Only performing TESScut search")
+                    if isinstance(target, SkyCoord):
+                        self.target_search_string = f"{target.ra.deg}, {target.dec.deg}"
+                        self.SkyCoord = target
+                    elif isinstance(target, tuple):
+                        self.target_search_string = f"{target[0]}, {target[1]}"
+                        self.SkyCoord = SkyCoord(*target, frame="icrs", unit="deg")
+                    elif isinstance(target, str):
+                        self.SkyCoord = MastClass().resolve_object(target)
+                        self.target_search_string = (
+                            f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
+                        )
+                    tcut = self._get_tesscut_info(sector_list=sector)
+                    # Make a df with the same keys as would be returned by the MAST search
+                    mask = [i not in tcut.keys() for i in table_keys]
+                    empty_df = pd.DataFrame(columns=table_keys[mask])
+                    table = pd.concat([empty_df, tcut], axis=1)
+                    add_tesscut = False
                 pipeline = np.delete(
                     pipeline, [p.lower() for p in pipeline].index("tesscut")
                 )
@@ -125,12 +134,11 @@ class TESSSearch(MASTSearch):
             sequence=sector,
         )
 
-        if table is None:
+        if add_tesscut:
             # Do not append tesscut products if pipeline = 'TESScut' (it's already been done!)
-            if not obs_table:
-                self._add_tesscut_products(sector)
-            self._add_TESS_mission_product()
-            self._sort_TESS()
+            self._add_tesscut_products(sector)
+        self._add_TESS_mission_product()
+        self._sort_TESS()
 
     @property
     def HLSPs(self):
