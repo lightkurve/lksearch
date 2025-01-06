@@ -2,6 +2,7 @@
 
 import os
 import pytest
+from time import time
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 import numpy as np
@@ -574,3 +575,37 @@ def test_tess_return_clouduri_not_download():
     mask = toi.timeseries.pipeline == "SPOC"
     lc_man = toi.timeseries[mask].download()
     assert lc_man["Local Path"][0][0:5] == "s3://"
+
+
+def test_cached_files_no_filesize_check():
+    """Test to see if turning off the file size check results in a faster return."""
+
+    conf.reload()
+    conf.CHECK_CACHED_FILE_SIZES = True
+    sr = KeplerSearch("Kepler-10", exptime=1800, quarter=1).timeseries
+
+    # Download file once, shouldn't be cached, should be longest DL time
+    start = time()
+    sr.download(cloud=False, cache=False)
+    dur1 = time() - start
+    # Download second time, ensure it's in the cache
+    sr.download(cloud=False, cache=True)
+
+    # Download third time, check against cache, should be slow
+    start = time()
+    sr.download(cloud=False, cache=True)
+    dur2 = time() - start
+
+    # Getting the cached data should be faster
+    assert dur2 < dur1
+
+    # Set no file size checking, should be fastest.
+    conf.CHECK_CACHED_FILE_SIZES = True
+
+    # Download third time, check against cache, should be slow
+    start = time()
+    sr.download(cloud=False, cache=True)
+    dur3 = time() - start
+
+    # This should be the fastest time
+    assert dur3 < dur2
