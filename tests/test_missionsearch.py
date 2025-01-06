@@ -3,6 +3,8 @@
 import os
 import pytest
 from time import time
+import socket
+from contextlib import contextmanager
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 import numpy as np
@@ -580,32 +582,41 @@ def test_tess_return_clouduri_not_download():
 def test_cached_files_no_filesize_check():
     """Test to see if turning off the file size check results in a faster return."""
 
+    @contextmanager
+    def monitor_socket():
+        original_socket = socket.socket
+
+        class WrappedSocket(original_socket):
+            def connect(self, address):
+                print(f"Network call to: {address}")
+                raise RuntimeError("Function uses internet access.")
+
+        socket.socket = WrappedSocket
+        try:
+            yield
+        finally:
+            socket.socket = original_socket
+
     conf.reload()
-    conf.CHECK_CACHED_FILE_SIZES = True
     sr = KeplerSearch("Kepler-10", exptime=1800, quarter=1).timeseries
 
-    # Download file once, shouldn't be cached, should be longest DL time
-    start = time()
-    sr.download(cloud=False, cache=False)
-    dur1 = time() - start
-    # Download second time, ensure it's in the cache
+    # ensure file is in the cache
     sr.download(cloud=False, cache=True)
 
-    # Download third time, check against cache, should be slow
-    start = time()
-    sr.download(cloud=False, cache=True)
-    dur2 = time() - start
-
-    # Getting the cached data should be faster
-    assert dur2 < dur1
-
-    # Set no file size checking, should be fastest.
+    # if CHECK_CACHED_FILE_SIZES is True, this should check the internet for file size
+    # this should result in a RuntimeError
     conf.CHECK_CACHED_FILE_SIZES = True
+    with pytest.raises(RuntimeError):
+        with monitor_socket():
+            sr.download(cloud=False, cache=True)
 
-    # Download third time, check against cache, should be slow
-    start = time()
-    sr.download(cloud=False, cache=True)
-    dur3 = time() - start
-
-    # This should be the fastest time
-    assert dur3 < dur2
+    # if CHECK_CACHED_FILE_SIZES is False, this should NOT check the internet for file size
+    # this should NOT result in a RuntimeError
+    conf.CHECK_CACHED_FILE_SIZES = False
+    try:
+        with monitor_socket():
+            sr.download(cloud=False, cache=True)
+    except RuntimeError:
+        pytest.fail(
+            "`CHECK_CACHED_FILE_SIZES` set to `False` still results in a file size check."
+        )
