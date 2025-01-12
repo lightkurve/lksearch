@@ -14,13 +14,28 @@ def test_id_query():
     assert len(tic_result) == 1
     assert tic_result["TIC"].values == tic
 
+    tic = 299096513
+    tic_result = query_id(tic, output_catalog="TIC")
+    assert len(tic_result) == 1
+    assert tic_result["TIC"].values == tic
+
     kic = 12644769
     kic_result = query_id(kic, output_catalog="kic")
     assert len(kic_result) == 1
     assert kic_result["KIC"].values == kic
 
+    kic = 12644769
+    kic_result = query_id(kic, output_catalog="KIC")
+    assert len(kic_result) == 1
+    assert kic_result["KIC"].values == kic
+
     epic = 201563164
     epic_result = query_id(epic, output_catalog="epic")
+    assert len(epic_result) == 1
+    assert epic_result["ID"].values == epic
+
+    epic = 201563164
+    epic_result = query_id(epic, output_catalog="EPIC")
     assert len(epic_result) == 1
     assert epic_result["ID"].values == epic
 
@@ -55,10 +70,10 @@ def test_name_disambiguation():
     assert name_disambiguation(f"ktwo {epic}", "ID", epic)
 
     gaiadr3 = 2133452475178900736
-    assert name_disambiguation(f"gaiadr3 {gaiadr3 }", "Source", gaiadr3)
+    assert name_disambiguation(f"gaiadr3 {gaiadr3}", "Source", gaiadr3)
     assert name_disambiguation(f"gaiadr3{gaiadr3}", "Source", gaiadr3)
-    assert name_disambiguation(f"GAIA{gaiadr3 }", "Source", gaiadr3)
-    assert name_disambiguation(f"GAIA {gaiadr3 }", "Source", gaiadr3)
+    assert name_disambiguation(f"GAIA{gaiadr3}", "Source", gaiadr3)
+    assert name_disambiguation(f"GAIA {gaiadr3}", "Source", gaiadr3)
 
 
 def test_lists():
