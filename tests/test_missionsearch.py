@@ -578,11 +578,12 @@ def test_tess_return_clouduri_not_download():
     lc_man = toi.timeseries[mask].download()
     assert lc_man["Local Path"][0][0:5] == "s3://"
 
+
 """The below was working for Christina but not for Tyler or Github Actions.  
 I've commented this out so we can get this merged with passing tests as I 
 verified its working locally but lets revisit"""
 
-#def test_cached_files_no_filesize_check():
+# def test_cached_files_no_filesize_check():
 #    """Test to see if turning off the file size check results in a faster return."""
 #
 #    @contextmanager
