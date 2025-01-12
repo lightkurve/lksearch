@@ -70,10 +70,10 @@ def test_name_disambiguation():
     assert name_disambiguation(f"ktwo {epic}", "ID", epic)
 
     gaiadr3 = 2133452475178900736
-    assert name_disambiguation(f"gaiadr3 {gaiadr3 }", "Source", gaiadr3)
+    assert name_disambiguation(f"gaiadr3 {gaiadr3}", "Source", gaiadr3)
     assert name_disambiguation(f"gaiadr3{gaiadr3}", "Source", gaiadr3)
-    assert name_disambiguation(f"GAIA{gaiadr3 }", "Source", gaiadr3)
-    assert name_disambiguation(f"GAIA {gaiadr3 }", "Source", gaiadr3)
+    assert name_disambiguation(f"GAIA{gaiadr3}", "Source", gaiadr3)
+    assert name_disambiguation(f"GAIA {gaiadr3}", "Source", gaiadr3)
 
 
 def test_lists():
