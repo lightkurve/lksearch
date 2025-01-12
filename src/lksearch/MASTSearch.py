@@ -216,8 +216,11 @@ class MASTSearch(object):
         uris = self.table["dataURI"].values
 
         if conf.PREFER_CLOUD:
+            # Could optionally suppress warnings for no cloud data. Leave for now
+            # with warnings.catch_warnings():
+            #    warnings.filterwarnings("ignore", category=NoResultsWarning)
             cloud_uris = self.cloud_uris
-            mask = cloud_uris is not None
+            mask = pd.notna(cloud_uris)
             uris[mask] = cloud_uris[mask]
 
         return uris
@@ -538,10 +541,14 @@ class MASTSearch(object):
         logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
 
         Observations.enable_cloud_dataset()
-        cloud_uris = Observations.get_cloud_uris(
-            Table.from_pandas(joint_table.loc[pd.notna(joint_table["dataURI"])]),
-            full_url=True,
-        )
+
+        cloud_uris = [
+            Observations.get_cloud_uris(
+                Table.from_pandas(joint_table[ii : ii + 1]), full_url=True
+            )[0]
+            for ii in joint_table.loc[pd.notna(joint_table["dataURI"])].index
+        ]
+
         joint_table.loc[pd.notna(joint_table["dataURI"]), "cloud_uri"] = cloud_uris
         return joint_table
 
@@ -1116,6 +1123,28 @@ class MASTSearch(object):
         # check to see if a cloud_uri exists, if so we just pass that
 
         download = True
+        if not conf.CHECK_CACHED_FILE_SIZES:
+            # If this configuration parameter is set and the file exists
+            # in the cache, we do not search for it
+            local_path = "/".join(
+                [
+                    config.get_cache_dir(),
+                    "mastDownload",
+                    row["obs_collection"],
+                    row["obs_id"],
+                    row["productFilename"],
+                ]
+            )
+            if os.path.isfile(local_path):
+                manifest = pd.DataFrame(
+                    {
+                        "Local Path": [local_path],
+                        "Status": ["UNKNOWN"],
+                        "Message": [None],
+                        "URL": [None],
+                    }
+                )
+                return manifest
         if not conf.DOWNLOAD_CLOUD:
             if pd.notna(row["cloud_uri"]):
                 download = False
@@ -1193,18 +1222,19 @@ class MASTSearch(object):
         ]
 
         manifest = pd.concat(manifest)
-        status = manifest["Status"] != "COMPLETE"
-        if np.any(status):
-            warnings.warn(
-                "Not All Files Downloaded Successfully, Check Returned Manifest.",
-                SearchWarning,
-            )
-            if remove_incomplete:
-                for file in manifest.loc[status]["Local Path"].values:
-                    if os.path.isfile(file):
-                        os.remove(file)
-                        warnings.warn(f"Removed {file}", SearchWarning)
-                    else:
-                        warnings.warn(f"Not a file: {file}", SearchWarning)
-        manifest = manifest.reset_index(drop=True)
+        if conf.CHECK_CACHED_FILE_SIZES:
+            status = manifest["Status"] != "COMPLETE"
+            if np.any(status):
+                warnings.warn(
+                    "Not All Files Downloaded Successfully, Check Returned Manifest.",
+                    SearchWarning,
+                )
+                if remove_incomplete:
+                    for file in manifest.loc[status]["Local Path"].values:
+                        if os.path.isfile(file):
+                            os.remove(file)
+                            warnings.warn(f"Removed {file}", SearchWarning)
+                        else:
+                            warnings.warn(f"Not a file: {file}", SearchWarning)
+            manifest = manifest.reset_index(drop=True)
         return manifest
