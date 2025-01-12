@@ -8,6 +8,7 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
+from astroquery.mast import MastClass
 
 # from astropy.utils.decorators import deprecated
 from astroquery.mast import Tesscut
@@ -18,7 +19,7 @@ from copy import deepcopy
 
 from .MASTSearch import MASTSearch
 from . import conf, config, log
-from .utils import SearchDeprecationError
+from .utils import SearchDeprecationError, table_keys
 
 PREFER_CLOUD = conf.PREFER_CLOUD
 DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
@@ -88,6 +89,40 @@ class TESSSearch(MASTSearch):
             self.mission_search = ["TESS"]
         else:
             self.mission_search = ["TESS", "HLSP"]
+        if pipeline != None:
+            pipeline = np.atleast_1d(pipeline).tolist()
+
+        # Sending 'tesscut' as a pipeline options returns a SearchError to the mast search
+        # If only tesscut is desired, we can just do the search on its own.
+        add_tesscut = True
+        if isinstance(pipeline, list):
+            if "tesscut" in [p.lower() for p in pipeline]:
+                # If only tesscut is requested, we can skip the regular MAST search
+                if [p.lower() for p in pipeline] == ["tesscut"]:
+                    log.debug(f"Only performing TESScut search")
+                    if isinstance(target, SkyCoord):
+                        self.target_search_string = f"{target.ra.deg}, {target.dec.deg}"
+                        self.SkyCoord = target
+                    elif isinstance(target, tuple):
+                        self.target_search_string = f"{target[0]}, {target[1]}"
+                        self.SkyCoord = SkyCoord(*target, frame="icrs", unit="deg")
+                    elif isinstance(target, str):
+                        self.SkyCoord = MastClass().resolve_object(target)
+                        self.target_search_string = (
+                            f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
+                        )
+                    tcut = self._get_tesscut_info(sector_list=sector)
+                    # Make a df with the same keys as would be returned by the MAST search
+                    mask = [i not in tcut.keys() for i in table_keys]
+                    empty_df = pd.DataFrame(columns=table_keys[mask])
+                    table = pd.concat([empty_df, tcut], axis=1)
+                    add_tesscut = False
+                pipeline = np.delete(
+                    pipeline, [p.lower() for p in pipeline].index("tesscut")
+                )
+            else:
+                # If pipeline is a list without 'tesscut', don't add it.
+                add_tesscut = False
 
         super().__init__(
             target=target,
@@ -101,11 +136,11 @@ class TESSSearch(MASTSearch):
             sequence=sector,
         )
 
-        if table is None:
-            if ("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None)):
-                self._add_tesscut_products(sector)
-            self._add_TESS_mission_product()
-            self._sort_TESS()
+        if add_tesscut:
+            # Do not append tesscut products if pipeline = 'TESScut' (it's already been done!)
+            self._add_tesscut_products(sector)
+        self._add_TESS_mission_product()
+        self._sort_TESS()
 
     @property
     def HLSPs(self):
@@ -144,7 +179,7 @@ class TESSSearch(MASTSearch):
         return f"{target.group(2)}"
 
     def _add_TESS_mission_product(self):
-        """Determine whick products are HLSPs and which are mission products"""
+        """Determine which products are HLSPs and which are mission products"""
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "SPOC"] = True
         self.table["mission_product"] = mission_product
