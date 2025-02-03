@@ -1131,7 +1131,7 @@ class MASTSearch(object):
         # If so - cloud_uris should have already been queried - in that case
         # check to see if a cloud_uri exists, if so we just pass that
 
-        skip_download = np.zeros_like(self.table.obs_id).astype(dtype=bool)
+        skip_download = np.zeros(len(self.table.obs_id), dtype=bool)
         cloud_manifest = None
         local_manifest = None
         download_manifest = None
