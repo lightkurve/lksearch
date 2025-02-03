@@ -580,7 +580,7 @@ def test_tess_return_clouduri_not_download():
 
 
 def test_cached_files_no_filesize_check():
-    """Test if turning off the file size check return the expected manigest"""
+    """Test if turning off the file size check return the expected manifest"""
 
     # reload the config, set download_cloud = False
     toi = TESSSearch("TOI 1161", sector=14).timeseries
