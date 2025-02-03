@@ -90,7 +90,6 @@ class TESSSearch(MASTSearch):
         else:
             self.mission_search = ["TESS", "HLSP"]
 
-
         super().__init__(
             target=target,
             mission=self.mission_search,
