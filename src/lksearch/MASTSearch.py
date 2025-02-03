@@ -1119,7 +1119,7 @@ class MASTSearch(object):
     ) -> pd.DataFrame:
         """Helper function that downloads an entire table via astroquery.
         This will require internet access and check file sizes against MAST
-        to validate completeness if the conf.CHECK_CACHED_FILE_SIZES is not set.
+        to validate completeness, unless conf.CHECK_CACHED_FILE_SIZES is `False`
         """
 
         # Make sure astroquery uses the same level of verbosity
