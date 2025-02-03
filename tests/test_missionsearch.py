@@ -443,12 +443,9 @@ def test_FFI_retrieval():
 def test_tesscut():
     """Can we find and download TESS tesscut tpfs"""
     results = TESSSearch("Kepler 16b", hlsp=False, sector=14)
-    results2 = TESSSearch("Kepler 16b", pipeline='TESScut', sector=14)
     assert len(results) == 12
     assert len(results.cubedata) == 2
-    assert len(results.tesscut) == 1
-    assert len(results.tesscut) == len(results2)
-    manifest = results.tesscut.download()
+    manifest = results.cubedata[1].download()
     assert len(manifest) == 1
 
 

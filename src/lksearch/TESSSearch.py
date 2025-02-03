@@ -94,7 +94,7 @@ class TESSSearch(MASTSearch):
 
 
         # Sending 'pipeline' to MASTSearch init causes a SearchError, so handle that separately
-        if (type(pipeline) is type(None)) or ("tesscut" in [p.lower() for p in pipeline]) :
+        if "tesscut" in [p.lower() for p in pipeline] or (type(pipeline) is type(None)):
             add_tesscut = True
             pipeline = np.delete(
                 pipeline, [p.lower() for p in pipeline].index("tesscut")
