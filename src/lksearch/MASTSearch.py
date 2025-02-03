@@ -1137,7 +1137,7 @@ class MASTSearch(object):
         download_manifest = None
 
         if not conf.CHECK_CACHED_FILE_SIZES:
-            # If this configuration parameter is set and the file exists
+            # If this configuration parameter is `False` and the file exists
             # in the cache, we do not search for it
             files_in_cache, local_paths = self._check_local_cache()
 
