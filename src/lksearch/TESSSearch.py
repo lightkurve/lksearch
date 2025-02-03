@@ -92,26 +92,15 @@ class TESSSearch(MASTSearch):
         if pipeline != None:
             pipeline = np.atleast_1d(pipeline).tolist()
 
-        # Sending 'tesscut' as a pipeline options returns a SearchError to the mast search
-        # If only tesscut is desired, we can just do the search on its own.
-        if isinstance(pipeline, list):
-            if [p.lower() for p in pipeline] == ["tesscut"]:
-                if isinstance(target, SkyCoord):
-                    self.target_search_string = f"{target.ra.deg}, {target.dec.deg}"
-                    self.SkyCoord = target
-                elif isinstance(target, tuple):
-                    self.target_search_string = f"{target[0]}, {target[1]}"
-                    self.SkyCoord = SkyCoord(*target, frame="icrs", unit="deg")
-                elif isinstance(target, str):
-                    self.SkyCoord = MastClass().resolve_object(target)
-                    self.target_search_string = (
-                        f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
-                    )
-                obs_table = self._get_tesscut_info(sector_list=sector)
-            if "tesscut" in [p.lower() for p in pipeline]:
-                pipeline = np.delete(
-                    pipeline, [p.lower() for p in pipeline].index("tesscut")
-                )
+
+        # Sending 'pipeline' to MASTSearch init causes a SearchError, so handle that separately
+        if (type(pipeline) is type(None)) or (
+            "tesscut" in [p.lower() for p in pipeline]
+        ):
+            add_tesscut = True
+            pipeline = np.delete(
+                pipeline, [p.lower() for p in pipeline].index("tesscut")
+            )
 
         super().__init__(
             target=target,
