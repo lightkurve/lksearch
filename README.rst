@@ -112,6 +112,12 @@ Please include a self-contained example that fully demonstrates your problem or 
 
 Changelog:
 ==========
+v1.2.0
+  - Made the catalogsearch functions case-insensitive[#38]
+  - Added `CHECK_CACHED_FILE_SIZES` configuration parameter, which on download allows local checking of cached files without a remote file-size check[#34][#38]
+  - Refactored `~lksearch.MastSearch.download` function to only call `~astroquery.mast.Observations.download` once 
+    - This results in a modest speedup O(N), particularly for files in the local cache when `CHECK_CACHED_FILE_SIZES` is `True`.  
+  - Updated tests, documentation for the new features
 v1.1.1
   - Deprecated TESSSearch.search_sector_ffis due to changes in astroquery functionality
 v1.1.0

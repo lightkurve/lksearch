@@ -555,9 +555,9 @@ def test_tess_clouduris():
     """regression test - do tesscut/nan's in dataURI column break cloud uri fetching"""
     toi = TESSSearch("TOI 1161", sector=14)
     # 20 products should be returned
-    assert len(toi.cloud_uris) == 20
+    assert len(toi.cloud_uri) == 20
     # 6 of them should have cloud uris
-    assert np.sum((toi.cloud_uris.values != None).astype(int)) == 6
+    assert np.sum((toi.cloud_uri.values != None).astype(int)) == 6
 
 
 def test_tess_return_clouduri_not_download():
@@ -570,7 +570,7 @@ def test_tess_return_clouduri_not_download():
     # Try to download a file without a S3 bucket, and one with
     # Search for TESS data only. This by default includes both HLSPs and FFI cutouts.
     toi = TESSSearch("TOI 1161", sector=14)
-    uris = toi.dvreports.cloud_uris
+    uris = toi.dvreports.cloud_uri
     not_cloud = pd.isna(uris)
     # A DV Report is not on the cloud - this should still get downloaded locally
     dvr = toi.dvreports[not_cloud]
@@ -578,8 +578,26 @@ def test_tess_return_clouduri_not_download():
     assert os.path.isfile(dvr_man["Local Path"][0])
     # A SPOC TPF is on the cloud, this should return a S3 bucket
     mask = toi.timeseries.pipeline == "SPOC"
-    lc_man = toi.timeseries[mask].download()
-    assert lc_man["Local Path"][0][0:5] == "s3://"
+    lc_man = toi.timeseries[mask][0].download()
+    assert lc_man["Local Path"][0].str.startswith("s3://").values
+
+
+def test_cached_files_no_filesize_check():
+    """Test if turning off the file size check return the expected manigest"""
+
+    # reload the config, set download_cloud = False
+    toi = TESSSearch("TOI 1161", sector=14).timeseries
+    file = toi.timeseries[toi.timeseries.pipeline == "SPOC"][0]
+
+    conf.reload()
+    conf.CHECK_CACHED_FILE_SIZES = True
+    manifest = file.download()
+    assert manifest["Status"].str.contains("COMPLETE").values
+
+    conf.reload()
+    conf.CHECK_CACHED_FILE_SIZES = False
+    manifest = file.download()
+    assert manifest["Status"].str.contains("UNKNOWN").values
 
 
 """The below was working for Christina but not for Tyler or Github Actions.  

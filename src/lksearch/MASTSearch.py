@@ -219,14 +219,14 @@ class MASTSearch(object):
             # Could optionally suppress warnings for no cloud data. Leave for now
             # with warnings.catch_warnings():
             #    warnings.filterwarnings("ignore", category=NoResultsWarning)
-            cloud_uris = self.cloud_uris
+            cloud_uris = self.cloud_uri
             mask = pd.notna(cloud_uris)
             uris[mask] = cloud_uris[mask]
 
         return uris
 
     @property
-    def cloud_uris(self):
+    def cloud_uri(self):
         """Returns the cloud uris for products in self.table.
         Returns
         -------
@@ -1100,17 +1100,30 @@ class MASTSearch(object):
         else:
             return self._mask(mask)
 
+    def _check_local_cache(self):
+        local_paths = [
+            "/".join(
+                [config.get_cache_dir(), "mastDownload", obs_col, obs_id, prodFile]
+            )
+            for obs_col, obs_id, prodFile in zip(
+                self.table["obs_collection"],
+                self.table["obs_id"],
+                self.table["productFilename"],
+            )
+        ]
+        files_exist = [os.path.isfile(path) for path in local_paths]
+        return files_exist, np.array(local_paths, dtype=str)
+
     @suppress_stdout
-    def _download_one(
+    def _download_bulk(
         self,
-        row: pd.Series,
         cloud_only: bool = False,
         cache: bool = True,
         download_dir: str = ".",
     ) -> pd.DataFrame:
-        """Helper function that downloads an individual row.
-        This may be more efficient if we are caching, but we can sent a full table
-        to download_products to get multiple items.
+        """Helper function that downloads an entire table via astroquery.
+        This will require internet access and check file sizes against MAST
+        to validate completeness if the conf.CHECK_CACHED_FILE_SIZES is not set.
         """
 
         # Make sure astroquery uses the same level of verbosity
@@ -1119,53 +1132,64 @@ class MASTSearch(object):
 
         # We don't want to query cloud_uri if we don't have to
         # First check to see if we're not downloading on a cloud platform
-        # If not - cloud_uris should have already been queried - in that case
+        # If so - cloud_uris should have already been queried - in that case
         # check to see if a cloud_uri exists, if so we just pass that
 
-        download = True
+        skip_download = np.zeros_like(self.table.obs_id).astype(dtype=bool)
+        cloud_manifest = None
+        local_manifest = None
+        download_manifest = None
+
         if not conf.CHECK_CACHED_FILE_SIZES:
             # If this configuration parameter is set and the file exists
             # in the cache, we do not search for it
-            local_path = "/".join(
-                [
-                    config.get_cache_dir(),
-                    "mastDownload",
-                    row["obs_collection"],
-                    row["obs_id"],
-                    row["productFilename"],
-                ]
-            )
-            if os.path.isfile(local_path):
-                manifest = pd.DataFrame(
+            files_in_cache, local_paths = self._check_local_cache()
+
+            skip_download = skip_download | files_in_cache
+
+            if any(files_in_cache):
+                local_manifest = pd.DataFrame(
                     {
-                        "Local Path": [local_path],
+                        "Local Path": local_paths[files_in_cache],
                         "Status": ["UNKNOWN"],
-                        "Message": [None],
+                        "Message": [
+                            "File exists in local cache, has not been validated for integrity"
+                        ],
                         "URL": [None],
-                    }
+                    },
+                    index=self.table.index[files_in_cache],
                 )
-                return manifest
+
         if not conf.DOWNLOAD_CLOUD:
-            if pd.notna(row["cloud_uri"]):
-                download = False
-        if conf.DOWNLOAD_CLOUD or download:
-            manifest = Observations.download_products(
-                Table().from_pandas(row.to_frame(name=" ").transpose()),
+            cloud_uri_exists = self.table["cloud_uri"].notna()
+            skip_download = skip_download | cloud_uri_exists
+            if cloud_uri_exists.any():
+                cloud_manifest = pd.DataFrame(
+                    {
+                        "Local Path": [self.table.loc[cloud_uri_exists]["cloud_uri"]],
+                        "Status": ["COMPLETE"],
+                        "Message": ["Link to S3 bucket for remote read"],
+                        "URL": [None],
+                    },
+                    index=self.table.index[cloud_uri_exists],
+                )
+
+        if any(~skip_download):
+            download_manifest = Observations.download_products(
+                Table().from_pandas(self.table[~skip_download]),
                 download_dir=download_dir,
                 cache=cache,
                 cloud_only=cloud_only,
             )
-            manifest = manifest.to_pandas()
-        else:
-            manifest = pd.DataFrame(
-                {
-                    "Local Path": [row["cloud_uri"]],
-                    "Status": ["COMPLETE"],
-                    "Message": ["Link to S3 bucket for remote read"],
-                    "URL": [None],
-                }
-            )
+            download_manifest = download_manifest.to_pandas()
+            download_manifest.index = self.table.index[~skip_download]
 
+        manifest_list = [
+            item
+            for item in [local_manifest, cloud_manifest, download_manifest]
+            if item is not None
+        ]
+        manifest = pd.concat(manifest_list)
         return manifest
 
     def download(
@@ -1212,16 +1236,8 @@ class MASTSearch(object):
         if (not conf.DOWNLOAD_CLOUD) and ("cloud_uri" not in self.table.columns):
             self.table = self._add_s3_url_column(self.table)
 
-        manifest = [
-            self._download_one(row, cloud_only, cache, download_dir)
-            for _, row in tqdm(
-                self.table.iterrows(),
-                total=self.table.shape[0],
-                desc="Downloading products",
-            )
-        ]
+        manifest = self._download_bulk(cloud_only, cache, download_dir)
 
-        manifest = pd.concat(manifest)
         if conf.CHECK_CACHED_FILE_SIZES:
             status = manifest["Status"] != "COMPLETE"
             if np.any(status):
