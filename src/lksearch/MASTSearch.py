@@ -1110,8 +1110,8 @@ class MASTSearch(object):
         files_exist = [os.path.isfile(path) for path in local_paths]
         return files_exist, np.array(local_paths, dtype=str)
 
-    @suppress_stdout
-    def _download_bulk(
+    # @suppress_stdout
+    def _download_manifest(
         self,
         cloud_only: bool = False,
         cache: bool = True,
@@ -1131,61 +1131,83 @@ class MASTSearch(object):
         # If so - cloud_uris should have already been queried - in that case
         # check to see if a cloud_uri exists, if so we just pass that
 
-        skip_download = np.zeros(len(self.table.obs_id), dtype=bool)
+        files_to_check = np.ones(len(self.table.obs_id), dtype=bool)
         cloud_manifest = None
         local_manifest = None
         download_manifest = None
+
+        if not conf.DOWNLOAD_CLOUD:
+            cloud_uri_exists = self.table["cloud_uri"].notna()
+
+            if cloud_uri_exists.any():
+                items = self.table.loc[cloud_uri_exists & files_to_check][
+                    "cloud_uri"
+                ].values
+                cloud_manifest = pd.DataFrame(
+                    {
+                        "Local Path": np.atleast_1d(items),
+                        "Status": ["COMPLETE"],
+                        "Message": ["Link to S3 bucket for remote read"],
+                        "URL": [None],
+                    },
+                    index=self.table.index[cloud_uri_exists & files_to_check],
+                )
+            files_to_check = files_to_check & ~(files_to_check & cloud_uri_exists)
 
         if not conf.CHECK_CACHED_FILE_SIZES:
             # If this configuration parameter is `False` and the file exists
             # in the cache, we do not search for it
             files_in_cache, local_paths = self._check_local_cache()
 
-            skip_download = skip_download | files_in_cache
-
             if any(files_in_cache):
                 local_manifest = pd.DataFrame(
                     {
-                        "Local Path": local_paths[files_in_cache],
+                        "Local Path": local_paths[files_in_cache & files_to_check],
                         "Status": ["UNKNOWN"],
                         "Message": [
                             "File exists in local cache, has not been validated for integrity"
                         ],
                         "URL": [None],
                     },
-                    index=self.table.index[files_in_cache],
+                    index=self.table.index[files_in_cache & files_to_check],
                 )
+                files_to_check = files_to_check & ~(files_to_check & files_in_cache)
 
-        if not conf.DOWNLOAD_CLOUD:
-            cloud_uri_exists = self.table["cloud_uri"].notna()
-            skip_download = skip_download | cloud_uri_exists
-            if cloud_uri_exists.any():
-                cloud_manifest = pd.DataFrame(
-                    {
-                        "Local Path": [self.table.loc[cloud_uri_exists]["cloud_uri"]],
-                        "Status": ["COMPLETE"],
-                        "Message": ["Link to S3 bucket for remote read"],
-                        "URL": [None],
-                    },
-                    index=self.table.index[cloud_uri_exists],
-                )
-
-        if any(~skip_download):
+        if any(files_to_check):
             download_manifest = Observations.download_products(
-                Table().from_pandas(self.table[~skip_download]),
+                Table().from_pandas(self.table[files_to_check]),
                 download_dir=download_dir,
                 cache=cache,
                 cloud_only=cloud_only,
             )
+
             download_manifest = download_manifest.to_pandas()
-            download_manifest.index = self.table.index[~skip_download]
+            new_index = np.zeros(len(download_manifest))
+            # astroquery does not return files in the same order they are delivered
+            # We'll match the files downloaded here and re-create the index
+            for i in range(len(new_index)):
+                loc = self.table["productFilename"].str.contains(
+                    download_manifest["Local Path"][i].split("/")[-1]
+                )
+                ind = self.table.index[loc].values
+                ind = np.atleast_1d(ind)
+                if len(ind) > 1:
+                    # Numpy deprecation warning - indexing with a 1 element array
+                    # For safety we'll make sure everything is at least a 1 element array and then grab the first item
+                    # To make sure there's not multiple matching items we'll make sure the length is not >1
+                    log.exception(
+                        "Multiple files in table matched in the download manifest"
+                    )
+                new_index[i] = ind[0]
+
+            download_manifest.index = new_index
 
         manifest_list = [
             item
             for item in [local_manifest, cloud_manifest, download_manifest]
             if item is not None
         ]
-        manifest = pd.concat(manifest_list)
+        manifest = pd.concat(manifest_list).sort_index()
         return manifest
 
     def download(
@@ -1232,7 +1254,7 @@ class MASTSearch(object):
         if (not conf.DOWNLOAD_CLOUD) and ("cloud_uri" not in self.table.columns):
             self.table = self._add_s3_url_column(self.table)
 
-        manifest = self._download_bulk(cloud_only, cache, download_dir)
+        manifest = self._download_manifest(cloud_only, cache, download_dir)
 
         if conf.CHECK_CACHED_FILE_SIZES:
             status = manifest["Status"] != "COMPLETE"

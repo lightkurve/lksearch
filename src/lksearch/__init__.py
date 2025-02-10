@@ -4,7 +4,17 @@ from . import config as _config
 import logging
 import os
 
-__version__ = "1.1.1"
+from importlib.metadata import version, PackageNotFoundError  # noqa
+
+
+def get_version():
+    try:
+        return version("lksearch")
+    except PackageNotFoundError:
+        return "unknown"
+
+
+__version__ = get_version()
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 
 
