@@ -1152,7 +1152,7 @@ class MASTSearch(object):
                     },
                     index=self.table.index[cloud_uri_exists & files_to_check],
                 )
-            files_to_check = files_to_check & ~(files_to_check & cloud_uri_exists)
+            files_to_check = ~cloud_uri_exists
 
         if not conf.CHECK_CACHED_FILE_SIZES:
             # If this configuration parameter is `False` and the file exists
