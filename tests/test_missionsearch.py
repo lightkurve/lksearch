@@ -650,8 +650,8 @@ def test_cached_files_no_filesize_check():
     assert manifest["Local Path"][0].startswith("s3://")
     assert manifest["Local Path"][1].startswith("/")
 
-    assert manifest["STATUS"][0] == "COMPLETE"
-    assert manifest["STATUS"][1] == "UNKNOWN"
+    assert manifest["Status"][0] == "COMPLETE"
+    assert manifest["Status"][1] == "UNKNOWN"
 
 
 """The below was working for Christina but not for Tyler or Github Actions.  
