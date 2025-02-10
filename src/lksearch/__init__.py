@@ -4,7 +4,17 @@ from . import config as _config
 import logging
 import os
 
-__version__ = "1.1.1"
+from importlib.metadata import version, PackageNotFoundError  # noqa
+
+
+def get_version():
+    try:
+        return version("lksearch")
+    except PackageNotFoundError:
+        return "unknown"
+
+
+__version__ = get_version()
 PACKAGEDIR = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -27,12 +37,20 @@ class Conf(_config.ConfigNamespace):
     cache_dir
         Default cache directory for data files downloaded, etc. Defaults to ``~/.lksearch/cache`` if not specified.
 
+    CLOUD_ONLY
+        If False (default), will download a file whether the source is the cloud or MAST archives.
+        If True, will only download/return uris for data located in the cloud (Amazon S3).
+
     PREFER_CLOUD
         Use Cloud-based data product retrieval where available (primarily Amazon S3 buckets for MAST holdings)
 
     DOWNLOAD_CLOUD
        Download cloud based data. If False, download() will return a pointer to the cloud based data instead of
        downloading it - intended usage for cloud-based science platforms (e.g. TIKE)
+
+    CHECK_CACHED_FILE_SIZES
+        Toggles whether to send requests to check whether the size of files in the local cache match the expected online file.
+
     """
 
     # Note: when using list or string_list datatype,
@@ -81,7 +99,7 @@ class Conf(_config.ConfigNamespace):
         True,
         "Whether to send requests to check the size of files in the cache match the expected online file."
         "If False, lksearch will assume files within the cache are complete and will not check their file size."
-        "Setting to True will create a modest speed up to retrieving paths for cached files, but will be lest robust.",
+        "Setting to True will create a modest speed up to retrieving paths for cached files, but will be lest robust, and return an 'UNKNOWN' status message",
         cfgtype="boolean",
     )
 

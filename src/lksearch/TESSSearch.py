@@ -8,6 +8,7 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
+from astroquery.mast import MastClass
 
 # from astropy.utils.decorators import deprecated
 from astroquery.mast import Tesscut

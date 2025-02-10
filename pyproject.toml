@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "lksearch"
-version = "1.1.0"
+version = "1.2.0"
 description = "A helpful little package to search for TESS/Kepler/K2 data"
 authors = ["TESS Science Support Center <tesshelp@bigbang.gsfc.nasa.gov>"]
 license = "MIT"
