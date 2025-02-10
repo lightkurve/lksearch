@@ -1126,17 +1126,16 @@ class MASTSearch(object):
         logging.getLogger("astropy").setLevel(log.getEffectiveLevel())
         logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
 
-        # We don't want to query cloud_uri if we don't have to
-        # First check to see if we're not downloading on a cloud platform
-        # If so - cloud_uris should have already been queried - in that case
-        # check to see if a cloud_uri exists, if so we just pass that
-
         files_to_check = np.ones(len(self.table.obs_id), dtype=bool)
         cloud_manifest = None
         local_manifest = None
         download_manifest = None
 
         if not conf.DOWNLOAD_CLOUD:
+            # If we are on a cloud platform, and do not want to download items with cloud_uris
+            # E.G. DOWNLOAD_CLOUD = FALSE
+            # Then cloud_uris should have already been queried
+            # and so our download manifest will contain a cloud-URI for the items with a not-NA value
             cloud_uri_exists = self.table["cloud_uri"].notna()
 
             if cloud_uri_exists.any():
