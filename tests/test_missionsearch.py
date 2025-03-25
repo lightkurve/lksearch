@@ -259,8 +259,12 @@ def test_issue_472():
     # Whether or not this SearchResult is empty has changed over the years,
     # because the target is only ~15 pixels beyond the FFI edge and the accuracy
     # of the FFI footprint polygons at the MAST portal have changed at times.
-    with pytest.raises(SearchError, match="No data"):
-        TESSSearch("TIC41336498", sector=2).tesscut
+    
+    #with pytest.raises(SearchError, match="No data"):
+    #    TESSSearch("TIC41336498", sector=2).tesscut
+    
+    # TESScut does find this target, even though it is in collateral pixels (no science data)
+    assert len(TESSSearch("TIC41336498", sector=2).tesscut) == 1
 
 
 """ This test used in OG Lightkurve used the fact that we were failing when we
@@ -447,6 +451,18 @@ def test_tesscut():
     assert len(results.tesscut) == len(results2)
     manifest = results.tesscut.download()
     assert len(manifest) == 1
+    # Now check a sector in which the target was not observed
+    with pytest.raises(SearchError, match="No data"):
+        results = TESSSearch("Kepler 16b", hlsp=False, sector=28)
+    with pytest.raises(SearchError, match="No data"):
+        results2 = TESSSearch("Kepler 16b", pipeline="TESScut", sector=28)
+
+    # Check a target that does not have SPOC products
+    sr = TESSSearch('TIC 51637609',pipeline=['SPOC','tesscut'], sector=56)
+    sr2 = TESSSearch('TIC 51637609',pipeline=['SPOC','QLP','tesscut'], sector=56)
+    assert len(sr) == 1
+    assert len(sr2) == 2
+
 
 
 class TestMASTSearchFilter:

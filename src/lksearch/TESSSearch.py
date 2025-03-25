@@ -19,7 +19,7 @@ from copy import deepcopy
 
 from .MASTSearch import MASTSearch
 from . import conf, config, log
-from .utils import SearchDeprecationError, table_keys
+from .utils import SearchDeprecationError, SearchError, table_keys
 
 PREFER_CLOUD = conf.PREFER_CLOUD
 DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
@@ -92,55 +92,30 @@ class TESSSearch(MASTSearch):
         if pipeline != None:
             pipeline = np.atleast_1d(pipeline).tolist()
 
-        # Sending 'tesscut' as a pipeline options returns a SearchError to the mast search
-        # If only tesscut is desired, we can just do the search on its own.
-        add_tesscut = True
-        if isinstance(pipeline, list):
-            if "tesscut" in [p.lower() for p in pipeline]:
-                # If only tesscut is requested, we can skip the regular MAST search
-                if [p.lower() for p in pipeline] == ["tesscut"]:
-                    log.debug(f"Only performing TESScut search")
-                    if isinstance(target, SkyCoord):
-                        self.target_search_string = f"{target.ra.deg}, {target.dec.deg}"
-                        self.SkyCoord = target
-                    elif isinstance(target, tuple):
-                        self.target_search_string = f"{target[0]}, {target[1]}"
-                        self.SkyCoord = SkyCoord(*target, frame="icrs", unit="deg")
-                    elif isinstance(target, str):
-                        self.SkyCoord = MastClass().resolve_object(target)
-                        self.target_search_string = (
-                            f"{self.SkyCoord.ra.deg}, {self.SkyCoord.dec.deg}"
-                        )
-                    tcut = self._get_tesscut_info(sector_list=sector)
-                    # Make a df with the same keys as would be returned by the MAST search
-                    mask = [i not in tcut.keys() for i in table_keys]
-                    empty_df = pd.DataFrame(columns=table_keys[mask])
-                    table = pd.concat([empty_df, tcut], axis=1)
-                    add_tesscut = False
-                pipeline = np.delete(
-                    pipeline, [p.lower() for p in pipeline].index("tesscut")
-                )
-            else:
-                # If pipeline is a list without 'tesscut', don't add it.
-                add_tesscut = False
+        # Even if there are no higher level products, we may still want to check for tesscut
+        try:
+            super().__init__(
+                target=target,
+                mission=self.mission_search,
+                obs_table=obs_table,
+                prod_table=prod_table,
+                table=table,
+                search_radius=search_radius,
+                exptime=exptime,
+                pipeline=pipeline,
+                sequence=sector,
+            )
+        except SearchError:
+            self.table=pd.DataFrame(columns=table_keys)
 
-        super().__init__(
-            target=target,
-            mission=self.mission_search,
-            obs_table=obs_table,
-            prod_table=prod_table,
-            table=table,
-            search_radius=search_radius,
-            exptime=exptime,
-            pipeline=pipeline,
-            sequence=sector,
-        )
-
-        if add_tesscut:
-            # Do not append tesscut products if pipeline = 'TESScut' (it's already been done!)
+        if (pipeline==None) or ("tesscut" in [p.lower() for p in pipeline]):
             self._add_tesscut_products(sector)
+        if len(self.table) == 0:
+            raise SearchError(f"No data found for target {self.target}.")
         self._add_TESS_mission_product()
+
         self._sort_TESS()
+
 
     @property
     def HLSPs(self):
@@ -197,7 +172,10 @@ class TESSSearch(MASTSearch):
         # get the ffi info for the targets
         tesscut_info = self._get_tesscut_info(sector_list)
         # add the ffi info to the table
-        self.table = pd.concat([self.table, tesscut_info])
+        if len(self.table) > 0:
+            self.table = pd.concat([self.table, tesscut_info])
+        else: 
+            self.table = tesscut_info 
 
     # FFIs only available when using TESSSearch.
     # Use TESS WCS to just return a table of sectors and dates?
@@ -283,6 +261,8 @@ class TESSSearch(MASTSearch):
             log.debug(f"Found {n_results} matching cutouts.")
         else:
             log.debug("Found no matching cutouts.")
+            # Return an empty table with all required keys if no tesscut data is found
+            tesscut_result = pd.DataFrame(columns=table_keys)
 
         return tesscut_result
 

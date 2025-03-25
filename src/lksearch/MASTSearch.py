@@ -625,6 +625,7 @@ class MASTSearch(object):
             f"MAST found {len(observations)} observations. "
             "Now querying MAST for the corresponding data products."
         )
+
         if len(observations) == 0:
             raise SearchError(f"No data found for target {self.target}.")
 
