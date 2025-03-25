@@ -19,7 +19,7 @@ from copy import deepcopy
 
 from .MASTSearch import MASTSearch
 from . import conf, config, log
-from .utils import SearchDeprecationError
+from .utils import SearchDeprecationError, SearchError, table_keys
 
 PREFER_CLOUD = conf.PREFER_CLOUD
 DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
@@ -89,24 +89,32 @@ class TESSSearch(MASTSearch):
             self.mission_search = ["TESS"]
         else:
             self.mission_search = ["TESS", "HLSP"]
+        if pipeline != None:
+            pipeline = np.atleast_1d(pipeline).tolist()
 
-        super().__init__(
-            target=target,
-            mission=self.mission_search,
-            obs_table=obs_table,
-            prod_table=prod_table,
-            table=table,
-            search_radius=search_radius,
-            exptime=exptime,
-            pipeline=pipeline,
-            sequence=sector,
-        )
+        # Even if there are no higher level products, we may still want to check for tesscut
+        try:
+            super().__init__(
+                target=target,
+                mission=self.mission_search,
+                obs_table=obs_table,
+                prod_table=prod_table,
+                table=table,
+                search_radius=search_radius,
+                exptime=exptime,
+                pipeline=pipeline,
+                sequence=sector,
+            )
+        except SearchError:
+            self.table = pd.DataFrame(columns=table_keys)
 
-        if table is None:
-            if ("TESScut" in np.atleast_1d(pipeline)) or (type(pipeline) is type(None)):
-                self._add_tesscut_products(sector)
-            self._add_TESS_mission_product()
-            self._sort_TESS()
+        if (pipeline == None) or ("tesscut" in [p.lower() for p in pipeline]):
+            self._add_tesscut_products(sector)
+        if len(self.table) == 0:
+            raise SearchError(f"No data found for target {self.target}.")
+        self._add_TESS_mission_product()
+
+        self._sort_TESS()
 
     @property
     def HLSPs(self):
@@ -145,7 +153,7 @@ class TESSSearch(MASTSearch):
         return f"{target.group(2)}"
 
     def _add_TESS_mission_product(self):
-        """Determine whick products are HLSPs and which are mission products"""
+        """Determine which products are HLSPs and which are mission products"""
         mission_product = np.zeros(len(self.table), dtype=bool)
         mission_product[self.table["pipeline"] == "SPOC"] = True
         self.table["mission_product"] = mission_product
@@ -163,7 +171,10 @@ class TESSSearch(MASTSearch):
         # get the ffi info for the targets
         tesscut_info = self._get_tesscut_info(sector_list)
         # add the ffi info to the table
-        self.table = pd.concat([self.table, tesscut_info])
+        if len(self.table) > 0:
+            self.table = pd.concat([self.table, tesscut_info])
+        else:
+            self.table = tesscut_info
 
     # FFIs only available when using TESSSearch.
     # Use TESS WCS to just return a table of sectors and dates?
@@ -249,6 +260,8 @@ class TESSSearch(MASTSearch):
             log.debug(f"Found {n_results} matching cutouts.")
         else:
             log.debug("Found no matching cutouts.")
+            # Return an empty table with all required keys if no tesscut data is found
+            tesscut_result = pd.DataFrame(columns=table_keys)
 
         return tesscut_result
 
