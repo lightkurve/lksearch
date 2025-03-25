@@ -254,47 +254,55 @@ def query_id(
         max_results = len(np.atleast_1d(search_object))
 
     if output_catalog is not None and input_catalog is not None:
-        if output_catalog != input_catalog:
+        if output_catalog.lower() != input_catalog.lower():
             max_results = max_results * 10
-            if input_catalog in np.atleast_1d(
-                _Catalog_Dictionary[output_catalog]["crossmatch_catalogs"]
+            if input_catalog.lower() in np.atleast_1d(
+                _Catalog_Dictionary[output_catalog.lower()]["crossmatch_catalogs"]
             ):
-                if _Catalog_Dictionary[output_catalog]["crossmatch_type"] == "tic":
+                if (
+                    _Catalog_Dictionary[output_catalog.lower()]["crossmatch_type"]
+                    == "tic"
+                ):
                     # TIC is is crossmatched with gaiadr3/kic
                     # If KIC data for a gaia source or vice versa is desired
                     # search TIC to get KIC/gaia ids then Search KIC /GAIA
                     source_id_column = _Catalog_Dictionary["tic"][
                         "crossmatch_column_id"
-                    ][input_catalog]
+                    ][input_catalog.lower()]
                     new_id_table = _query_id(
                         "tic", id_list, max_results, id_column=source_id_column
                     )
                     id_list = ", ".join(
                         new_id_table[
                             _Catalog_Dictionary["tic"]["crossmatch_column_id"][
-                                output_catalog
+                                output_catalog.lower()
                             ]
                         ].astype(str)
                         # .values
                     )
-                if _Catalog_Dictionary[output_catalog]["crossmatch_type"] == "column":
+                if (
+                    _Catalog_Dictionary[output_catalog.lower()]["crossmatch_type"]
+                    == "column"
+                ):
                     # TIC is is crossmatched with gaiadr3/kic
                     # If we want TIC Info for a gaiadr3/KIC source - match appropriate column in TIC
-                    id_column = _Catalog_Dictionary[output_catalog][
+                    id_column = _Catalog_Dictionary[output_catalog.lower()][
                         "crossmatch_column_id"
-                    ][input_catalog]
+                    ][input_catalog.lower()]
             else:
                 raise ValueError(
-                    f"{input_catalog} does not have crossmatched IDs with {output_catalog}. {output_catalog} can be crossmatched with {_Catalog_Dictionary[catalog]['crossmatch_catalogs']}"
+                    f"{input_catalog} does not have crossmatched IDs with {output_catalog}. {output_catalog} can be crossmatched with {_Catalog_Dictionary[output_catalog.lower()]['crossmatch_catalogs']}"
                 )
     else:
         if output_catalog is None:
             output_catalog = _default_catalog
 
-    results_table = _query_id(output_catalog, id_list, max_results, id_column=id_column)
+    results_table = _query_id(
+        output_catalog.lower(), id_list, max_results, id_column=id_column
+    )
     if return_skycoord:
         return _table_to_skycoord(
-            results_table, output_epoch=output_epoch, catalog=output_catalog
+            results_table, output_epoch=output_epoch, catalog=output_catalog.lower()
         )
     else:
         return results_table.to_pandas()
