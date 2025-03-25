@@ -119,6 +119,7 @@ v1.2.0
     - This results in a modest speedup O(N), particularly for files in the local cache when `CHECK_CACHED_FILE_SIZES` is `True`.  
   - Updated tests, documentation for the new features
   - Changed the property cloud_uris(self) to cloud_uri(self) [#42]
+  - Updated the logic surrounding TESScut searches to allow only TESScut results [#32]
 v1.1.1
   - Deprecated TESSSearch.search_sector_ffis due to changes in astroquery functionality
 v1.1.0
