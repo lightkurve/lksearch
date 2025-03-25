@@ -106,16 +106,15 @@ class TESSSearch(MASTSearch):
                 sequence=sector,
             )
         except SearchError:
-            self.table=pd.DataFrame(columns=table_keys)
+            self.table = pd.DataFrame(columns=table_keys)
 
-        if (pipeline==None) or ("tesscut" in [p.lower() for p in pipeline]):
+        if (pipeline == None) or ("tesscut" in [p.lower() for p in pipeline]):
             self._add_tesscut_products(sector)
         if len(self.table) == 0:
             raise SearchError(f"No data found for target {self.target}.")
         self._add_TESS_mission_product()
 
         self._sort_TESS()
-
 
     @property
     def HLSPs(self):
@@ -174,8 +173,8 @@ class TESSSearch(MASTSearch):
         # add the ffi info to the table
         if len(self.table) > 0:
             self.table = pd.concat([self.table, tesscut_info])
-        else: 
-            self.table = tesscut_info 
+        else:
+            self.table = tesscut_info
 
     # FFIs only available when using TESSSearch.
     # Use TESS WCS to just return a table of sectors and dates?
