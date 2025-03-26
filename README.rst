@@ -114,7 +114,7 @@ Changelog:
 ==========
 v1.2.2
   - Updated the logic surrounding TESScut searches to allow only TESScut results [#32]
-  - filter TESScut results by exposure time keywork [#43]
+  - filter TESScut results by exposure time keyword [#43]
 v1.2.0
   - Made the catalogsearch functions case-insensitive[#38]
   - Added `CHECK_CACHED_FILE_SIZES` configuration parameter, which on download allows local checking of cached files without a remote file-size check[#34][#38]
