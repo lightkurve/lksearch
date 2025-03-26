@@ -1,0 +1,2407 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How to Search for Catalog Data and IDs with lksearch &#8212; lksearch</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=781dc9bd"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/catalog-searches';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="lksearch Configuration and working with Cloud Data" href="cloud-data-searches.html" />
+    <link rel="prev" title="How to Search for TESS/Kepler/K2 Mission Data with lksearch" href="data-searches.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="26 Mar 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">lksearch</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Quickstart.html">
+    Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../apidoc.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../GetInvolved.html">
+    Contributing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../HowtoCite.html">
+    Citing
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../Contact.html">
+    Contact
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lightkurve/lksearch" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Quickstart.html">
+    Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../apidoc.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../GetInvolved.html">
+    Contributing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../HowtoCite.html">
+    Citing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Contact.html">
+    Contact
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lightkurve/lksearch" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">How to...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="How-to-Search-for-Catalog-Data-and-IDs-with-lksearch">
+<h1>How to Search for Catalog Data and IDs with lksearch<a class="headerlink" href="#How-to-Search-for-Catalog-Data-and-IDs-with-lksearch" title="Link to this heading">#</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">lksearch</span></code> enables you to search through the catalogs associated with each mission, and Gaia. You can query:</p>
+<ul class="simple">
+<li><p>The Kepler Input Catalog</p></li>
+<li><p>The Ecliptic Plane Input Catalog</p></li>
+<li><p>The TESS Input Catalog</p></li>
+<li><p>Gaia EDR3.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">lksearch</span></code> has three main pieces of functionality - two ways of retrieving data from a catalog, and one for looking up catalog IDs.</p>
+<p>These are:</p>
+<ul class="simple">
+<li><p><strong>A position cone-search</strong> that searches for sources within a given radius from some position using <code class="docutils literal notranslate"><span class="pre">QueryPosition</span></code></p></li>
+<li><p><strong>An exact ID lookup</strong>, retrieving catalog rows where the catalog ID matches the search ID using <code class="docutils literal notranslate"><span class="pre">QueryID</span></code></p></li>
+<li><p><strong>A way of looking up catalog IDs</strong> given a common name or another catalog ID with <code class="docutils literal notranslate"><span class="pre">IDLookup</span></code>.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">lksearch</span></code> also has the ability to crossmatch targets when doing an exact ID lookup between the TIC, KIC, and Gaia EDR3 catalogs because this crossmatch already exists in the TIC.</p>
+<p><code class="docutils literal notranslate"><span class="pre">lksearch</span></code> will propagate the proper motion for you, and can optionally return a SkyCoordinate either directly from the Search or by using the <code class="docutils literal notranslate"><span class="pre">to_skycoord</span></code> property from the results table.</p>
+<p>Below are examples of each query.</p>
+<section id="Searching-by-Position">
+<h2>Searching by Position<a class="headerlink" href="#Searching-by-Position" title="Link to this heading">#</a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lksearch.catalogsearch</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">query_region</span><span class="p">,</span>
+    <span class="n">query_id</span><span class="p">,</span>
+    <span class="n">query_names</span><span class="p">,</span>
+    <span class="n">match_names_catalogs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">astropy.coordinates</span> <span class="kn">import</span> <span class="n">SkyCoord</span>
+<span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
+<span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+</pre></div>
+</div>
+</div>
+<p>Before we search we need a sky position to search. <code class="docutils literal notranslate"><span class="pre">lksearch</span></code> catalog queries use <code class="docutils literal notranslate"><span class="pre">astropy</span></code>’s <code class="docutils literal notranslate"><span class="pre">SkyCoord</span></code> as an input. We can either make one ourselves with an RA and Dec, or we can use the built in <code class="docutils literal notranslate"><span class="pre">from_name</span></code> method.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">c</span> <span class="o">=</span> <span class="n">SkyCoord</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="s2">&quot;Kepler-10&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>Now we have a position we want to query, we can query each catalog. For example, here is the query for KIC</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_region</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="s2">&quot;kic&quot;</span><span class="p">,</span> <span class="n">max_results</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>RA</th>
+      <th>Dec</th>
+      <th>Separation</th>
+      <th>Relative_Flux</th>
+      <th>pmRA</th>
+      <th>pmDE</th>
+      <th>Kepmag</th>
+      <th>Teff</th>
+      <th>logg</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>KIC 11904151</td>
+      <td>285.67938</td>
+      <td>50.241299</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.961000</td>
+      <td>5491</td>
+      <td>4.467</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>KIC 11904160</td>
+      <td>285.68076</td>
+      <td>50.242493</td>
+      <td>5.345214</td>
+      <td>0.006644</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>16.405001</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>KIC 11904158</td>
+      <td>285.68042</td>
+      <td>50.245716</td>
+      <td>16.080462</td>
+      <td>0.005420</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>16.625999</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>KIC 11904156</td>
+      <td>285.68015</td>
+      <td>50.250011</td>
+      <td>31.413257</td>
+      <td>0.002672</td>
+      <td>-4.0</td>
+      <td>0.0</td>
+      <td>17.393999</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>KIC 11904148</td>
+      <td>285.67722</td>
+      <td>50.259010</td>
+      <td>63.953186</td>
+      <td>0.017155</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>15.375000</td>
+      <td>5286</td>
+      <td>4.640</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>By default, the catalog will query with an epoch of that is the default for the catalog. You can set the <code class="docutils literal notranslate"><span class="pre">epoch</span></code> keyword to a date in order to get <code class="docutils literal notranslate"><span class="pre">RA</span></code> and <code class="docutils literal notranslate"><span class="pre">Dec</span></code> at that date, given the proper motion.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_region</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">output_epoch</span><span class="o">=</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">catalog</span><span class="o">=</span><span class="s2">&quot;kic&quot;</span><span class="p">,</span> <span class="n">max_results</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>RA</th>
+      <th>Dec</th>
+      <th>Separation</th>
+      <th>Relative_Flux</th>
+      <th>pmRA</th>
+      <th>pmDE</th>
+      <th>Kepmag</th>
+      <th>Teff</th>
+      <th>logg</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>KIC 11904151</td>
+      <td>285.679380</td>
+      <td>50.241299</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.961000</td>
+      <td>5491</td>
+      <td>4.467</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>KIC 11904160</td>
+      <td>285.680760</td>
+      <td>50.242493</td>
+      <td>5.345214</td>
+      <td>0.006644</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>16.405001</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>KIC 11904158</td>
+      <td>285.680420</td>
+      <td>50.245716</td>
+      <td>16.080462</td>
+      <td>0.005420</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>16.625999</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>KIC 11904156</td>
+      <td>285.680107</td>
+      <td>50.250011</td>
+      <td>31.407788</td>
+      <td>0.002672</td>
+      <td>-4.0</td>
+      <td>0.0</td>
+      <td>17.393999</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>KIC 11904148</td>
+      <td>285.677220</td>
+      <td>50.259010</td>
+      <td>63.953186</td>
+      <td>0.017155</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>15.375000</td>
+      <td>5286</td>
+      <td>4.640</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>You can also pass a radius for your query. If you query each catalog directly you can set your query radius in units of pixels, otherwise you can use arcseconds.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_region</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">output_epoch</span><span class="o">=</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">radius</span><span class="o">=</span><span class="mi">30</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">arcsec</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="s2">&quot;kic&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>RA</th>
+      <th>Dec</th>
+      <th>Separation</th>
+      <th>Relative_Flux</th>
+      <th>pmRA</th>
+      <th>pmDE</th>
+      <th>Kepmag</th>
+      <th>Teff</th>
+      <th>logg</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>KIC 11904151</td>
+      <td>285.67938</td>
+      <td>50.241299</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>10.961000</td>
+      <td>5491</td>
+      <td>4.467</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>KIC 11904160</td>
+      <td>285.68076</td>
+      <td>50.242493</td>
+      <td>5.345214</td>
+      <td>0.006644</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>16.405001</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>KIC 11904165</td>
+      <td>285.68317</td>
+      <td>50.241207</td>
+      <td>8.732390</td>
+      <td>0.002660</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>17.399000</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>KIC 11904162</td>
+      <td>285.68124</td>
+      <td>50.243916</td>
+      <td>10.348793</td>
+      <td>0.001576</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>17.966999</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>KIC 11904158</td>
+      <td>285.68042</td>
+      <td>50.245716</td>
+      <td>16.080462</td>
+      <td>0.005420</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>16.625999</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>You can query TIC</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_region</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">output_epoch</span><span class="o">=</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">radius</span><span class="o">=</span><span class="mi">20</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">arcsec</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="s2">&quot;tic&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>RA</th>
+      <th>Dec</th>
+      <th>Separation</th>
+      <th>Relative_Flux</th>
+      <th>pmRA</th>
+      <th>pmDE</th>
+      <th>TESSmag</th>
+      <th>Mass</th>
+      <th>Rad</th>
+      <th>Teff</th>
+      <th>logg</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>TIC 377780790</td>
+      <td>285.679223</td>
+      <td>50.241593</td>
+      <td>NaN</td>
+      <td>915.377136</td>
+      <td>-18.394</td>
+      <td>41.448</td>
+      <td>10.477000</td>
+      <td>1.017</td>
+      <td>1.09</td>
+      <td>5706.0</td>
+      <td>4.3707</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>TIC 1717218059</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.000000</td>
+      <td>-2.227</td>
+      <td>-1.204</td>
+      <td>17.881001</td>
+      <td>1.070</td>
+      <td>0.81</td>
+      <td>5895.0</td>
+      <td>4.6506</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>EPIC (Note Kepler-10 isn’t inside EPIC, because it’s outside the ecliptic plane!)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_region</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="s2">&quot;epic&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>RAJ2000</th>
+      <th>DEJ2000</th>
+      <th>pmRA</th>
+      <th>pmDE</th>
+      <th>Plx</th>
+      <th>K2mag</th>
+      <th>logg</th>
+      <th>Teff</th>
+      <th>Rad</th>
+      <th>Mass</th>
+      <th>RA</th>
+      <th>Dec</th>
+      <th>Separation</th>
+      <th>Relative_Flux</th>
+    </tr>
+    <tr>
+      <th>ID</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>And Gaia in the same ways</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_region</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">output_epoch</span><span class="o">=</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span> <span class="n">radius</span><span class="o">=</span><span class="mi">40</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">arcsecond</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="s2">&quot;gaiadr3&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>ID</th>
+      <th>RA</th>
+      <th>Dec</th>
+      <th>Separation</th>
+      <th>Relative_Flux</th>
+      <th>pmRA</th>
+      <th>pmDE</th>
+      <th>BPmag</th>
+      <th>Gmag</th>
+      <th>RPmag</th>
+      <th>Teff</th>
+      <th>logg</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Gaia DR3 2132155017099178624</td>
+      <td>285.679351</td>
+      <td>50.241409</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>-18.483</td>
+      <td>41.382</td>
+      <td>11.253505</td>
+      <td>10.920031</td>
+      <td>10.418263</td>
+      <td>5595.8</td>
+      <td>4.3544</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Gaia DR3 2132155051458917632</td>
+      <td>285.680213</td>
+      <td>50.249942</td>
+      <td>30.783367</td>
+      <td>0.001691</td>
+      <td>-1.519</td>
+      <td>-1.203</td>
+      <td>18.209782</td>
+      <td>17.849485</td>
+      <td>17.317846</td>
+      <td>5424.7</td>
+      <td>4.6774</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Gaia DR3 2132155051458918144</td>
+      <td>285.685923</td>
+      <td>50.249919</td>
+      <td>34.169635</td>
+      <td>0.005578</td>
+      <td>9.402</td>
+      <td>5.814</td>
+      <td>17.213984</td>
+      <td>16.553818</td>
+      <td>15.778805</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>Optionally, you can return the output of the search as an <code class="docutils literal notranslate"><span class="pre">astropy.coordinates.SkyCoord</span></code> object</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_region</span><span class="p">(</span>
+    <span class="n">c</span><span class="p">,</span>
+    <span class="n">output_epoch</span><span class="o">=</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">(),</span>
+    <span class="n">radius</span><span class="o">=</span><span class="mi">40</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">arcsecond</span><span class="p">,</span>
+    <span class="n">catalog</span><span class="o">=</span><span class="s2">&quot;gaiadr3&quot;</span><span class="p">,</span>
+    <span class="n">return_skycoord</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
+    [(285.67935079, 50.24140863,  186.22667508),
+     (285.68021336, 50.24994175, 7132.66761762),
+     (285.68592306, 50.24991892, 1124.73287589)]
+ (pm_ra_cosdec, pm_dec, radial_velocity) in (mas / yr, mas / yr, km / s)
+    [(-18.48303979, 41.38198223, 7.84849083e-05),
+     ( -1.5189999 , -1.20300012, 5.49460825e-06),
+     (  9.40200284,  5.8139954 , 2.81997883e-05)]&gt;
+</pre></div></div>
+</div>
+</section>
+<section id="Searching-by-Catalog-ID">
+<h2>Searching by Catalog ID<a class="headerlink" href="#Searching-by-Catalog-ID" title="Link to this heading">#</a></h2>
+<p>For TIC, KIC, EPIC, and Gaia DR3 - if we know the Catalog ID of a source we can use <code class="docutils literal notranslate"><span class="pre">QueryID</span></code> to return the data from that catalog for that id. For example, Kepler-10 above is also known as TIC 377780790.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_id</span><span class="p">(</span><span class="s2">&quot;TIC 377780790&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>TIC</th>
+      <th>RAJ2000</th>
+      <th>DEJ2000</th>
+      <th>HIP</th>
+      <th>TYC</th>
+      <th>UCAC4</th>
+      <th>_2MASS</th>
+      <th>objID</th>
+      <th>WISEA</th>
+      <th>GAIA</th>
+      <th>...</th>
+      <th>Clist</th>
+      <th>e_RAJ2000</th>
+      <th>e_DEJ2000</th>
+      <th>RAOdeg</th>
+      <th>DEOdeg</th>
+      <th>e_RAOdeg</th>
+      <th>e_DEOdeg</th>
+      <th>RadFl</th>
+      <th>WDFl</th>
+      <th>ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>377780790</td>
+      <td>285.679422</td>
+      <td>50.241306</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>702-062695</td>
+      <td>19024305+5014286</td>
+      <td>&lt;NA&gt;</td>
+      <td>J190243.03+501429.1</td>
+      <td>2132155017099178624</td>
+      <td>...</td>
+      <td></td>
+      <td>0.767293</td>
+      <td>0.711508</td>
+      <td>285.679298</td>
+      <td>50.241484</td>
+      <td>0.020474</td>
+      <td>0.024043</td>
+      <td>1</td>
+      <td>0</td>
+      <td>237087497</td>
+    </tr>
+  </tbody>
+</table>
+<p>1 rows × 122 columns</p>
+</div></div>
+</div>
+<p>… and KIC 11904151</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_id</span><span class="p">(</span><span class="s2">&quot;KIC 11904151&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>KIC</th>
+      <th>RAJ2000</th>
+      <th>DEJ2000</th>
+      <th>pmRA</th>
+      <th>pmDE</th>
+      <th>Plx</th>
+      <th>umag</th>
+      <th>gmag</th>
+      <th>rmag</th>
+      <th>imag</th>
+      <th>...</th>
+      <th>cq</th>
+      <th>pq</th>
+      <th>aq</th>
+      <th>fv</th>
+      <th>Teff</th>
+      <th>logg</th>
+      <th>__Fe_H_</th>
+      <th>E_B-V_</th>
+      <th>Av</th>
+      <th>R_</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>11904151</td>
+      <td>285.67938</td>
+      <td>50.241299</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>11.388</td>
+      <td>10.92</td>
+      <td>10.778</td>
+      <td>...</td>
+      <td>SCP</td>
+      <td>5</td>
+      <td>6</td>
+      <td>2</td>
+      <td>5491</td>
+      <td>4.467</td>
+      <td>-0.812</td>
+      <td>0.031</td>
+      <td>0.095</td>
+      <td>0.98</td>
+    </tr>
+  </tbody>
+</table>
+<p>1 rows × 36 columns</p>
+</div></div>
+</div>
+<p>… and Gaia DR3 2132155017099178624</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_id</span><span class="p">(</span><span class="s2">&quot;Gaia DR3 2132155017099178624&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>DR3Name</th>
+      <th>RA_ICRS</th>
+      <th>DE_ICRS</th>
+      <th>SolID</th>
+      <th>Source</th>
+      <th>RandomI</th>
+      <th>e_RA_ICRS</th>
+      <th>e_DE_ICRS</th>
+      <th>Plx</th>
+      <th>e_Plx</th>
+      <th>...</th>
+      <th>RAVE6</th>
+      <th>dRAVE6</th>
+      <th>f_RAVE6</th>
+      <th>RAVE6oid</th>
+      <th>nRAVE6</th>
+      <th>RAJ2000</th>
+      <th>DEJ2000</th>
+      <th>e_RAJ2000</th>
+      <th>e_DEJ2000</th>
+      <th>RADEcorJ2000</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Gaia DR3 2132155017099178624</td>
+      <td>285.679294</td>
+      <td>50.24149</td>
+      <td>1636148068921376768</td>
+      <td>2132155017099178624</td>
+      <td>712720541</td>
+      <td>0.0097</td>
+      <td>0.0105</td>
+      <td>5.3698</td>
+      <td>0.0103</td>
+      <td>...</td>
+      <td></td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+      <td>285.679422</td>
+      <td>50.241306</td>
+      <td>0.199479</td>
+      <td>0.217694</td>
+      <td>-0.0523</td>
+    </tr>
+  </tbody>
+</table>
+<p>1 rows × 225 columns</p>
+</div></div>
+</div>
+<p>The TIC catalog has been cross-matched with the GAIA DR3 and KIC catalogs. <code class="docutils literal notranslate"><span class="pre">lksearch</span></code> can use this cross-matching to retrieve TIC/KIC/GAIA catalog info for any given TIC/KIC/GaiaDR3 source ID. The EPIC catalog is not included in this cross-matching.</p>
+<p>For Example, if we want the TIC info for Kepler-10, but only have the GAIA DR3Name above, we can get that like so:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_id</span><span class="p">(</span><span class="s2">&quot;Gaia DR3 2132155017099178624&quot;</span><span class="p">,</span> <span class="n">output_catalog</span><span class="o">=</span><span class="s2">&quot;tic&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>TIC</th>
+      <th>RAJ2000</th>
+      <th>DEJ2000</th>
+      <th>HIP</th>
+      <th>TYC</th>
+      <th>UCAC4</th>
+      <th>_2MASS</th>
+      <th>objID</th>
+      <th>WISEA</th>
+      <th>GAIA</th>
+      <th>...</th>
+      <th>Clist</th>
+      <th>e_RAJ2000</th>
+      <th>e_DEJ2000</th>
+      <th>RAOdeg</th>
+      <th>DEOdeg</th>
+      <th>e_RAOdeg</th>
+      <th>e_DEOdeg</th>
+      <th>RadFl</th>
+      <th>WDFl</th>
+      <th>ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>377780790</td>
+      <td>285.679422</td>
+      <td>50.241306</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>702-062695</td>
+      <td>19024305+5014286</td>
+      <td>&lt;NA&gt;</td>
+      <td>J190243.03+501429.1</td>
+      <td>2132155017099178624</td>
+      <td>...</td>
+      <td></td>
+      <td>0.767293</td>
+      <td>0.711508</td>
+      <td>285.679298</td>
+      <td>50.241484</td>
+      <td>0.020474</td>
+      <td>0.024043</td>
+      <td>1</td>
+      <td>0</td>
+      <td>237087497</td>
+    </tr>
+  </tbody>
+</table>
+<p>1 rows × 122 columns</p>
+</div></div>
+</div>
+<p>We can also supply an integer ID, but if so we MUST specify what catalog to search</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_id</span><span class="p">(</span><span class="s2">&quot;2132155017099178624&quot;</span><span class="p">,</span> <span class="n">output_catalog</span><span class="o">=</span><span class="s2">&quot;gaiadr3&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>DR3Name</th>
+      <th>RA_ICRS</th>
+      <th>DE_ICRS</th>
+      <th>SolID</th>
+      <th>Source</th>
+      <th>RandomI</th>
+      <th>e_RA_ICRS</th>
+      <th>e_DE_ICRS</th>
+      <th>Plx</th>
+      <th>e_Plx</th>
+      <th>...</th>
+      <th>RAVE6</th>
+      <th>dRAVE6</th>
+      <th>f_RAVE6</th>
+      <th>RAVE6oid</th>
+      <th>nRAVE6</th>
+      <th>RAJ2000</th>
+      <th>DEJ2000</th>
+      <th>e_RAJ2000</th>
+      <th>e_DEJ2000</th>
+      <th>RADEcorJ2000</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Gaia DR3 2132155017099178624</td>
+      <td>285.679294</td>
+      <td>50.24149</td>
+      <td>1636148068921376768</td>
+      <td>2132155017099178624</td>
+      <td>712720541</td>
+      <td>0.0097</td>
+      <td>0.0105</td>
+      <td>5.3698</td>
+      <td>0.0103</td>
+      <td>...</td>
+      <td></td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+      <td>NaN</td>
+      <td>&lt;NA&gt;</td>
+      <td>285.679422</td>
+      <td>50.241306</td>
+      <td>0.199479</td>
+      <td>0.217694</td>
+      <td>-0.0523</td>
+    </tr>
+  </tbody>
+</table>
+<p>1 rows × 225 columns</p>
+</div></div>
+</div>
+<p>If we specify an integer and wish to use our limited cross-match, we can do that by specifying both the <code class="docutils literal notranslate"><span class="pre">input_catalog</span></code> and <code class="docutils literal notranslate"><span class="pre">catalog</span></code> parameters</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_id</span><span class="p">(</span><span class="s2">&quot;2132155017099178624&quot;</span><span class="p">,</span> <span class="n">output_catalog</span><span class="o">=</span><span class="s2">&quot;tic&quot;</span><span class="p">,</span> <span class="n">input_catalog</span><span class="o">=</span><span class="s2">&quot;gaiadr3&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>TIC</th>
+      <th>RAJ2000</th>
+      <th>DEJ2000</th>
+      <th>HIP</th>
+      <th>TYC</th>
+      <th>UCAC4</th>
+      <th>_2MASS</th>
+      <th>objID</th>
+      <th>WISEA</th>
+      <th>GAIA</th>
+      <th>...</th>
+      <th>Clist</th>
+      <th>e_RAJ2000</th>
+      <th>e_DEJ2000</th>
+      <th>RAOdeg</th>
+      <th>DEOdeg</th>
+      <th>e_RAOdeg</th>
+      <th>e_DEOdeg</th>
+      <th>RadFl</th>
+      <th>WDFl</th>
+      <th>ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>377780790</td>
+      <td>285.679422</td>
+      <td>50.241306</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>702-062695</td>
+      <td>19024305+5014286</td>
+      <td>&lt;NA&gt;</td>
+      <td>J190243.03+501429.1</td>
+      <td>2132155017099178624</td>
+      <td>...</td>
+      <td></td>
+      <td>0.767293</td>
+      <td>0.711508</td>
+      <td>285.679298</td>
+      <td>50.241484</td>
+      <td>0.020474</td>
+      <td>0.024043</td>
+      <td>1</td>
+      <td>0</td>
+      <td>237087497</td>
+    </tr>
+  </tbody>
+</table>
+<p>1 rows × 122 columns</p>
+</div></div>
+</div>
+<p>We can also search for multiple IDS from a single catalog and get a table of all of the resulting catalog entries</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Kepler Objects 1-10</span>
+<span class="n">idlist</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;TIC 399860444&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 424865156&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 28230919&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 350814622&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 268823307&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 27916356&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 121660904&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 123233041&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 120571842&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TIC 377780790&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">query_id</span><span class="p">(</span><span class="n">idlist</span><span class="p">,</span> <span class="n">output_catalog</span><span class="o">=</span><span class="s2">&quot;tic&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>TIC</th>
+      <th>RAJ2000</th>
+      <th>DEJ2000</th>
+      <th>HIP</th>
+      <th>TYC</th>
+      <th>UCAC4</th>
+      <th>_2MASS</th>
+      <th>objID</th>
+      <th>WISEA</th>
+      <th>GAIA</th>
+      <th>...</th>
+      <th>Clist</th>
+      <th>e_RAJ2000</th>
+      <th>e_DEJ2000</th>
+      <th>RAOdeg</th>
+      <th>DEOdeg</th>
+      <th>e_RAOdeg</th>
+      <th>e_DEOdeg</th>
+      <th>RadFl</th>
+      <th>WDFl</th>
+      <th>ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>27916356</td>
+      <td>296.837241</td>
+      <td>48.239933</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>692-068460</td>
+      <td>19472094+4814238</td>
+      <td>&lt;NA&gt;</td>
+      <td>J194720.94+481423.9</td>
+      <td>2086636884980514304</td>
+      <td>...</td>
+      <td></td>
+      <td>0.431661</td>
+      <td>0.401100</td>
+      <td>296.837248</td>
+      <td>48.239969</td>
+      <td>0.011393</td>
+      <td>0.014386</td>
+      <td>1</td>
+      <td>0</td>
+      <td>338972619</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>28230919</td>
+      <td>297.709364</td>
+      <td>48.080860</td>
+      <td>97657</td>
+      <td>3561-02092-1</td>
+      <td>691-070316</td>
+      <td>19505021+4804508</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>2086512227851023872</td>
+      <td>...</td>
+      <td></td>
+      <td>0.689515</td>
+      <td>0.697757</td>
+      <td>297.710176</td>
+      <td>48.081864</td>
+      <td>0.019271</td>
+      <td>0.024141</td>
+      <td>1</td>
+      <td>0</td>
+      <td>347873767</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>120571842</td>
+      <td>285.573977</td>
+      <td>38.400883</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>643-065464</td>
+      <td>19021775+3824032</td>
+      <td>1237668734687445760</td>
+      <td>J190217.77+382402.9</td>
+      <td>2099925719951103872</td>
+      <td>...</td>
+      <td></td>
+      <td>0.460796</td>
+      <td>0.495197</td>
+      <td>285.573990</td>
+      <td>38.400819</td>
+      <td>0.013008</td>
+      <td>0.016279</td>
+      <td>1</td>
+      <td>0</td>
+      <td>236288245</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>121660904</td>
+      <td>288.581510</td>
+      <td>41.089824</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>656-070649</td>
+      <td>19141956+4105233</td>
+      <td>&lt;NA&gt;</td>
+      <td>J191419.55+410523.1</td>
+      <td>2102117871259036672</td>
+      <td>...</td>
+      <td></td>
+      <td>0.830982</td>
+      <td>0.646732</td>
+      <td>288.581493</td>
+      <td>41.089734</td>
+      <td>0.021624</td>
+      <td>0.020590</td>
+      <td>1</td>
+      <td>0</td>
+      <td>259926978</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>123233041</td>
+      <td>281.288121</td>
+      <td>42.451081</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>663-070081</td>
+      <td>18450914+4227038</td>
+      <td>&lt;NA&gt;</td>
+      <td>J184509.14+422703.9</td>
+      <td>2116730994965905280</td>
+      <td>...</td>
+      <td></td>
+      <td>0.388089</td>
+      <td>0.420084</td>
+      <td>281.288134</td>
+      <td>42.451098</td>
+      <td>0.011065</td>
+      <td>0.014161</td>
+      <td>1</td>
+      <td>0</td>
+      <td>214866427</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>268823307</td>
+      <td>299.407035</td>
+      <td>44.035053</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>671-080900</td>
+      <td>19573768+4402061</td>
+      <td>&lt;NA&gt;</td>
+      <td>J195737.69+440206.0</td>
+      <td>2079018300195390464</td>
+      <td>...</td>
+      <td></td>
+      <td>0.605437</td>
+      <td>0.487757</td>
+      <td>299.407034</td>
+      <td>44.035039</td>
+      <td>0.018613</td>
+      <td>0.016314</td>
+      <td>1</td>
+      <td>0</td>
+      <td>363112972</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>350814622</td>
+      <td>285.615409</td>
+      <td>50.135751</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>701-064857</td>
+      <td>19022767+5008087</td>
+      <td>&lt;NA&gt;</td>
+      <td>J190227.69+500808.7</td>
+      <td>2132152916856093952</td>
+      <td>...</td>
+      <td></td>
+      <td>0.670902</td>
+      <td>0.662993</td>
+      <td>285.615449</td>
+      <td>50.135771</td>
+      <td>0.019169</td>
+      <td>0.024925</td>
+      <td>1</td>
+      <td>0</td>
+      <td>237044605</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>377780790</td>
+      <td>285.679422</td>
+      <td>50.241306</td>
+      <td>&lt;NA&gt;</td>
+      <td></td>
+      <td>702-062695</td>
+      <td>19024305+5014286</td>
+      <td>&lt;NA&gt;</td>
+      <td>J190243.03+501429.1</td>
+      <td>2132155017099178624</td>
+      <td>...</td>
+      <td></td>
+      <td>0.767293</td>
+      <td>0.711508</td>
+      <td>285.679298</td>
+      <td>50.241484</td>
+      <td>0.020474</td>
+      <td>0.024043</td>
+      <td>1</td>
+      <td>0</td>
+      <td>237087497</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>399860444</td>
+      <td>286.808491</td>
+      <td>49.316414</td>
+      <td>&lt;NA&gt;</td>
+      <td>3549-02811-1</td>
+      <td>697-064165</td>
+      <td>19071403+4918590</td>
+      <td>&lt;NA&gt;</td>
+      <td>J190714.04+491859.0</td>
+      <td>2131314401800665344</td>
+      <td>...</td>
+      <td></td>
+      <td>0.734770</td>
+      <td>0.672364</td>
+      <td>286.808526</td>
+      <td>49.316421</td>
+      <td>0.019726</td>
+      <td>0.022829</td>
+      <td>1</td>
+      <td>0</td>
+      <td>245833148</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>424865156</td>
+      <td>292.247308</td>
+      <td>47.969505</td>
+      <td>&lt;NA&gt;</td>
+      <td>3547-01402-1</td>
+      <td>690-068273</td>
+      <td>19285935+4758102</td>
+      <td>&lt;NA&gt;</td>
+      <td>J192859.33+475810.3</td>
+      <td>2129256395211984000</td>
+      <td>...</td>
+      <td></td>
+      <td>0.645983</td>
+      <td>0.573522</td>
+      <td>292.247190</td>
+      <td>47.969543</td>
+      <td>0.017649</td>
+      <td>0.019830</td>
+      <td>1</td>
+      <td>0</td>
+      <td>290881018</td>
+    </tr>
+  </tbody>
+</table>
+<p>10 rows × 122 columns</p>
+</div></div>
+</div>
+<p>Large queries (over one thousand objects) will be performed asynchronously and may take some time.</p>
+<p>Like <code class="docutils literal notranslate"><span class="pre">QueryPosition</span></code>, These results can also be returned as <code class="docutils literal notranslate"><span class="pre">astropy</span> <span class="pre">SkyCoord</span></code> objects.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_id</span><span class="p">(</span><span class="s2">&quot;TIC 377780790&quot;</span><span class="p">,</span> <span class="n">return_skycoord</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;SkyCoord (ICRS): (ra, dec, distance) in (deg, deg, pc)
+    [(285.67942179, 50.24130577, 186.50105373)]
+ (pm_ra_cosdec, pm_dec) in mas / yr
+    [(-18.394, 41.448)]&gt;
+</pre></div></div>
+</div>
+</section>
+<section id="Looking-up-Catalog-IDs">
+<h2>Looking up Catalog IDs<a class="headerlink" href="#Looking-up-Catalog-IDs" title="Link to this heading">#</a></h2>
+<p>We have also included a limited way of looking up catalog IDs using other known IDs. This functionality wraps the <code class="docutils literal notranslate"><span class="pre">astroquery.simbad.Simbad.query_objectids</span></code> functionality.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_names</span><span class="p">(</span><span class="s2">&quot;Kepler 10&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>LAMOST J190243.11+501428.7</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>AP J19024305+5014286</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Gaia DR3 2132155017099178624</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>TIC 377780790</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>SPOCS 4268</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>PPMX J190243.0+501428</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>USNO-B1.0 1402-00324696</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>GSC 03549-00354</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>KOI-72</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>KIC 11904151</td>
+    </tr>
+  </tbody>
+</table>
+<p>14 rows × 1 columns</p>
+</div></div>
+</div>
+<p>It is based off of joining IDs across Simbad tables, and is useful but not comprehensive as it relies upon published works to do the ID crossmatching. That means that you may run into situations where not all assosciations have been made, eg. for this EPIC ID:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_names</span><span class="p">(</span><span class="s2">&quot;EPIC 201563164&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Gaia DR3 3796414192429498880</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>LBQS 1145+0145</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>WD 1145+017</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>SDSS J114833.62+012859.4</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>EPIC 201563164</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>HE 1145+0145</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Gaia DR2 3796414192429498880</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>We can see above that this EPIC ID has a Gaia DR3 ID assosciated with it, and we know that GAIA DR3 and TIC are crossmatched, but the TIC ID is not reported. To retrieve the TIC ID we can use the GAIA DR3 ID above and QueryID</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_names</span><span class="p">(</span><span class="s2">&quot;Gaia DR3 3796414192429498880&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[20]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Gaia DR3 3796414192429498880</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>LBQS 1145+0145</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>WD 1145+017</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>SDSS J114833.62+012859.4</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>EPIC 201563164</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>HE 1145+0145</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Gaia DR2 3796414192429498880</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">lksearch</span></code> also alows you to input a list of strings, which will then perform sequential ID searches for each item in the list and return a list of the resulting tables:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">query_names</span><span class="p">([</span><span class="s2">&quot;Kepler 10&quot;</span><span class="p">,</span> <span class="s2">&quot;Kepler 16&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Throttling query limit to Simbad&#39;s: max 5/s
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[                              id
+ 0     LAMOST J190243.11+501428.7
+ 1           AP J19024305+5014286
+ 2   Gaia DR3 2132155017099178624
+ 3                  TIC 377780790
+ 4                     SPOCS 4268
+ ..                           ...
+ 9          PPMX J190243.0+501428
+ 10       USNO-B1.0 1402-00324696
+ 11               GSC 03549-00354
+ 12                        KOI-72
+ 13                  KIC 11904151
+
+ [14 rows x 1 columns],
+                               id
+ 0     LAMOST J191618.16+514526.7
+ 1   Gaia DR3 2133476355197071616
+ 2                  TIC 299096355
+ 3   Gaia DR2 2133476355197071616
+ 4        2MASS J19161817+5145267
+ ..                           ...
+ 6                GSC 03554-01147
+ 7                   KIC 12644769
+ 8                      Kepler-16
+ 9            NAME Kepler-16 (AB)
+ 10                      KOI-1611
+
+ [11 rows x 1 columns]]
+</pre></div></div>
+</div>
+<section id="Matching-ID-Results-to-Catalogs">
+<h3>Matching ID Results to Catalogs<a class="headerlink" href="#Matching-ID-Results-to-Catalogs" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">lksearch</span></code> has the ability to parse the id lists returned by <code class="docutils literal notranslate"><span class="pre">QueryID</span></code> to look for ids which contain the string contained in the optional parameter <code class="docutils literal notranslate"><span class="pre">match</span></code>. This can be usefull for only returning the catalog results which interest you.</p>
+<p>Just like the search input can be a list, so can the match criteria, as so:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">match_names_catalogs</span><span class="p">([</span><span class="s2">&quot;Kepler 10&quot;</span><span class="p">,</span> <span class="s2">&quot;Kepler 16&quot;</span><span class="p">],</span> <span class="n">match</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;tic&quot;</span><span class="p">,</span> <span class="s2">&quot;kic&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Throttling query limit to Simbad&#39;s: max 5/s
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>search</th>
+      <th>tic</th>
+      <th>kic</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Kepler 10</td>
+      <td>TIC 377780790</td>
+      <td>KIC 11904151</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Kepler 16</td>
+      <td>TIC 299096355</td>
+      <td>KIC 12644769</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="data-searches.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">How to Search for TESS/Kepler/K2 Mission Data with lksearch</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="cloud-data-searches.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">lksearch Configuration and working with Cloud Data</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Searching-by-Position">Searching by Position</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Searching-by-Catalog-ID">Searching by Catalog ID</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Looking-up-Catalog-IDs">Looking up Catalog IDs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Matching-ID-Results-to-Catalogs">Matching ID Results to Catalogs</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/tutorials/catalog-searches.ipynb.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024, TESS Science Support Center.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.4.7.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.4.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

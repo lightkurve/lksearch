@@ -1,0 +1,947 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>lksearch Configuration and working with Cloud Data &#8212; lksearch</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=781dc9bd"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/cloud-data-searches';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API" href="../apidoc.html" />
+    <link rel="prev" title="How to Search for Catalog Data and IDs with lksearch" href="catalog-searches.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="26 Mar 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">lksearch</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Quickstart.html">
+    Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../apidoc.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../GetInvolved.html">
+    Contributing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../HowtoCite.html">
+    Citing
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../Contact.html">
+    Contact
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lightkurve/lksearch" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Quickstart.html">
+    Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../apidoc.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../GetInvolved.html">
+    Contributing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../HowtoCite.html">
+    Citing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Contact.html">
+    Contact
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lightkurve/lksearch" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">lksearch...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="lksearch-Configuration-and-working-with-Cloud-Data">
+<h1>lksearch Configuration and working with Cloud Data<a class="headerlink" href="#lksearch-Configuration-and-working-with-Cloud-Data" title="Link to this heading">#</a></h1>
+<p>lksearch has a <code class="docutils literal notranslate"><span class="pre">config</span></code> class and configuration file that can be used to configure the default behaviour of the package including how lksearch treats cloud data and where (or if) local files are cached.</p>
+<section id="lksearch-File-Download-and-Cache">
+<h2>lksearch File Download and Cache<a class="headerlink" href="#lksearch-File-Download-and-Cache" title="Link to this heading">#</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">lksearch</span></code> file cache is a directory where files are downloaded to. This directory also serves as a cache directory, and if a file matching the name of the file to be downloaded exists we treat this as a cached file and by default do not overwrite the current file on disk.</p>
+<p>The default file download and cache directory is located at: <code class="docutils literal notranslate"><span class="pre">~/.lksearch/cache</span></code></p>
+<p>This can be verified using the get_cache_dir convenience function in the config sub-module, e.g.:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lksearch</span> <span class="kn">import</span> <span class="n">config</span> <span class="k">as</span> <span class="n">lkconfig</span>
+
+<span class="n">lkconfig</span><span class="o">.</span><span class="n">get_cache_dir</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;/Users/tapritc2/.lksearch/cache&#39;
+</pre></div></div>
+</div>
+<section id="Clearing-the-Cache-&amp;-Corrupted-Files">
+<h3>Clearing the Cache &amp; Corrupted Files<a class="headerlink" href="#Clearing-the-Cache-&-Corrupted-Files" title="Link to this heading">#</a></h3>
+<p>If you wish to delete an individual file that you downloaded (for example, if you are concerned that a previously downloaded file is corrupted), the easiest way to do that is using the <code class="docutils literal notranslate"><span class="pre">Local</span> <span class="pre">Path</span></code> information in the manifest returned by the <code class="docutils literal notranslate"><span class="pre">.download()</span></code> function.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">lksearch</span> <span class="kn">import</span> <span class="n">K2Search</span>
+
+<span class="c1">##First lets download a few files</span>
+<span class="n">K218</span> <span class="o">=</span> <span class="n">K2Search</span><span class="p">(</span><span class="s2">&quot;K2-18&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">HLSPs</span><span class="o">.</span><span class="n">timeseries</span>
+<span class="n">manifest</span> <span class="o">=</span> <span class="n">K218</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="n">manifest</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Local Path</th>
+      <th>Status</th>
+      <th>Message</th>
+      <th>URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># The manifest returned by download() is a pandas DataFrame</span>
+<span class="c1"># We will access the first local path using iloc as so</span>
+<span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;Local Path&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<p>If you want to clear <em>everything</em> from your cache, you can use the <code class="docutils literal notranslate"><span class="pre">config.clearcache()</span></code> function to completely empty your cache of downloaded files. by default this will run in “test” mode and print what you will be deleting. To confirm deletion, run with <code class="docutils literal notranslate"><span class="pre">test=False</span></code> optional parameter.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lkconfig</span><span class="o">.</span><span class="n">clearcache</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Running in test mode, rerun with test=False to clear cache
+removing /Users/tapritc2/.lksearch/cache/mastDownload/TESS
+removing /Users/tapritc2/.lksearch/cache/mastDownload/K2
+removing /Users/tapritc2/.lksearch/cache/mastDownload/Kepler
+removing /Users/tapritc2/.lksearch/cache/mastDownload/TESSCut
+removing /Users/tapritc2/.lksearch/cache/mastDownload/HLSP
+</pre></div></div>
+</div>
+<p><strong>Passing ``test=False`` will then fully delete the above directories</strong></p>
+<p>e.g. <code class="docutils literal notranslate"><span class="pre">lkconfig.clearcache(test=False)</span></code></p>
+<section id="Caching-and-File-Downloads">
+<h4>Caching and File Downloads<a class="headerlink" href="#Caching-and-File-Downloads" title="Link to this heading">#</a></h4>
+<p>By default, lksearch will use the <code class="docutils literal notranslate"><span class="pre">~astroquery.mast.Observations</span></code> built in caching functionality which includes a file-size check to verify the completeness of a download and static nature of a file. This means that if a file is truncated mid-download, or gets updated on the MAST archive (rare but not unheard of), this will detect a mismatch and re-download the file. This does, however, add some small overhead to file downloads and can add additional remote calls.</p>
+<p>If this behaviour is undesired, the CHECK_CACHED_FILE_SIZES configuration parameter can be set to <code class="docutils literal notranslate"><span class="pre">False</span></code> - this will cause the download function to check for the presence of a local file with the appropriate name/location of the desired download, and if it exists pass the local file location with a modified <code class="docutils literal notranslate"><span class="pre">Status</span></code> tag.</p>
+<p>This will be lest robust but slightly faster and with potentially fewer remote calls.</p>
+<p>For example, with file size checking:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lksearch</span> <span class="kn">import</span> <span class="n">conf</span>
+
+<span class="n">conf</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
+<span class="n">conf</span><span class="o">.</span><span class="n">CHECK_CACHED_FILE_SIZES</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">K218</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Local Path</th>
+      <th>Status</th>
+      <th>Message</th>
+      <th>URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>And without file size checking:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span><span class="o">.</span><span class="n">CHECK_CACHED_FILE_SIZES</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">K218</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Local Path</th>
+      <th>Status</th>
+      <th>Message</th>
+      <th>URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>UNKNOWN</td>
+      <td>File exists in local cache, has not been valid...</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+</section>
+<section id="lksearch-Configuration-and-Configuration-File">
+<h3>lksearch Configuration and Configuration File<a class="headerlink" href="#lksearch-Configuration-and-Configuration-File" title="Link to this heading">#</a></h3>
+<p>lksearch has a number of configuration parameters, these are contained in the <code class="docutils literal notranslate"><span class="pre">~lksearch.Conf</span></code> <a class="reference external" href="https://lightkurve.github.io/lksearch/apidoc.html#lksearch.Conf">class</a>. One can modify these parameters for a given python session by updating the values in the Conf class. To modify these configuration parameters default values, lksearch also has an optional configuration file that is built on-top of <code class="docutils literal notranslate"><span class="pre">~astropy.config</span></code> using <code class="docutils literal notranslate"><span class="pre">~astropy.config.ConfigNamespace</span></code>. This file does not exist by
+default, but a default version can be created using the <code class="docutils literal notranslate"><span class="pre">config.create_config_file</span></code> helper function. Modifications to the values in this file will then update the default <code class="docutils literal notranslate"><span class="pre">~lksearch.Conf</span></code> values.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lkconfig</span><span class="o">.</span><span class="n">create_config_file</span><span class="p">(</span><span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p>This file can be found in the below location. To edit this, please see the astropy.config documentation.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lkconfig</span><span class="o">.</span><span class="n">get_config_dir</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;/Users/tapritc2/.lksearch/config&#39;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">lkconfig</span><span class="o">.</span><span class="n">get_config_file</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&#39;/Users/tapritc2/.lksearch/config/lksearch.cfg&#39;
+</pre></div></div>
+</div>
+</section>
+</section>
+<section id="lksearch-Cloud-Configuration">
+<h2>lksearch Cloud Configuration<a class="headerlink" href="#lksearch-Cloud-Configuration" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">lksearch</span></code> has three configuration parameters that are particularly relevant to cloud-based science platforms. These are: - <code class="docutils literal notranslate"><span class="pre">CLOUD_ONLY</span></code>: Only Download cloud based data. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, will download all data. If <code class="docutils literal notranslate"><span class="pre">True</span></code>, will only download data located on a cloud (Amazon S3) bucket - <code class="docutils literal notranslate"><span class="pre">PREFER_CLOUD</span></code>: Prefer Cloud-based data product retrieval where available - <code class="docutils literal notranslate"><span class="pre">DOWNLOAD_CLOUD</span></code>: Download cloud based data. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, download() will return a pointer to the cloud based datainstead of
+downloading it - intended usage for cloud-based science platforms (e.g. TiKE)</p>
+<p><code class="docutils literal notranslate"><span class="pre">CLOUD_ONLY</span></code> governs whether or not non-cloud based data will be possible to be downloaded. Many science files have both a cloud-based location (typically on Amazon S3) and a MAST archive location. By default this is <code class="docutils literal notranslate"><span class="pre">False</span></code>, and all products will be downloaded regardless of whether the file is available via cloud-hosting or MAST archive hosting. If <code class="docutils literal notranslate"><span class="pre">CLOUD_ONLY</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, only files available for download on a cloud-based platform will be retrieved. This configuration parameter is
+passed through to the <code class="docutils literal notranslate"><span class="pre">~astroquery.mast</span></code> parameter of the same name.</p>
+<p><code class="docutils literal notranslate"><span class="pre">PREFER_CLOUD</span></code> governs the default download behaviour in the event that a data product is available from both a cloud-based location and a MAST-hosted archive location. If <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), then <code class="docutils literal notranslate"><span class="pre">lksearch</span></code> will preferentially download files from the cloud-host rather than the MAST-hosted Archive. This configuration parameter is passed through to the <code class="docutils literal notranslate"><span class="pre">~astroquery.mast</span></code> parameter of the same name.</p>
+<p><code class="docutils literal notranslate"><span class="pre">DOWNLOAD_CLOUD</span></code> governs whether files that are hosted on the cloud are downloaded locally. If this value is <code class="docutils literal notranslate"><span class="pre">True</span></code> (default), cloud-hosted files are downloaded normally. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, then files hosted on a cloud based platform are not downloaded, and a URI containing the path to the desired file on the cloud-host is returned instead of the local path to the file. This path can then be used to read the file remotely (see <code class="docutils literal notranslate"><span class="pre">~astropy.io.fits</span></code> <a class="reference external" href="https://docs.astropy.org/en/stable/io/fits/#working-with-remote-and-cloud-hosted-files:~:text=with%20large%20files-,Working%20with%20remote%20and%20cloud%2Dhosted%20files,-Unsigned%20integers">working with remote and cloud hosted
+files</a> for more information). This ability may be most relevant when using <code class="docutils literal notranslate"><span class="pre">lksearch</span></code> on a cloud-based science platform where the remote read is very rapid and short-term local storage comparatively expensive.</p>
+<p>Using this <code class="docutils literal notranslate"><span class="pre">DOWNLOAD_CLOUD</span></code> functionality, we can find a cloud-hosted file and read it directly into memory like so:”</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># First, lets update our configuration to not download a cloud-hosted file</span>
+<span class="kn">from</span> <span class="nn">lksearch</span> <span class="kn">import</span> <span class="n">Conf</span><span class="p">,</span> <span class="n">TESSSearch</span>
+
+<span class="n">Conf</span><span class="o">.</span><span class="n">DOWNLOAD_CLOUD</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1"># Now, lets find some data. We use this target earlier in the tutorial.</span>
+<span class="n">toi</span> <span class="o">=</span> <span class="n">TESSSearch</span><span class="p">(</span><span class="s2">&quot;TOI 1161&quot;</span><span class="p">)</span>
+
+<span class="c1"># What happens when we try to download it in our updated configuration?</span>
+<span class="n">cloud_result</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">timeseries</span><span class="o">.</span><span class="n">mission_products</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="n">cloud_result</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Local Path</th>
+      <th>Status</th>
+      <th>Message</th>
+      <th>URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/T...</td>
+      <td>UNKNOWN</td>
+      <td>File exists in local cache, has not been valid...</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>0    s3://stpubdata/tess/public/tid/s0014/0000...</td>
+      <td>COMPLETE</td>
+      <td>Link to S3 bucket for remote read</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>As we can see above, instead of downloading the above file we have instead returned an amazon S3 URI for its cloud hosted location. If we want to access the file, we can do it using the remote-read capabilities of <code class="docutils literal notranslate"><span class="pre">~astropy.io.fits</span></code>.</p>
+<p>(Note: to do this you will need to install <code class="docutils literal notranslate"><span class="pre">fsspec</span></code> and <code class="docutils literal notranslate"><span class="pre">s3fs</span></code>.)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">astropy.io.fits</span> <span class="k">as</span> <span class="nn">fits</span>
+
+<span class="k">with</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
+    <span class="n">cloud_result</span><span class="p">[</span><span class="s2">&quot;Local Path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">use_fsspec</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fsspec_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;anon&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">hdu</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">hdu</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">fileinfo</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;file&#39;: &lt;astropy.io.fits.file._File &lt;fsspec.implementations.local.LocalFileOpener object at 0x150b62740&gt;&gt;, &#39;filemode&#39;: &#39;readonly&#39;, &#39;hdrLoc&#39;: 0, &#39;datLoc&#39;: 5760, &#39;datSpan&#39;: 0}
+{&#39;file&#39;: &lt;astropy.io.fits.file._File &lt;fsspec.implementations.local.LocalFileOpener object at 0x150b62740&gt;&gt;, &#39;filemode&#39;: &#39;readonly&#39;, &#39;hdrLoc&#39;: 5760, &#39;datLoc&#39;: 20160, &#39;datSpan&#39;: 1935360}
+{&#39;file&#39;: &lt;astropy.io.fits.file._File &lt;fsspec.implementations.local.LocalFileOpener object at 0x150b62740&gt;&gt;, &#39;filemode&#39;: &#39;readonly&#39;, &#39;hdrLoc&#39;: 1955520, &#39;datLoc&#39;: 1961280, &#39;datSpan&#39;: 2880}
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="catalog-searches.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">How to Search for Catalog Data and IDs with lksearch</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../apidoc.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">API</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lksearch-File-Download-and-Cache">lksearch File Download and Cache</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Clearing-the-Cache-&amp;-Corrupted-Files">Clearing the Cache &amp; Corrupted Files</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#Caching-and-File-Downloads">Caching and File Downloads</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lksearch-Configuration-and-Configuration-File">lksearch Configuration and Configuration File</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lksearch-Cloud-Configuration">lksearch Cloud Configuration</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/tutorials/cloud-data-searches.ipynb.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024, TESS Science Support Center.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.4.7.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.4.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,3846 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How to Search for TESS/Kepler/K2 Mission Data with lksearch &#8212; lksearch</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/documentation_options.js?v=781dc9bd"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/data-searches';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="How to Search for Catalog Data and IDs with lksearch" href="catalog-searches.html" />
+    <link rel="prev" title="Tutorials" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="26 Mar 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">lksearch</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Quickstart.html">
+    Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../apidoc.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../GetInvolved.html">
+    Contributing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../HowtoCite.html">
+    Citing
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../Contact.html">
+    Contact
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lightkurve/lksearch" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Quickstart.html">
+    Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../apidoc.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../GetInvolved.html">
+    Contributing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../HowtoCite.html">
+    Citing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../Contact.html">
+    Contact
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lightkurve/lksearch" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">How to...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="How-to-Search-for-TESS/Kepler/K2-Mission-Data-with-lksearch">
+<h1>How to Search for TESS/Kepler/K2 Mission Data with lksearch<a class="headerlink" href="#How-to-Search-for-TESS/Kepler/K2-Mission-Data-with-lksearch" title="Link to this heading">#</a></h1>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lksearch</span> <span class="kn">import</span> <span class="n">MASTSearch</span><span class="p">,</span> <span class="n">KeplerSearch</span><span class="p">,</span> <span class="n">K2Search</span><span class="p">,</span> <span class="n">TESSSearch</span>
+</pre></div>
+</div>
+</div>
+<p>Welcome to the new lksearch module! This package allows users to peruse available data products for the TESS, Kepler, and K2 missions. This notebook will guide you through several examples of how to use search functions.</p>
+<p>The result of the search is a MASTSearch object, which contains among other things a full list of results stored in a pandas dataframe.</p>
+<p><em>NOTE: While MASTSearch is a usable class, it does not have all of the functionality or nicities of the mission-specific searches (TESSSearch/KeplerSearch/K2Search). It is therefore recommended you as the user interact with these instead.</em></p>
+<section id="Basic-Searches">
+<h2>Basic Searches<a class="headerlink" href="#Basic-Searches" title="Link to this heading">#</a></h2>
+<section id="Data-Exploration">
+<h3>Data Exploration<a class="headerlink" href="#Data-Exploration" title="Link to this heading">#</a></h3>
+<p>The lksearch package provides a user-friendly wrapper to search the MAST data archive. The most generic search is to use MASTsearch, which checks for mission products from three missions (Kepler, K2, and TESS). This search can be useful for data exploration, but does not have full functionality, as discussed below.</p>
+<p>In addition, you can specify</p>
+<ul class="simple">
+<li><p>search_radius: a search radius (assumes arcsec by default, but you can specify anything by using astropy units)</p></li>
+<li><p>exptime: the exposure time of the observation. Either a number or a range in the form of a tuple</p></li>
+<li><p>mission: the mission - only Kepler, K2, and TESS are directly supported</p></li>
+<li><p>pipline: the pipeline(s) used to create the product, eg. Kepler, K2, SPOC, QLP, KBONUS-BKG, etc</p></li>
+</ul>
+<p>and in the case of mission-specific searches</p>
+<ul class="simple">
+<li><p>a sequence number*</p>
+<ul>
+<li><p>sector for TESS</p></li>
+<li><p>quarter/month for Kepler</p></li>
+<li><p>campaign for K2</p></li>
+</ul>
+</li>
+</ul>
+<p>**NOTE* MASTSearch allows a sequence number, but it will result in selecting the same sequence for all mission. For example, if you provide sequence = 5, it will return only data from TESS sector 5, K2 campaign 5, or Kepler quarter 5.</p>
+<p>For data exploration, it is suggested users search with the default setting (ie, providing only the target). You can use the provided class functions to extract the data products you want to download, as demonstrated throughout this tutorial.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># First, we can check what data is available by any mission (TESS, Kepler, or K2)</span>
+<span class="c1"># TOI-1161 is the same as Kepler-13. You can search using either name to get the same results</span>
+<span class="n">search_result</span> <span class="o">=</span> <span class="n">MASTSearch</span><span class="p">(</span><span class="s2">&quot;TOI 1161&quot;</span><span class="p">)</span>
+<span class="n">search_result</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+MASTSearch object containing 244 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>full data validation report</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>TCE summary report</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Data validation mini report</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>239</th>
+      <td>kplr009941662</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2012</td>
+      <td>Lightcurve Short Cadence (CSC) - Q14</td>
+    </tr>
+    <tr>
+      <th>240</th>
+      <td>kplr009941662</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2012</td>
+      <td>Target Pixel Short Cadence (TPS) - Q14</td>
+    </tr>
+    <tr>
+      <th>241</th>
+      <td>kplr009941662</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2013</td>
+      <td>Lightcurve Short Cadence (CSC) - Q17</td>
+    </tr>
+    <tr>
+      <th>242</th>
+      <td>kplr009941662</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2011</td>
+      <td>Target Pixel Short Cadence (TPS) - Q11</td>
+    </tr>
+    <tr>
+      <th>243</th>
+      <td>kplr009941662</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Target Pixel Short Cadence (TPS) - Q2</td>
+    </tr>
+  </tbody>
+</table>
+<p>244 rows × 7 columns</p>
+</div></div>
+</div>
+<p>Note that search_result is a MASTSearch object. When calling the object, a summary of the contents (MASTSearch object containing X data products) is printed to the screen along with a subset of the observation table.</p>
+<p>The returned MASTSearch object has several properties to easily access specific observation characteristics. These include</p>
+<ul class="simple">
+<li><p>target name (target_name)</p></li>
+<li><p>right ascension (ra)</p></li>
+<li><p>declination (dec)</p></li>
+<li><p>exposure time (exptime)</p></li>
+<li><p>mission</p></li>
+<li><p>obsrvation year (year)</p></li>
+<li><p>reduction pipeline (pipeline)</p></li>
+<li><p>data location URI (uris)</p></li>
+<li><p>data location in cloud storage (cloud_uri)</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Let&#39;s use this to check what mission(s) have observed this target</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">search_result</span><span class="o">.</span><span class="n">mission</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39;
+ &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;TESS&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39; &#39;Kepler&#39;
+ &#39;Kepler&#39; &#39;Kepler&#39;]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;There are </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">search_result</span><span class="o">.</span><span class="n">mission</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">&#39;TESS&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> observations by TESS and </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="n">search_result</span><span class="o">.</span><span class="n">mission</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s1">&#39;Kepler&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> by Kepler&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+There are 128 observations by TESS and 116 by Kepler
+</pre></div></div>
+</div>
+</section>
+<section id="Accessing-the-full-result-table">
+<h3>Accessing the full result table<a class="headerlink" href="#Accessing-the-full-result-table" title="Link to this heading">#</a></h3>
+<p>To view all of the results, you can access the ‘table’ variable. This table is a pandas dataframe that contains the full results of the MAST search as well as a few added parameters such as <em>year</em>, <em>start_time</em>, and <em>end_time</em>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">search_result</span><span class="o">.</span><span class="n">table</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>intentType</th>
+      <th>obs_collection_obs</th>
+      <th>provenance_name</th>
+      <th>instrument_name</th>
+      <th>project_obs</th>
+      <th>filters_obs</th>
+      <th>wavelength_region</th>
+      <th>target_name</th>
+      <th>target_classification</th>
+      <th>obs_id</th>
+      <th>...</th>
+      <th>size</th>
+      <th>parent_obsid</th>
+      <th>dataRights</th>
+      <th>calib_level_prod</th>
+      <th>filters_prod</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>year</th>
+      <th>start_time</th>
+      <th>end_time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>science</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>Photometer</td>
+      <td>TESS</td>
+      <td>TESS</td>
+      <td>Optical</td>
+      <td>158324245</td>
+      <td>NaN</td>
+      <td>tess2019198215352-s0014-0000000158324245-0150-s</td>
+      <td>...</td>
+      <td>16426251</td>
+      <td>27448285</td>
+      <td>PUBLIC</td>
+      <td>3</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>2019</td>
+      <td>2019-07-18 20:30:33.624</td>
+      <td>2019-08-14 16:56:23.634</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>science</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>Photometer</td>
+      <td>TESS</td>
+      <td>TESS</td>
+      <td>Optical</td>
+      <td>158324245</td>
+      <td>NaN</td>
+      <td>tess2019198215352-s0014-0000000158324245-0150-s</td>
+      <td>...</td>
+      <td>1964160</td>
+      <td>27448285</td>
+      <td>PUBLIC</td>
+      <td>3</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>2019</td>
+      <td>2019-07-18 20:30:33.624</td>
+      <td>2019-08-14 16:56:23.634</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>science</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>Photometer</td>
+      <td>TESS</td>
+      <td>TESS</td>
+      <td>Optical</td>
+      <td>158324245</td>
+      <td>NaN</td>
+      <td>tess2019198215352-s0014-0000000158324245-0150-s</td>
+      <td>...</td>
+      <td>1322689</td>
+      <td>27448285</td>
+      <td>PUBLIC</td>
+      <td>3</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>2019</td>
+      <td>2019-07-18 20:30:33.624</td>
+      <td>2019-08-14 16:56:23.634</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>science</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>Photometer</td>
+      <td>TESS</td>
+      <td>TESS</td>
+      <td>Optical</td>
+      <td>158324245</td>
+      <td>NaN</td>
+      <td>tess2019198215352-s0014-0000000158324245-0150-s</td>
+      <td>...</td>
+      <td>5082604</td>
+      <td>27448285</td>
+      <td>PUBLIC</td>
+      <td>3</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>2019</td>
+      <td>2019-07-18 20:30:33.624</td>
+      <td>2019-08-14 16:56:23.634</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>science</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>Photometer</td>
+      <td>TESS</td>
+      <td>TESS</td>
+      <td>Optical</td>
+      <td>158324245</td>
+      <td>NaN</td>
+      <td>tess2019198215352-s0014-0000000158324245-0150-s</td>
+      <td>...</td>
+      <td>47376000</td>
+      <td>27448285</td>
+      <td>PUBLIC</td>
+      <td>2</td>
+      <td>TESS</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>2019</td>
+      <td>2019-07-18 20:30:33.624</td>
+      <td>2019-08-14 16:56:23.634</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>239</th>
+      <td>science</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>KEPLER</td>
+      <td>OPTICAL</td>
+      <td>kplr009941662</td>
+      <td>NaN</td>
+      <td>kplr009941662_sc_Q003300033333333332</td>
+      <td>...</td>
+      <td>5045760</td>
+      <td>599738</td>
+      <td>PUBLIC</td>
+      <td>2</td>
+      <td>KEPLER</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>2012</td>
+      <td>2009-05-02 00:54:00.000</td>
+      <td>2013-05-11 12:15:00.000</td>
+    </tr>
+    <tr>
+      <th>240</th>
+      <td>science</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>KEPLER</td>
+      <td>OPTICAL</td>
+      <td>kplr009941662</td>
+      <td>NaN</td>
+      <td>kplr009941662_sc_Q003300033333333332</td>
+      <td>...</td>
+      <td>76302956</td>
+      <td>599738</td>
+      <td>PUBLIC</td>
+      <td>2</td>
+      <td>KEPLER</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>2012</td>
+      <td>2009-05-02 00:54:00.000</td>
+      <td>2013-05-11 12:15:00.000</td>
+    </tr>
+    <tr>
+      <th>241</th>
+      <td>science</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>KEPLER</td>
+      <td>OPTICAL</td>
+      <td>kplr009941662</td>
+      <td>NaN</td>
+      <td>kplr009941662_sc_Q003300033333333332</td>
+      <td>...</td>
+      <td>648000</td>
+      <td>599738</td>
+      <td>PUBLIC</td>
+      <td>2</td>
+      <td>KEPLER</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>2013</td>
+      <td>2009-05-02 00:54:00.000</td>
+      <td>2013-05-11 12:15:00.000</td>
+    </tr>
+    <tr>
+      <th>242</th>
+      <td>science</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>KEPLER</td>
+      <td>OPTICAL</td>
+      <td>kplr009941662</td>
+      <td>NaN</td>
+      <td>kplr009941662_sc_Q003300033333333332</td>
+      <td>...</td>
+      <td>130764115</td>
+      <td>599738</td>
+      <td>PUBLIC</td>
+      <td>2</td>
+      <td>KEPLER</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>2011</td>
+      <td>2009-05-02 00:54:00.000</td>
+      <td>2013-05-11 12:15:00.000</td>
+    </tr>
+    <tr>
+      <th>243</th>
+      <td>science</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>KEPLER</td>
+      <td>OPTICAL</td>
+      <td>kplr009941662</td>
+      <td>NaN</td>
+      <td>kplr009941662_sc_Q003300033333333332</td>
+      <td>...</td>
+      <td>64708791</td>
+      <td>599738</td>
+      <td>PUBLIC</td>
+      <td>2</td>
+      <td>KEPLER</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>2009</td>
+      <td>2009-05-02 00:54:00.000</td>
+      <td>2013-05-11 12:15:00.000</td>
+    </tr>
+  </tbody>
+</table>
+<p>244 rows × 59 columns</p>
+</div></div>
+</div>
+<p>By default, MASTSearch returns any available data provided by an official mission pipeline. This means that any available High Level Science Products (HLSPs) are NOT returned. Additonally, TESS full frame images (FFIs) are not returned by MASTSearch. To search for these data types, we recommend using the mission-specific searches.</p>
+</section>
+</section>
+<section id="TESS-search">
+<h2>TESS search<a class="headerlink" href="#TESS-search" title="Link to this heading">#</a></h2>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Search for TESS data only. This by default includes both HLSPs and FFI cutouts.</span>
+<span class="n">toi</span> <span class="o">=</span> <span class="n">TESSSearch</span><span class="p">(</span><span class="s2">&quot;TOI 1161&quot;</span><span class="p">)</span>
+<span class="n">toi</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 236 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>full data validation report</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Data validation mini report</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>TCE summary report</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>231</th>
+      <td>1717079071</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>232</th>
+      <td>1717079066</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>233</th>
+      <td>158324245</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>234</th>
+      <td>1717079066</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>235</th>
+      <td>1717079071</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+<p>236 rows × 8 columns</p>
+</div></div>
+</div>
+<p>There are 200+ TESS data products available for this target. Note that this is more than were returned by our first MASTsearch. These ‘extra’ data products come from non-mission sources. The ‘pipeline’ column shows what pipeline was used to generate the data product. The ‘mission’ column simply reports if the data is a mission product or HLSP. Another addition for the TESSSearch is the ‘sector’ column. This column is only populated in the TESSSearch call, so is not available when using
+MASTSearch.</p>
+<p>Now that we know that TESS has observed this target, we may want to restrict our search to match our needs. Below we demonstrate some common filtering examples.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Only return timeseries (lightcurve) products</span>
+<span class="n">toi_lc</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">timeseries</span>
+<span class="n">toi_lc</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 86 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>15</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>26</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1717079071</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>26</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1717079066</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>40</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2021</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>81</th>
+      <td>1717079071</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>82</th>
+      <td>1717079066</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>83</th>
+      <td>158324245</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>84</th>
+      <td>1717079066</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>85</th>
+      <td>1717079071</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+<p>86 rows × 8 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Only return cubedata (TPF) products</span>
+<span class="c1"># NOTE: Only TESS provides FFI cutouts</span>
+<span class="n">toi_cube</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">cubedata</span>
+<span class="n">toi_cube</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 46 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>15</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>26</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1717079071</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>26</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1717079066</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>40</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2021</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>41</th>
+      <td>TOI 1161</td>
+      <td>TESScut</td>
+      <td>TESS Sector 53</td>
+      <td>53</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>TESS FFI Cutout (sector 53)</td>
+    </tr>
+    <tr>
+      <th>42</th>
+      <td>TOI 1161</td>
+      <td>TESScut</td>
+      <td>TESS Sector 54</td>
+      <td>54</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>TESS FFI Cutout (sector 54)</td>
+    </tr>
+    <tr>
+      <th>43</th>
+      <td>TOI 1161</td>
+      <td>TESScut</td>
+      <td>TESS Sector 55</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>TESS FFI Cutout (sector 55)</td>
+    </tr>
+    <tr>
+      <th>44</th>
+      <td>TOI 1161</td>
+      <td>TESScut</td>
+      <td>TESS Sector 74</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>TESS FFI Cutout (sector 74)</td>
+    </tr>
+    <tr>
+      <th>45</th>
+      <td>TOI 1161</td>
+      <td>TESScut</td>
+      <td>TESS Sector 75</td>
+      <td>75</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>TESS FFI Cutout (sector 75)</td>
+    </tr>
+  </tbody>
+</table>
+<p>46 rows × 8 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Only return data validation products. These are PDFs generated automatically during transit searches.</span>
+<span class="n">toi_dv</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">dvreports</span>
+<span class="n">toi_dv</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 104 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>full data validation report</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Data validation mini report</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>TCE summary report</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>full data validation report</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>TCE summary report</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>99</th>
+      <td>1717079066</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>54</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>Informational PDF</td>
+    </tr>
+    <tr>
+      <th>100</th>
+      <td>158324245</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>Informational PDF</td>
+    </tr>
+    <tr>
+      <th>101</th>
+      <td>158324245</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>PDF</td>
+    </tr>
+    <tr>
+      <th>102</th>
+      <td>1717079066</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>PDF</td>
+    </tr>
+    <tr>
+      <th>103</th>
+      <td>1717079066</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>Informational PDF</td>
+    </tr>
+  </tbody>
+</table>
+<p>104 rows × 8 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Only return High Level Science Products</span>
+<span class="n">toi_hlsp</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">HLSPs</span>
+<span class="n">toi_hlsp</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 108 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>14</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>14</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>158324245</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>15</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>158324245</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>15</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1717079071</td>
+      <td>TESS-SPOC</td>
+      <td>HLSP</td>
+      <td>26</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>103</th>
+      <td>1717079071</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>104</th>
+      <td>1717079066</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>55</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2022</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>105</th>
+      <td>158324245</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>106</th>
+      <td>1717079066</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>107</th>
+      <td>1717079071</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+<p>108 rows × 8 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Only return official mission products</span>
+<span class="n">toi_mission</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">mission_products</span>
+<span class="n">toi_mission</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 128 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>full data validation report</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Data validation mini report</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>TCE summary report</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>123</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>TCE summary report</td>
+    </tr>
+    <tr>
+      <th>124</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Data validation mini report</td>
+    </tr>
+    <tr>
+      <th>125</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>full data validation report</td>
+    </tr>
+    <tr>
+      <th>126</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>127</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Target pixel files</td>
+    </tr>
+  </tbody>
+</table>
+<p>128 rows × 8 columns</p>
+</div></div>
+</div>
+<p>Even after limiting results by data type, there are a lot of results for this target. The filter_table function allows you to filter by several additional parameters. These are: - exposure time (exptime) - the data pipline (pipeline) - the total number of results (limit).</p>
+<p>In addition, KeplerSearch objects can be filtered by quarter/month, TESSSearch objects by sector, and K2Search objects by campaign.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Keep any data type, but only the shortest cadence available, which in this case is 2-minute data</span>
+
+<span class="n">toi_shortest</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">filter_table</span><span class="p">(</span><span class="n">exptime</span><span class="o">=</span><span class="s2">&quot;shortest&quot;</span><span class="p">)</span>
+<span class="n">toi_shortest</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 8 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>74</td>
+      <td>20.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>74</td>
+      <td>20.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1717079066</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>74</td>
+      <td>20.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1717079066</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>74</td>
+      <td>20.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1717079066</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>20.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>1717079066</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>20.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>20.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>75</td>
+      <td>20.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>Light curves</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># You could also specify an exact exposure time or range in the form of a tuple (eg, (100,500))</span>
+<span class="n">toi_trange</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">filter_table</span><span class="p">(</span><span class="n">exptime</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">500</span><span class="p">))</span>
+<span class="n">toi_trange</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 128 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>full data validation report</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Data validation mini report</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>TCE summary report</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>123</th>
+      <td>158324245</td>
+      <td>TASOC</td>
+      <td>HLSP</td>
+      <td>15</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>124</th>
+      <td>158324245</td>
+      <td>TASOC</td>
+      <td>HLSP</td>
+      <td>26</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>125</th>
+      <td>158324245</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>126</th>
+      <td>1717079066</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>127</th>
+      <td>1717079071</td>
+      <td>QLP</td>
+      <td>HLSP</td>
+      <td>74</td>
+      <td>200.0</td>
+      <td>0.0</td>
+      <td>2024</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+<p>128 rows × 8 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">toi_lim</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">filter_table</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">toi_lim</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 2 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Target pixel files</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>full data validation report</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>Keep in mind, you can chain these commands</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">toi_short_lcs</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">timeseries</span><span class="o">.</span><span class="n">filter_table</span><span class="p">(</span><span class="n">exptime</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">sector</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+<span class="n">toi_short_lcs</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 2 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>TASOC</td>
+      <td>HLSP</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>Once your search result contains the files you want, you can download the files directly to your machine.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">toi_short_lcs</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+pipeline products: 100%|████████████████████████████████████████████| 2/2 [00:00&lt;00:00,  4.27it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Local Path</th>
+      <th>Status</th>
+      <th>Message</th>
+      <th>URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/T...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>You can also query the pandas Dataframe back end to perform more complicated searches. For example, the above could also be perfomed via:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">toi_short_lcs</span> <span class="o">=</span> <span class="n">toi</span><span class="o">.</span><span class="n">timeseries</span><span class="o">.</span><span class="n">query_table</span><span class="p">(</span><span class="s2">&quot;sector == 14 &amp; exptime == 120&quot;</span><span class="p">)</span>
+<span class="n">toi_short_lcs</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 2 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>158324245</td>
+      <td>SPOC</td>
+      <td>TESS</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>Light curves</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>158324245</td>
+      <td>TASOC</td>
+      <td>HLSP</td>
+      <td>14</td>
+      <td>120.0</td>
+      <td>0.0</td>
+      <td>2019</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<section id="TESScut-FFI-Cutouts">
+<h3>TESScut FFI Cutouts<a class="headerlink" href="#TESScut-FFI-Cutouts" title="Link to this heading">#</a></h3>
+<p>In addition to lightcurves and target pixel files, TESS provides Full Frame Image (FFI) data. This data was taken at a cadence of 30 minutes during the primary mission, 10 minutes during the first extension, and 200-seconds beginning in the second mission extension.</p>
+<p>lksearch allows users to download entire FFIs, or make smaller cutouts around a target of interest using TESScut. All of this functionality if available with the TESSSearch object.</p>
+<section id="Find-and-download-TESScut-TPFs">
+<h4>Find and download TESScut TPFs<a class="headerlink" href="#Find-and-download-TESScut-TPFs" title="Link to this heading">#</a></h4>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">search_result</span> <span class="o">=</span> <span class="n">TESSSearch</span><span class="p">(</span><span class="s2">&quot;TOI 270&quot;</span><span class="p">,</span> <span class="n">hlsp</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># You can filter two different ways to get the same result.</span>
+<span class="c1"># search_result.filter_table(pipeline=&#39;TESScut&#39;)</span>
+<span class="n">search_result</span><span class="o">.</span><span class="n">tesscut</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+TESSSearch object containing 6 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>sector</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>TOI 270</td>
+      <td>TESScut</td>
+      <td>TESS Sector 03</td>
+      <td>3</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2018</td>
+      <td>TESS FFI Cutout (sector 3)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>TOI 270</td>
+      <td>TESScut</td>
+      <td>TESS Sector 04</td>
+      <td>4</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2018</td>
+      <td>TESS FFI Cutout (sector 4)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>TOI 270</td>
+      <td>TESScut</td>
+      <td>TESS Sector 05</td>
+      <td>5</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2018</td>
+      <td>TESS FFI Cutout (sector 5)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>TOI 270</td>
+      <td>TESScut</td>
+      <td>TESS Sector 30</td>
+      <td>30</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>TESS FFI Cutout (sector 30)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>TOI 270</td>
+      <td>TESScut</td>
+      <td>TESS Sector 31</td>
+      <td>31</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>TESS FFI Cutout (sector 31)</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>TOI 270</td>
+      <td>TESScut</td>
+      <td>TESS Sector 32</td>
+      <td>32</td>
+      <td>600.0</td>
+      <td>0.0</td>
+      <td>2020</td>
+      <td>TESS FFI Cutout (sector 32)</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>For TESScut images, you can specify how large you want the cutout to be in pixels when you download the data using the TESScut_size keyword. By default, it will download a 10-pixel square image. If you use set this keyword when downloading non-TESScut data, it will be ignored.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">search_result</span><span class="o">.</span><span class="n">tesscut</span><span class="o">.</span><span class="n">filter_table</span><span class="p">(</span><span class="n">sector</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">TESScut_size</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+TESScut          : 100%|████████████████████████████████████████████| 1/1 [00:08&lt;00:00,  8.03s/it]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Local Path</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/T...</td>
+      <td>COMPLETE</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+</section>
+</section>
+<section id="Kepler-Search">
+<h2>Kepler Search<a class="headerlink" href="#Kepler-Search" title="Link to this heading">#</a></h2>
+<p>The call to KeplerSearch saves all availabe data products for the target as a table. Like with the other search objects, there are several convenient functions to limit the results to timeseries (lighcurve), cubedata (target pixel files and, in the case of TESS only, full frame image cutouts), dvreports (PDF data validation reports generated by the data pipelines), mission_products, and HLSPs. Calling these functions returns a new search object.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># What timeseries data is available?</span>
+<span class="n">kep</span> <span class="o">=</span> <span class="n">KeplerSearch</span><span class="p">(</span><span class="s2">&quot;Kepler 137&quot;</span><span class="p">)</span>
+<span class="n">kep</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+KeplerSearch object containing 82 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>quarter</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>0</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Lightcurve Long Cadence (CLC) - Q0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>0</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Target Pixel Long Cadence (TPL) - Q0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>1</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Lightcurve Long Cadence (CLC) - Q1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>1</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Target Pixel Long Cadence (TPL) - Q1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>2</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Lightcurve Long Cadence (CLC) - Q2</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>77</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>17</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2013</td>
+      <td>Target Pixel Long Cadence (TPL) - Q17</td>
+    </tr>
+    <tr>
+      <th>78</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>99</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Data Validation full report</td>
+    </tr>
+    <tr>
+      <th>79</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>99</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Data Validation summary report</td>
+    </tr>
+    <tr>
+      <th>80</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>99</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Data Validation summary report</td>
+    </tr>
+    <tr>
+      <th>81</th>
+      <td>Gaia DR3 2104847370214740352</td>
+      <td>KBONUS-BKG</td>
+      <td>HLSP</td>
+      <td>99</td>
+      <td>1765.464</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+<p>82 rows × 8 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">kep_lc</span> <span class="o">=</span> <span class="n">kep</span><span class="o">.</span><span class="n">timeseries</span>
+<span class="n">kep_lc</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[24]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+KeplerSearch object containing 40 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>quarter</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>0</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Lightcurve Long Cadence (CLC) - Q0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>1</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Lightcurve Long Cadence (CLC) - Q1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>2</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Lightcurve Long Cadence (CLC) - Q2</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>3</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>Lightcurve Long Cadence (CLC) - Q3</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>4</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Lightcurve Long Cadence (CLC) - Q4</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>14</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2012</td>
+      <td>Lightcurve Long Cadence (CLC) - Q14</td>
+    </tr>
+    <tr>
+      <th>36</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>15</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2013</td>
+      <td>Lightcurve Long Cadence (CLC) - Q15</td>
+    </tr>
+    <tr>
+      <th>37</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>16</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2013</td>
+      <td>Lightcurve Long Cadence (CLC) - Q16</td>
+    </tr>
+    <tr>
+      <th>38</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>17</td>
+      <td>1800.000</td>
+      <td>0.0</td>
+      <td>2013</td>
+      <td>Lightcurve Long Cadence (CLC) - Q17</td>
+    </tr>
+    <tr>
+      <th>39</th>
+      <td>Gaia DR3 2104847370214740352</td>
+      <td>KBONUS-BKG</td>
+      <td>HLSP</td>
+      <td>99</td>
+      <td>1765.464</td>
+      <td>0.0</td>
+      <td>2009</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+<p>40 rows × 8 columns</p>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># You can download a subsection of results directly</span>
+<span class="n">kep_lc</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+pipeline products: 100%|████████████████████████████████████████████| 2/2 [00:00&lt;00:00,  3.32it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[25]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Local Path</th>
+      <th>Status</th>
+      <th>Message</th>
+      <th>URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/K...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/K...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<p>Notice that when downloading, a table is printed out showing the status of the download. You can save this table and explore it in more detail, if desired.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[26]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># You can download a subsection of results directly</span>
+<span class="n">manifest</span> <span class="o">=</span> <span class="n">kep</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">manifest</span><span class="p">[</span><span class="s2">&quot;Local Path&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+pipeline products: 100%|████████████████████████████████████████████| 2/2 [00:00&lt;00:00,  3.98it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;/Users/tapritc2/.lksearch/cache/mastDownload/Kepler/kplr007419318_lc_Q111111111111111111/kplr007419318-2009131105131_llc.fits&#39;
+ &#39;/Users/tapritc2/.lksearch/cache/mastDownload/Kepler/kplr007419318_lc_Q111111111111111111/kplr007419318-2009131105131_lpd-targ.fits.gz&#39;]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># we can also filter the results by observing quarter</span>
+<span class="n">kep_quarters</span> <span class="o">=</span> <span class="n">kep</span><span class="o">.</span><span class="n">filter_table</span><span class="p">(</span><span class="n">quarter</span><span class="o">=</span><span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">17</span><span class="p">])</span>
+<span class="n">kep_quarters</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[27]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+KeplerSearch object containing 10 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>quarter</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>7</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Lightcurve Short Cadence (CSC) - Q7</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>7</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Lightcurve Short Cadence (CSC) - Q7</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>7</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Target Pixel Short Cadence (TPS) - Q7</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>7</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Target Pixel Short Cadence (TPS) - Q7</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>7</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Target Pixel Short Cadence (TPS) - Q7</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>7</td>
+      <td>60.0</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Lightcurve Short Cadence (CSC) - Q7</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>7</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Target Pixel Long Cadence (TPL) - Q7</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>7</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2010</td>
+      <td>Lightcurve Long Cadence (CLC) - Q7</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>17</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2013</td>
+      <td>Lightcurve Long Cadence (CLC) - Q17</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>kplr007419318</td>
+      <td>Kepler</td>
+      <td>Kepler</td>
+      <td>17</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2013</td>
+      <td>Target Pixel Long Cadence (TPL) - Q17</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+<section id="K2-Search">
+<h2>K2 Search<a class="headerlink" href="#K2-Search" title="Link to this heading">#</a></h2>
+<p>K2Search behaves in much the same way as Kepler. As with Kepler, both mission products and HLSPs are returned by default. Note that instead of quarters, the K2 mission was separated by campaign.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">K2</span> <span class="o">=</span> <span class="n">K2Search</span><span class="p">(</span><span class="s2">&quot;K2-18&quot;</span><span class="p">)</span>
+<span class="n">K2</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[28]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+K2Search object containing 6 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>campaign</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ktwo201912552</td>
+      <td>K2</td>
+      <td>K2</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>Target Pixel Long Cadence (KTL) - C01</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ktwo201912552</td>
+      <td>K2</td>
+      <td>K2</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>Lightcurve Long Cadence (KLC) - C01</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>ktwo201912552</td>
+      <td>EVEREST</td>
+      <td>HLSP</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ktwo201912552</td>
+      <td>EVEREST</td>
+      <td>HLSP</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>PDF</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ktwo201912552</td>
+      <td>K2SFF</td>
+      <td>HLSP</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>ktwo201912552</td>
+      <td>K2VARCAT</td>
+      <td>HLSP</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Download all lightcurves produced by HLSPs</span>
+<span class="n">K2_HLSPs</span> <span class="o">=</span> <span class="n">K2</span><span class="o">.</span><span class="n">HLSPs</span>
+<span class="n">K2_HLSPs</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[29]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+K2Search object containing 4 data products
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>target_name</th>
+      <th>pipeline</th>
+      <th>mission</th>
+      <th>campaign</th>
+      <th>exptime</th>
+      <th>distance</th>
+      <th>year</th>
+      <th>description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ktwo201912552</td>
+      <td>EVEREST</td>
+      <td>HLSP</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ktwo201912552</td>
+      <td>EVEREST</td>
+      <td>HLSP</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>PDF</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>ktwo201912552</td>
+      <td>K2SFF</td>
+      <td>HLSP</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>FITS</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ktwo201912552</td>
+      <td>K2VARCAT</td>
+      <td>HLSP</td>
+      <td>1</td>
+      <td>1800.0</td>
+      <td>0.0</td>
+      <td>2014</td>
+      <td>FITS</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">manifest</span> <span class="o">=</span> <span class="n">K2_HLSPs</span><span class="o">.</span><span class="n">timeseries</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="n">manifest</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+pipeline products: 100%|████████████████████████████████████████████| 3/3 [00:01&lt;00:00,  2.02it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Local Path</th>
+      <th>Status</th>
+      <th>Message</th>
+      <th>URL</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>/Users/tapritc2/.lksearch/cache/mastDownload/H...</td>
+      <td>COMPLETE</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Tutorials</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="catalog-searches.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">How to Search for Catalog Data and IDs with lksearch</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Basic-Searches">Basic Searches</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Data-Exploration">Data Exploration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Accessing-the-full-result-table">Accessing the full result table</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#TESS-search">TESS search</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#TESScut-FFI-Cutouts">TESScut FFI Cutouts</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#Find-and-download-TESScut-TPFs">Find and download TESScut TPFs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Kepler-Search">Kepler Search</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#K2-Search">K2 Search</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/tutorials/data-searches.ipynb.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024, TESS Science Support Center.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.4.7.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.4.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

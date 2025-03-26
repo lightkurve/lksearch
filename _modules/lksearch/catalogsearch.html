@@ -1,0 +1,1164 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>lksearch.catalogsearch &#8212; lksearch</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../_static/documentation_options.js?v=781dc9bd"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/lksearch/catalogsearch';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="26 Mar 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">lksearch</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../Quickstart.html">
+    Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../apidoc.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../GetInvolved.html">
+    Contributing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../HowtoCite.html">
+    Citing
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../../Contact.html">
+    Contact
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lightkurve/lksearch" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../Quickstart.html">
+    Quickstart
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../apidoc.html">
+    API
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../GetInvolved.html">
+    Contributing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../HowtoCite.html">
+    Citing
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../Contact.html">
+    Contact
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/lightkurve/lksearch" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">Module code</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../lksearch.html" class="nav-link">lksearch</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">lksearch.cat...</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for lksearch.catalogsearch</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Catalog module to search various catalogs for missions&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">astropy.coordinates</span> <span class="kn">import</span> <span class="n">Angle</span><span class="p">,</span> <span class="n">SkyCoord</span><span class="p">,</span> <span class="n">Distance</span>
+<span class="kn">from</span> <span class="nn">astropy.table</span> <span class="kn">import</span> <span class="n">Table</span>
+<span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
+<span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+
+<span class="kn">from</span> <span class="nn">astroquery.vizier</span> <span class="kn">import</span> <span class="n">Vizier</span>
+<span class="kn">from</span> <span class="nn">astroquery.utils.tap.core</span> <span class="kn">import</span> <span class="n">TapPlus</span>
+<span class="kn">from</span> <span class="nn">astroquery.mast</span> <span class="kn">import</span> <span class="n">MastClass</span>
+<span class="kn">from</span> <span class="nn">astroquery.simbad</span> <span class="kn">import</span> <span class="n">Simbad</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">PACKAGEDIR</span>
+
+
+<span class="c1"># This is a lits of VizieR catalogs and their input parameters to be used in the</span>
+<span class="c1"># query_skycatalog function</span>
+<span class="k">def</span> <span class="nf">_load_cat_config</span><span class="p">():</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">PACKAGEDIR</span><span class="si">}</span><span class="s2">/data/catalog_config.json&quot;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">j</span><span class="p">:</span>
+        <span class="n">cat_dict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cat_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">cat_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s2">&quot;equinox&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Time</span><span class="p">(</span>
+            <span class="n">cat_dict</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s2">&quot;equinox&quot;</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;jyear&quot;</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="s2">&quot;tt&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">cat_dict</span>
+
+
+<span class="n">_Catalog_Dictionary</span> <span class="o">=</span> <span class="n">_load_cat_config</span><span class="p">()</span>
+
+<span class="c1"># Connect to the Vizier TAP server here so that we only do this once</span>
+<span class="n">VizTap</span> <span class="o">=</span> <span class="n">TapPlus</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s2">&quot;http://TAPVizieR.u-strasbg.fr/TAPVizieR/tap/&quot;</span><span class="p">)</span>
+
+<span class="c1"># TODO Swap this out with a configuration parameter maybe?</span>
+<span class="c1"># Or None and Raise Exception</span>
+<span class="c1"># Make this an optional keword argument for debugging/doc</span>
+<span class="n">_default_catalog</span> <span class="o">=</span> <span class="s2">&quot;tic&quot;</span>
+
+
+<div class="viewcode-block" id="query_region">
+<a class="viewcode-back" href="../../apidoc.html#lksearch.catalogsearch.query_region">[docs]</a>
+<span class="k">def</span> <span class="nf">query_region</span><span class="p">(</span>
+    <span class="n">search_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SkyCoord</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SkyCoord</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]],</span>
+    <span class="n">output_epoch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Time</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">catalog</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tic&quot;</span><span class="p">,</span>
+    <span class="n">radius</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;arcsecond&quot;</span><span class="p">),</span>
+    <span class="n">magnitude_limit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">18.0</span><span class="p">,</span>
+    <span class="n">max_results</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_skycoord</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Query a catalog for a single source location, obtain nearby sources</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    coord : `~astropy.coordinates.SkyCoord`, string, tuple, or list thereof</span>
+<span class="sd">        Coordinates around which to do a radius query. If passed a string, will first try to resolve string as a coordinate using `~astropy.coordinates.SkyCoord`, if this fails then tries to resolve the string as a name using `~astroquery.mast.MastClass.resolve_object`.</span>
+<span class="sd">    output_epoch: `~astropy.time.Time`</span>
+<span class="sd">        The time of observation in JD.</span>
+<span class="sd">    catalog: str</span>
+<span class="sd">        The catalog to query, either &#39;kepler&#39;, &#39;k2&#39;, or &#39;tess&#39;, &#39;gaia&#39;</span>
+<span class="sd">    radius : float or `~astropy.units.quantity.Quantity`</span>
+<span class="sd">        Radius in arcseconds to query</span>
+<span class="sd">    magnitude_limit : float</span>
+<span class="sd">        A value to limit the results in based on the Tmag/Kepler mag/K2 mag or Gaia G mag. Default, 18.</span>
+<span class="sd">    return_skycoord: bool</span>
+<span class="sd">        Whether to return an `~astropy.coordinates.SkyCoord` object. Default is False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result: `~astropy.table.Table` or `~astropy.coordinates.SkyCoord`</span>
+<span class="sd">        By default returns a  pandas dataframe of the sources within radius query, corrected for proper motion. Optionally will return astropy.coordinates.SkyCoord object.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">coord</span><span class="p">,</span> <span class="n">search_catalog</span> <span class="o">=</span> <span class="n">_parse_search_input</span><span class="p">(</span><span class="n">search_input</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="n">catalog</span><span class="p">)</span>
+
+    <span class="c1"># Check to make sure that user input is in the correct format</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">SkyCoord</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">coord</span> <span class="o">=</span> <span class="n">MastClass</span><span class="p">()</span><span class="o">.</span><span class="n">resolve_object</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;could not resolve </span><span class="si">{</span><span class="n">coord</span><span class="si">}</span><span class="s2"> to SkyCoord&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">output_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output_epoch</span><span class="p">,</span> <span class="n">Time</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">output_epoch</span> <span class="o">=</span> <span class="n">Time</span><span class="p">(</span><span class="n">output_epoch</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;jd&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Must pass an `astropy.time.Time object` or parsable object.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;Must pass an `astropy.time.Time object` or parsable object.&quot;</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">coord</span><span class="o">.</span><span class="n">isscalar</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;must pass one target only.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Here we check to make sure that the radius entered is in arcseconds</span>
+    <span class="c1"># This also means we do not need to specify arcseconds in our catalog query</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">radius</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">radius</span><span class="p">,</span> <span class="s2">&quot;arcsecond&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">u</span><span class="o">.</span><span class="n">UnitConversionError</span><span class="p">:</span>
+        <span class="k">raise</span>
+
+    <span class="c1"># Check to make sure that the catalog provided by the user is valid for this function</span>
+    <span class="k">if</span> <span class="n">search_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_Catalog_Dictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can not parse catalog name &#39;</span><span class="si">{</span><span class="n">catalog</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>
+    <span class="n">catalog_meta</span> <span class="o">=</span> <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">search_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+
+    <span class="c1"># Get the Vizier catalog name</span>
+    <span class="n">catalog_name</span> <span class="o">=</span> <span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;catalog&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Get the appropriate column names and filters to be applied</span>
+    <span class="n">filters</span> <span class="o">=</span> <span class="n">Vizier</span><span class="p">(</span>
+        <span class="n">columns</span><span class="o">=</span><span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">],</span>
+        <span class="n">column_filters</span><span class="o">=</span><span class="p">{</span><span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;column_filters&quot;</span><span class="p">]:</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="n">magnitude_limit</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="c1"># The catalog can cut off at 50 - we dont want this to happen</span>
+    <span class="k">if</span> <span class="n">max_results</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">ROW_LIMIT</span> <span class="o">=</span> <span class="n">max_results</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">ROW_LIMIT</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="c1"># Now query the catalog</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">filters</span><span class="o">.</span><span class="n">query_region</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="n">catalog_name</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="n">Angle</span><span class="p">(</span><span class="n">radius</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Make an empty Table</span>
+        <span class="n">empty_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span>
+                <span class="o">*</span><span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;columns&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;ID&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;RA&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Dec&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Separation&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Relative_Flux&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Make Sure Columns are consistently renamed for the catalog</span>
+        <span class="n">empty_table</span> <span class="o">=</span> <span class="n">empty_table</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">i</span><span class="p">:</span> <span class="n">o</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;rename_in&quot;</span><span class="p">],</span> <span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;rename_out&quot;</span><span class="p">])</span>
+            <span class="p">},</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Make sure we have an index set</span>
+        <span class="n">empty_table</span> <span class="o">=</span> <span class="n">empty_table</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;ID&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">empty_table</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="n">catalog_name</span><span class="p">]</span>
+    <span class="c1"># Rename the columns so that the output is uniform</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">rename_columns</span><span class="p">(</span>
+        <span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;rename_in&quot;</span><span class="p">],</span>
+        <span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;rename_out&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;prefix&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;prefix&quot;</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="n">output_epoch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_epoch</span> <span class="o">=</span> <span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;equinox&quot;</span><span class="p">]</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">_table_to_skycoord</span><span class="p">(</span>
+        <span class="n">table</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+        <span class="n">equinox</span><span class="o">=</span><span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;equinox&quot;</span><span class="p">],</span>
+        <span class="n">output_epoch</span><span class="o">=</span><span class="n">output_epoch</span><span class="p">,</span>
+        <span class="n">catalog</span><span class="o">=</span><span class="n">search_catalog</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ref_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">coord</span><span class="o">.</span><span class="n">separation</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">arcsecond</span><span class="p">)</span>
+    <span class="n">sep</span> <span class="o">=</span> <span class="n">c</span><span class="p">[</span><span class="n">ref_index</span><span class="p">]</span><span class="o">.</span><span class="n">separation</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">return_skycoord</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">deg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">c</span><span class="p">[</span><span class="n">s</span><span class="p">]</span>
+    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;RA&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">ra</span><span class="o">.</span><span class="n">deg</span>
+    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;Dec&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">dec</span><span class="o">.</span><span class="n">deg</span>
+    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;Separation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sep</span><span class="o">.</span><span class="n">arcsecond</span>
+    <span class="c1"># Calculate the relative flux</span>
+    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;Relative_Flux&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;default_mag&quot;</span><span class="p">]]</span>
+            <span class="o">-</span> <span class="n">result</span><span class="p">[</span><span class="n">catalog_meta</span><span class="p">[</span><span class="s2">&quot;default_mag&quot;</span><span class="p">]][</span><span class="n">ref_index</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="o">/</span> <span class="o">-</span><span class="mf">2.5</span>
+    <span class="p">)</span>
+    <span class="c1"># Now sort the table based on separation</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="s2">&quot;Separation&quot;</span><span class="p">])</span>
+    <span class="c1"># return result</span>
+    <span class="c1"># result = result.to_pandas().set_index(&quot;ID&quot;)</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="n">_get_return_columns</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">columns</span><span class="p">)]</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="query_id">
+<a class="viewcode-back" href="../../apidoc.html#lksearch.catalogsearch.query_id">[docs]</a>
+<span class="k">def</span> <span class="nf">query_id</span><span class="p">(</span>
+    <span class="n">search_object</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="n">output_catalog</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">input_catalog</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_results</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_skycoord</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">output_epoch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Time</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Searches a catalog (TIC, KIC, EPIC, or GAIA DR3) for an exact ID match and</span>
+<span class="sd">    returns the assosciated catalog rows.  A limited cross-match between the TIC, KIC, and gaiadr3</span>
+<span class="sd">    catalogs is possible using the catalog, and input_catalog optional parameters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    search_object : Union[str, int, list[str, int]]</span>
+<span class="sd">        A string or integer, or list of strings or integers, that represents</span>
+<span class="sd">        a list of IDs from a single catalog to match.  If an integer is supplied the</span>
+<span class="sd">        catalog optional parameter must be specified.</span>
+<span class="sd">    catalog : str, optional</span>
+<span class="sd">        Catalog to search for an ID match to.  If no input_catalog is</span>
+<span class="sd">        specified catalog and input_catalog are assumed to be the same.</span>
+<span class="sd">        If search_object is a string and catalog and is None, search_object is</span>
+<span class="sd">        parsed to try and determine the catalog, by default None</span>
+<span class="sd">    input_catalog : str, optional</span>
+<span class="sd">        _description_, by default None</span>
+<span class="sd">    max_results : int, optional</span>
+<span class="sd">        limits the maximum rows to return, by default None</span>
+<span class="sd">    return_skycoord : bool, optional</span>
+<span class="sd">        If true, an `~astropy.coordinates.SkyCoord` objects is returned for each</span>
+<span class="sd">        row in the result table, by default False</span>
+<span class="sd">    output_epoch : Union[str, Time], optional</span>
+<span class="sd">        If a return_skycoord is True, output_epoch can be used to specify the output_epoch for the</span>
+<span class="sd">        returned SkyCoord object, by default None</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    results_table: Union[Table, SkyCoord, list[SkyCoord]]</span>
+<span class="sd">        `~astropy.table.Table` object containing the rows of the catalog with IDs matching the search_input.</span>
+<span class="sd">        If return_skycoord is set to True, a `~astropy.coordinates.SkyCoord` object or list of `~astropy.coordinates.SkyCoord` objects</span>
+<span class="sd">        is instead returned.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">id_column</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_object</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">id_list</span> <span class="o">=</span> <span class="n">_parse_id_list</span><span class="p">(</span><span class="n">search_object</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">id_list</span><span class="p">,</span> <span class="n">scat</span> <span class="o">=</span> <span class="n">_parse_id</span><span class="p">(</span><span class="n">search_object</span><span class="p">)</span>
+        <span class="c1"># IF we can figure out the soruce catalog from context -</span>
+        <span class="c1"># EG TIC Blah, assume the catalog to search is the catalog detected</span>
+        <span class="c1"># And th</span>
+        <span class="k">if</span> <span class="n">output_catalog</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">scat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_catalog</span> <span class="o">=</span> <span class="n">scat</span>
+        <span class="k">if</span> <span class="n">input_catalog</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">scat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">input_catalog</span> <span class="o">=</span> <span class="n">scat</span>
+
+    <span class="c1"># Assuming a 1:1 match.  TODO is this a bad assumption?</span>
+    <span class="k">if</span> <span class="n">max_results</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">max_results</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">search_object</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">output_catalog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">input_catalog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="n">input_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+            <span class="n">max_results</span> <span class="o">=</span> <span class="n">max_results</span> <span class="o">*</span> <span class="mi">10</span>
+            <span class="k">if</span> <span class="n">input_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span>
+                <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()][</span><span class="s2">&quot;crossmatch_catalogs&quot;</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()][</span><span class="s2">&quot;crossmatch_type&quot;</span><span class="p">]</span>
+                    <span class="o">==</span> <span class="s2">&quot;tic&quot;</span>
+                <span class="p">):</span>
+                    <span class="c1"># TIC is is crossmatched with gaiadr3/kic</span>
+                    <span class="c1"># If KIC data for a gaia source or vice versa is desired</span>
+                    <span class="c1"># search TIC to get KIC/gaia ids then Search KIC /GAIA</span>
+                    <span class="n">source_id_column</span> <span class="o">=</span> <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="s2">&quot;tic&quot;</span><span class="p">][</span>
+                        <span class="s2">&quot;crossmatch_column_id&quot;</span>
+                    <span class="p">][</span><span class="n">input_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+                    <span class="n">new_id_table</span> <span class="o">=</span> <span class="n">_query_id</span><span class="p">(</span>
+                        <span class="s2">&quot;tic&quot;</span><span class="p">,</span> <span class="n">id_list</span><span class="p">,</span> <span class="n">max_results</span><span class="p">,</span> <span class="n">id_column</span><span class="o">=</span><span class="n">source_id_column</span>
+                    <span class="p">)</span>
+                    <span class="n">id_list</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="n">new_id_table</span><span class="p">[</span>
+                            <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="s2">&quot;tic&quot;</span><span class="p">][</span><span class="s2">&quot;crossmatch_column_id&quot;</span><span class="p">][</span>
+                                <span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                            <span class="p">]</span>
+                        <span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+                        <span class="c1"># .values</span>
+                    <span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()][</span><span class="s2">&quot;crossmatch_type&quot;</span><span class="p">]</span>
+                    <span class="o">==</span> <span class="s2">&quot;column&quot;</span>
+                <span class="p">):</span>
+                    <span class="c1"># TIC is is crossmatched with gaiadr3/kic</span>
+                    <span class="c1"># If we want TIC Info for a gaiadr3/KIC source - match appropriate column in TIC</span>
+                    <span class="n">id_column</span> <span class="o">=</span> <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()][</span>
+                        <span class="s2">&quot;crossmatch_column_id&quot;</span>
+                    <span class="p">][</span><span class="n">input_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_catalog</span><span class="si">}</span><span class="s2"> does not have crossmatched IDs with </span><span class="si">{</span><span class="n">output_catalog</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">output_catalog</span><span class="si">}</span><span class="s2"> can be crossmatched with </span><span class="si">{</span><span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()][</span><span class="s1">&#39;crossmatch_catalogs&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">output_catalog</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">output_catalog</span> <span class="o">=</span> <span class="n">_default_catalog</span>
+
+    <span class="n">results_table</span> <span class="o">=</span> <span class="n">_query_id</span><span class="p">(</span>
+        <span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">id_list</span><span class="p">,</span> <span class="n">max_results</span><span class="p">,</span> <span class="n">id_column</span><span class="o">=</span><span class="n">id_column</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">return_skycoord</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_table_to_skycoord</span><span class="p">(</span>
+            <span class="n">results_table</span><span class="p">,</span> <span class="n">output_epoch</span><span class="o">=</span><span class="n">output_epoch</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="n">output_catalog</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">results_table</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_query_id</span><span class="p">(</span><span class="n">catalog</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">id_list</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_results</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">id_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="n">_get_TAP_Query</span><span class="p">(</span>
+        <span class="n">catalog</span><span class="p">,</span> <span class="n">id_list</span><span class="p">,</span> <span class="n">max_results</span><span class="o">=</span><span class="n">max_results</span><span class="p">,</span> <span class="n">id_column</span><span class="o">=</span><span class="n">id_column</span>
+    <span class="p">)</span>
+    <span class="n">async_limit</span> <span class="o">=</span> <span class="mf">1e3</span>
+    <span class="k">if</span> <span class="n">max_results</span> <span class="o">&gt;</span> <span class="n">async_limit</span><span class="p">:</span>
+        <span class="c1"># we should chex max_results and if low do a synchronous query, if large async</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Warning: Queries over </span><span class="si">{</span><span class="n">async_limit</span><span class="si">}</span><span class="s2"> will be done asynchronously, and may take some time&quot;</span>
+        <span class="p">)</span>
+        <span class="n">job</span> <span class="o">=</span> <span class="n">VizTap</span><span class="o">.</span><span class="n">launch_job_async</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">wait_for_job_end</span><span class="p">()</span>
+        <span class="n">results_table</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">job</span> <span class="o">=</span> <span class="n">VizTap</span><span class="o">.</span><span class="n">launch_job</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">results_table</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">results_table</span>  <span class="c1"># .to_pandas()</span>
+
+
+<span class="c1"># use simbad to get name/ID crossmatches</span>
+<div class="viewcode-block" id="query_names">
+<a class="viewcode-back" href="../../apidoc.html#lksearch.catalogsearch.query_names">[docs]</a>
+<span class="k">def</span> <span class="nf">query_names</span><span class="p">(</span><span class="n">search_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Uses the Simbad name resolver and ids to disambiguate the search_input string or list.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    search_input: Union[str, list[str]]</span>
+<span class="sd">        A string or list of strings to query simbad for ID disambiguation</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result: DataFrame, list[DataFrame]</span>
+<span class="sd">        Results from the `~astroquery.simbad.Simbad` ID query in `~pandas.DataFrame` format.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># match_str = None only usable in bleeding edge astroquery</span>
+    <span class="c1"># match_list = _Catalog_Dictionary.keys()</span>
+
+    <span class="c1"># if match_catalog is not None:</span>
+    <span class="c1">#    if match_catalog.lower() in match_list:</span>
+    <span class="c1">#        match_str = _Catalog_Dictionary[match_catalog.lower()][&quot;SIMBAD_match_like&quot;]</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_input</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Throttling query limit to Simbad&#39;s: max 5/s&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">search_input</span><span class="p">:</span>
+            <span class="n">result_iter</span> <span class="o">=</span> <span class="n">_query_names</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.2</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result_iter</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_query_names</span><span class="p">(</span><span class="n">search_input</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="match_names_catalogs">
+<a class="viewcode-back" href="../../apidoc.html#lksearch.catalogsearch.match_names_catalogs">[docs]</a>
+<span class="k">def</span> <span class="nf">match_names_catalogs</span><span class="p">(</span>
+    <span class="n">search_input</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">match</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Uses the Simbad name resolver and ids to disambiguate the search_input string or list, and compare the disambiguated names with a list to match against.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    search_input: Union[str, list[str]]</span>
+<span class="sd">        A string or list of strings to query simbad for ID disambiguation</span>
+
+<span class="sd">    match: Union[str, list[str]]</span>
+<span class="sd">        Short name of catalog to parse the simbad id results for.  If this is passed the list of ids are not</span>
+<span class="sd">        reported and a column per item in the match list is added and the ids with that match str contained in the id are listed.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    result: DataFrame, list[DataFrame]</span>
+<span class="sd">        Results from the `~astroquery.simbad.Simbad` ID query in `~pandas.DataFrame` format.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">query_names</span><span class="p">(</span><span class="n">search_input</span><span class="p">)</span>
+
+    <span class="c1"># Make an Empty DataFrame with # columns = 1(the search input) + len(match)</span>
+    <span class="c1"># This will provide the ids that match each search input given the match criteria</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;search&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">match</span><span class="p">):</span>
+        <span class="n">col</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+    <span class="n">final_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="c1"># Iterate through the search inputs, returned ids, and match criteria</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">search_input</span><span class="p">):</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="p">]</span>
+        <span class="c1"># make sure we&#39;re in a list in the event we have a single result</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">result</span><span class="p">]</span>
+        <span class="c1"># For each item in the match terms, see if it is contained in ID</span>
+        <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">match</span><span class="p">):</span>
+            <span class="n">mcat</span> <span class="o">=</span> <span class="n">cat</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="n">cmatch</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">sid</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;id&quot;</span><span class="p">]:</span>
+                <span class="nb">id</span> <span class="o">=</span> <span class="n">sid</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">mcat</span> <span class="ow">in</span> <span class="nb">id</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">cmatch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">cmatch</span> <span class="o">=</span> <span class="n">sid</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">cmatch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sid</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">cmatch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cmatch</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cmatch</span><span class="p">)</span>
+
+        <span class="n">row_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">row</span><span class="p">]),</span> <span class="n">columns</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">final_result</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">final_result</span><span class="p">,</span> <span class="n">row_result</span><span class="p">],</span>
+            <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="c1"># get rid of our old list of tables result and return the matching results</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">final_result</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_query_names</span><span class="p">(</span><span class="n">search_item</span><span class="p">):</span>
+    <span class="c1"># Construct exact ID TAP queries for various surveys</span>
+    <span class="c1">#    result_table = Simbad.query_objectids(search_item, criteria = match_str)</span>
+    <span class="n">result_table</span> <span class="o">=</span> <span class="n">Simbad</span><span class="o">.</span><span class="n">query_objectids</span><span class="p">(</span><span class="n">search_item</span><span class="p">)</span>
+    <span class="n">result_table</span> <span class="o">=</span> <span class="n">result_table</span><span class="o">.</span><span class="n">to_pandas</span><span class="p">()</span>
+
+    <span class="c1"># Older astroquery versions return bytes-like objects, lets make sure things are strings</span>
+    <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">result_table</span><span class="o">.</span><span class="n">dtypes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="o">==</span> <span class="nb">object</span> <span class="ow">and</span> <span class="n">col</span> <span class="o">==</span> <span class="s2">&quot;ID&quot;</span><span class="p">:</span>  <span class="c1"># Only process byte object columns</span>
+            <span class="n">result_table</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">result_table</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="c1"># older astroquery versions use &quot;ID&quot; not &#39;id&#39;, lets be backwards compatible</span>
+    <span class="k">if</span> <span class="s2">&quot;ID&quot;</span> <span class="ow">in</span> <span class="n">result_table</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">result_table</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;ID&quot;</span><span class="p">:</span> <span class="s2">&quot;id&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result_table</span>
+
+
+<span class="k">def</span> <span class="nf">_get_TAP_Query</span><span class="p">(</span><span class="n">catalog</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ID</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">max_results</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">id_column</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">catalog</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_Catalog_Dictionary</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">catalog</span><span class="si">}</span><span class="s2"> not found in TAP catalogs list&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">max_results</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">max_results</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ID</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">id_column</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">id_column</span> <span class="o">=</span> <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">catalog</span><span class="p">][</span><span class="s2">&quot;default_id_column&quot;</span><span class="p">]</span>
+
+    <span class="n">query_model</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot; SELECT TOP </span><span class="si">{</span><span class="n">max_results</span><span class="si">}</span><span class="s2"> * </span>
+<span class="s2">    FROM &quot;</span><span class="si">{</span><span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">catalog</span><span class="p">][</span><span class="s2">&quot;catalog&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot; </span>
+<span class="s2">    WHERE </span><span class="si">{</span><span class="n">id_column</span><span class="si">}</span><span class="s2"> IN(</span><span class="si">{</span><span class="n">ID</span><span class="si">}</span><span class="s2">) &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="n">query_model</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_search_input</span><span class="p">(</span><span class="n">search_input</span><span class="p">,</span> <span class="n">catalog</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_input</span><span class="p">,</span> <span class="n">SkyCoord</span><span class="p">):</span>
+        <span class="n">search_object</span> <span class="o">=</span> <span class="n">search_input</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_input</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="n">search_object</span> <span class="o">=</span> <span class="n">SkyCoord</span><span class="p">(</span><span class="n">search_input</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">search_input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;deg&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_input</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="c1"># Try to turn the passed string into a SkyCoord.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">search_object</span> <span class="o">=</span> <span class="n">SkyCoord</span><span class="p">(</span><span class="n">search_input</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># If this fails assume we were given an object name</span>
+            <span class="n">search_object</span> <span class="o">=</span> <span class="n">search_input</span>
+            <span class="c1"># If no catalog is specified, see if we can infer a preffered catalog</span>
+            <span class="k">if</span> <span class="n">catalog</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">search_catalog</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_match_target_catalog</span><span class="p">(</span><span class="n">search_input</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot Resolve type of search input&quot;</span><span class="p">)</span>
+
+    <span class="c1"># If a catalog is passed make this the catalog to search</span>
+    <span class="c1"># Else use a default catalog(tic?) if none is assigned</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">catalog</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="n">catalog</span>
+    <span class="k">elif</span> <span class="n">catalog</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">search_object</span><span class="p">,</span> <span class="n">search_catalog</span>
+
+
+<span class="k">def</span> <span class="nf">_match_target_catalog</span><span class="p">(</span><span class="n">search_input</span><span class="p">):</span>
+    <span class="n">search</span> <span class="o">=</span> <span class="n">search_input</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">search_input</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
+        <span class="c1"># If string is purelt numbers, make no assumptions</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search_input</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="n">search</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;tic&quot;</span><span class="p">:</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="s2">&quot;tic&quot;</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">search</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;tess&quot;</span><span class="p">:</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="s2">&quot;tic&quot;</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">search</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;kic&quot;</span><span class="p">:</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="s2">&quot;kic&quot;</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">search</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;kplr&quot;</span><span class="p">:</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="s2">&quot;kic&quot;</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">search</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;epic&quot;</span><span class="p">:</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="s2">&quot;epic&quot;</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">search</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;ktwo&quot;</span><span class="p">:</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="s2">&quot;epic&quot;</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">search</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">7</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;gaiadr3&quot;</span><span class="p">:</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="s2">&quot;gaiadr3&quot;</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search</span><span class="p">[</span><span class="mi">7</span><span class="p">:]</span>
+    <span class="k">elif</span> <span class="n">search</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;gaia&quot;</span> <span class="ow">and</span> <span class="n">search_input</span><span class="p">[</span><span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;dr&quot;</span><span class="p">:</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="s2">&quot;gaiadr3&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># If we cannot parse a catalog, make no assumptions</span>
+        <span class="n">search_catalog</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span>
+        <span class="n">search_string</span> <span class="o">=</span> <span class="n">search_input</span>
+    <span class="k">return</span> <span class="n">search_catalog</span><span class="p">,</span> <span class="n">search_string</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_id_list</span><span class="p">(</span><span class="n">search_object</span><span class="p">):</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">_parse_id</span><span class="p">(</span><span class="n">item</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">search_object</span><span class="p">]</span>
+    <span class="n">id_list</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">id_list</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_id</span><span class="p">(</span><span class="n">search_item</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_item</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">search_item</span><span class="p">)</span>
+        <span class="n">scat</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">search_item</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">scat</span><span class="p">,</span> <span class="nb">id</span> <span class="o">=</span> <span class="n">_match_target_catalog</span><span class="p">(</span><span class="n">search_item</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">scat</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="nb">id</span><span class="p">,</span> <span class="n">scat</span>
+
+
+<span class="k">def</span> <span class="nf">_get_return_columns</span><span class="p">(</span><span class="n">columns</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convenience function to reorder columns and remove motion columns.&quot;&quot;&quot;</span>
+    <span class="n">downselect_columns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+        <span class="nb">set</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+        <span class="o">-</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="s2">&quot;ID&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;RA&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Dec&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;RAJ2000&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;DEJ2000&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Plx&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;pmRA&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;pmDE&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Separation&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Relative_Flux&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">downselect_columns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">downselect_columns</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;mag&quot;</span><span class="p">)]),</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">downselect_columns</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;mag&quot;</span><span class="p">)]),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">new_columns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;ID&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;RA&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Dec&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Separation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Relative_Flux&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;pmRA&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;pmDE&quot;</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">downselect_columns</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">new_columns</span>
+
+
+<span class="k">def</span> <span class="nf">_table_to_skycoord</span><span class="p">(</span>
+    <span class="n">table</span><span class="p">:</span> <span class="n">Table</span><span class="p">,</span> <span class="n">equinox</span><span class="p">:</span> <span class="n">Time</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">output_epoch</span><span class="p">:</span> <span class="n">Time</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">catalog</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SkyCoord</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a table input to astropy.coordinates.SkyCoord object</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    table : astropy.table.Table</span>
+<span class="sd">        astropy.table.Table which contains the coordinates of targets and proper motion values</span>
+<span class="sd">    equinox: astropy.time.Time</span>
+<span class="sd">        The equinox for the catalog</span>
+<span class="sd">    output_epoch : astropy.time.Time</span>
+<span class="sd">        Desired time of the observation</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    coords : astropy.coordinates.SkyCoord</span>
+<span class="sd">       SkyCoord object with RA, Dec, equinox, and proper motion parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">equinox</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">catalog</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">catalog</span> <span class="o">=</span> <span class="n">_parse_id</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">equinox</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">catalog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">equinox</span> <span class="o">=</span> <span class="n">_Catalog_Dictionary</span><span class="p">[</span><span class="n">catalog</span><span class="p">][</span><span class="s2">&quot;equinox&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">output_epoch</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">catalog</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_epoch</span> <span class="o">=</span> <span class="n">equinox</span>
+
+    <span class="c1"># We need to remove any nan values from our proper  motion list</span>
+    <span class="c1"># Doing this will allow objects which do not have proper motion to still be displayed</span>
+    <span class="k">if</span> <span class="s2">&quot;pmRA&quot;</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">table</span><span class="p">[</span><span class="s2">&quot;pmRA&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="s2">&quot;pmRA&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">table</span><span class="p">[</span><span class="s2">&quot;pmRA&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">mas</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">yr</span>
+
+    <span class="k">if</span> <span class="s2">&quot;pmDE&quot;</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">table</span><span class="p">[</span><span class="s2">&quot;pmDE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="s2">&quot;pmDE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">table</span><span class="p">[</span><span class="s2">&quot;pmDE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">mas</span> <span class="o">/</span> <span class="n">u</span><span class="o">.</span><span class="n">yr</span>
+
+    <span class="c1"># If an object does not have a parallax then we treat it as if the object is an &quot;infinite distance&quot;</span>
+    <span class="c1"># and set the parallax to 1e-7 arcseconds or 10Mpc.</span>
+    <span class="k">if</span> <span class="s2">&quot;Plx&quot;</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">table</span><span class="p">[</span><span class="s2">&quot;Plx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">filled</span><span class="p">(</span><span class="n">table</span><span class="p">[</span><span class="s2">&quot;Plx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span> <span class="mf">1e-4</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">table</span><span class="p">[</span><span class="s2">&quot;Plx&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-4</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">mas</span>
+
+    <span class="k">if</span> <span class="s2">&quot;RAJ2000&quot;</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s2">&quot;DEJ2000&quot;</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">ra</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="s2">&quot;RAJ2000&quot;</span><span class="p">]</span>
+        <span class="n">dec</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="s2">&quot;DEJ2000&quot;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="s2">&quot;RA&quot;</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="ow">and</span> <span class="s2">&quot;Dec&quot;</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">ra</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="s2">&quot;RA&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">deg</span>
+        <span class="n">dec</span> <span class="o">=</span> <span class="n">table</span><span class="p">[</span><span class="s2">&quot;Dec&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">u</span><span class="o">.</span><span class="n">deg</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;RA, DEC Disambiguation failed&quot;</span><span class="p">)</span>
+    <span class="c1"># Suppress warning caused by Astropy as noted in issue 111747 (https://github.com/astropy/astropy/issues/11747)</span>
+    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;negative parallaxes&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Get the input data from the table</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">SkyCoord</span><span class="p">(</span>
+            <span class="n">ra</span><span class="o">=</span><span class="n">ra</span><span class="p">,</span>
+            <span class="n">dec</span><span class="o">=</span><span class="n">dec</span><span class="p">,</span>
+            <span class="n">distance</span><span class="o">=</span><span class="n">Distance</span><span class="p">(</span><span class="n">parallax</span><span class="o">=</span><span class="n">table</span><span class="p">[</span><span class="s2">&quot;Plx&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">quantity</span><span class="p">,</span> <span class="n">allow_negative</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">pm_ra_cosdec</span><span class="o">=</span><span class="n">table</span><span class="p">[</span><span class="s2">&quot;pmRA&quot;</span><span class="p">],</span>
+            <span class="n">pm_dec</span><span class="o">=</span><span class="n">table</span><span class="p">[</span><span class="s2">&quot;pmDE&quot;</span><span class="p">],</span>
+            <span class="n">frame</span><span class="o">=</span><span class="s2">&quot;icrs&quot;</span><span class="p">,</span>
+            <span class="n">obstime</span><span class="o">=</span><span class="n">equinox</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Suppress warning caused by Astropy as noted in issue 111747 (https://github.com/astropy/astropy/issues/11747)</span>
+    <span class="k">if</span> <span class="n">output_epoch</span> <span class="o">!=</span> <span class="n">equinox</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;ERFA function&quot;</span><span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;invalid value&quot;</span><span class="p">)</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">apply_space_motion</span><span class="p">(</span><span class="n">new_obstime</span><span class="o">=</span><span class="n">output_epoch</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">c</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024, TESS Science Support Center.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 7.4.7.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.15.4.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
