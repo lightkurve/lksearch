@@ -160,10 +160,11 @@ class TESSSearch(MASTSearch):
         self.table["mission_product"] = mission_product
         self.table["sector"] = self.table["sequence_number"]
 
-    def _add_tesscut_products(self, 
-                              sector_list: Union[int, list[int]],
-                              exptime: Union[int, tuple[float]],
-                              ):
+    def _add_tesscut_products(
+        self,
+        sector_list: Union[int, list[int]],
+        exptime: Union[int, tuple[float]],
+    ):
         """Add tesscut product information to the search table
 
         Parameters
@@ -261,7 +262,6 @@ class TESSSearch(MASTSearch):
                 "year": tesscut_year,
             }
         )
-
 
         if len(tesscut_result) > 0:
             log.debug(f"Found {n_results} matching cutouts.")

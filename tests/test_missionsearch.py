@@ -470,7 +470,7 @@ def test_tesscut():
     # Previously the TESScut data was appended after the exposure time cuts
     #     so it returned 1800s tesscut data [see issue #41]
     with pytest.raises(SearchError, match="No data"):
-        TESSSearch("TOI 1161",  sector=14, exptime=20)
+        TESSSearch("TOI 1161", sector=14, exptime=20)
 
 
 class TestMASTSearchFilter:
