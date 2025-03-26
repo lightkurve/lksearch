@@ -466,6 +466,12 @@ def test_tesscut():
     assert len(sr) == 1
     assert len(sr2) == 2
 
+    # No 20-s data was taken so this should be empty
+    # Previously the TESScut data was appended after the exposure time cuts
+    #     so it returned 1800s tesscut data [see issue #41]
+    with pytest.raises(SearchError, match="No data"):
+        TESSSearch("TOI 1161", sector=14, exptime=20)
+
 
 class TestMASTSearchFilter:
     results = MASTSearch("Kepler 16b")

@@ -109,7 +109,8 @@ class TESSSearch(MASTSearch):
             self.table = pd.DataFrame(columns=table_keys)
 
         if (pipeline == None) or ("tesscut" in [p.lower() for p in pipeline]):
-            self._add_tesscut_products(sector)
+            self._add_tesscut_products(sector, exptime=exptime)
+
         if len(self.table) == 0:
             raise SearchError(f"No data found for target {self.target}.")
         self._add_TESS_mission_product()
@@ -159,7 +160,11 @@ class TESSSearch(MASTSearch):
         self.table["mission_product"] = mission_product
         self.table["sector"] = self.table["sequence_number"]
 
-    def _add_tesscut_products(self, sector_list: Union[int, list[int]]):
+    def _add_tesscut_products(
+        self,
+        sector_list: Union[int, list[int]],
+        exptime: Union[int, tuple[float]],
+    ):
         """Add tesscut product information to the search table
 
         Parameters
@@ -175,6 +180,8 @@ class TESSSearch(MASTSearch):
             self.table = pd.concat([self.table, tesscut_info])
         else:
             self.table = tesscut_info
+        mask = self._mask_by_exptime(exptime=exptime)
+        self.table = self.table[mask]
 
     # FFIs only available when using TESSSearch.
     # Use TESS WCS to just return a table of sectors and dates?
