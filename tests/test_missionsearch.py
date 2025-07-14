@@ -246,7 +246,7 @@ def test_properties():
     ).timeseries
     assert len(result) == 2
     assert len(result.sector) == 2
-    assert (result.campaign == "1").all()
+    assert (result.sector == "1").all()
     assert (result.mission == "TESS").all()
     assert (result.pipeline == "SPOC").all()
 
@@ -598,7 +598,7 @@ def test_tess_clouduris():
     # 12 products should be returned
     assert len(toi.cloud_uri) == 12
     # 6 of them should have cloud uris
-    assert np.sum((toi.cloud_uri.values is not None).astype(int)) == 6
+    assert np.sum((toi.cloud_uri.values != None).astype(int)) == 6
 
 
 def test_tess_return_clouduri_not_download():

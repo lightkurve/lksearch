@@ -85,7 +85,7 @@ class TESSSearch(MASTSearch):
             self.mission_search = ["TESS"]
         else:
             self.mission_search = ["TESS", "HLSP"]
-        if pipeline is not None:
+        if pipeline != None:
             pipeline = np.atleast_1d(pipeline).tolist()
 
         # Even if there are no higher level products, we may still want to check for tesscut
