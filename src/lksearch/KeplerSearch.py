@@ -95,7 +95,11 @@ class KeplerSearch(MASTSearch):
             self._sort_Kepler()
             # Can't search mast with quarter/month directly, so filter on that after the fact.
             self.table = self.table[self._filter_kepler(quarter, month)]
-
+    @property
+    def quarter(self):
+        """Kepler Observing quarter for each data product found."""
+        return self.table["quarter"].values
+    
     @property
     def HLSPs(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""

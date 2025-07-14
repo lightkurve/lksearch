@@ -91,6 +91,11 @@ class K2Search(MASTSearch):
             self._sort_K2()
 
     @property
+    def campaign(self):
+        """K2 Observing campaign for each data product found."""
+        return self.table["campaign"].values
+
+    @property
     def HLSPs(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""
         mask = self.table["mission_product"]
