@@ -235,7 +235,7 @@ def test_properties():
     result = K2Search("EPIC 205998445", search_radius=900, campaign=3).cubedata
     assert len(result) == 4
     assert len(result.cloud_uri) == 4
-    assert (result.campaign == "3").all()
+    assert (result.campaign == 3).all()
 
     result = KeplerSearch("KIC 11904151", exptime="short", quarter=[2, 3, 4]).cubedata
     assert len(result) == 5
@@ -246,7 +246,7 @@ def test_properties():
     ).timeseries
     assert len(result) == 2
     assert len(result.sector) == 2
-    assert (result.sector == "1").all()
+    assert (result.sector == 1).all()
     assert (result.mission == "TESS").all()
     assert (result.pipeline == "SPOC").all()
 
