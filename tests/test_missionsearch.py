@@ -235,19 +235,20 @@ def test_properties():
     result = K2Search("EPIC 205998445", search_radius=900, campaign=3).cubedata
     assert len(result) == 4
     assert len(result.cloud_uri) == 4
-    assert (result.campaign == '3').all()
-    
-    result = KeplerSearch("KIC 11904151",  exptime="short", quarter=[2,3,4]).cubedata
-    assert len(result) == 5
-    assert all([r in [2,3,4] for r in result.quarter])
+    assert (result.campaign == "3").all()
 
-    result = TESSSearch("TIC 273985862", pipeline="spoc", sector=1, search_radius=100).timeseries
+    result = KeplerSearch("KIC 11904151", exptime="short", quarter=[2, 3, 4]).cubedata
+    assert len(result) == 5
+    assert all([r in [2, 3, 4] for r in result.quarter])
+
+    result = TESSSearch(
+        "TIC 273985862", pipeline="spoc", sector=1, search_radius=100
+    ).timeseries
     assert len(result) == 2
     assert len(result.sector) == 2
-    assert (result.campaign == '1').all()
+    assert (result.campaign == "1").all()
     assert (result.mission == "TESS").all()
     assert (result.pipeline == "SPOC").all()
-
 
     with pytest.raises(AttributeError, match="no attibute"):
         result = MASTSearch("EPIC 205998445", search_radius=900).cubedata

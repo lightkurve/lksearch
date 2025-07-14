@@ -117,7 +117,7 @@ class TESSSearch(MASTSearch):
     def sector(self):
         """TESS Observing sector for each data product found."""
         return self.table["sector"].values
-    
+
     @property
     def HLSPs(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""
