@@ -1,4 +1,3 @@
-from astroquery.mast import Observations
 import pandas as pd
 from typing import Union, Optional
 import re
@@ -8,14 +7,11 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
-from astroquery.mast import MastClass
 
 # from astropy.utils.decorators import deprecated
 from astroquery.mast import Tesscut
 
 from tqdm import tqdm
-
-from copy import deepcopy
 
 from .MASTSearch import MASTSearch
 from . import conf, config, log
@@ -89,7 +85,7 @@ class TESSSearch(MASTSearch):
             self.mission_search = ["TESS"]
         else:
             self.mission_search = ["TESS", "HLSP"]
-        if pipeline != None:
+        if pipeline is not None:
             pipeline = np.atleast_1d(pipeline).tolist()
 
         # Even if there are no higher level products, we may still want to check for tesscut
@@ -108,7 +104,7 @@ class TESSSearch(MASTSearch):
         except SearchError:
             self.table = pd.DataFrame(columns=table_keys)
 
-        if (pipeline == None) or ("tesscut" in [p.lower() for p in pipeline]):
+        if (pipeline is None) or ("tesscut" in [p.lower() for p in pipeline]):
             self._add_tesscut_products(sector, exptime=exptime)
 
         if len(self.table) == 0:

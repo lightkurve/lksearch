@@ -2,9 +2,6 @@
 
 import os
 import pytest
-from time import time
-import socket
-from contextlib import contextmanager
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 import numpy as np
@@ -244,7 +241,7 @@ def test_properties():
     assert len(result) == 5
     assert all([r in [2,3,4] for r in result.quarter])
 
-    result = TESSSearch(tic, pipeline="spoc", sector=1, search_radius=100).timeseries
+    result = TESSSearch("TIC 273985862", pipeline="spoc", sector=1, search_radius=100).timeseries
     assert len(result) == 2
     assert len(result.sector) == 2
     assert (result.campaign == '1').all()
@@ -461,7 +458,7 @@ def test_split_k2_campaigns():
 def test_FFI_retrieval():
     """MAST has deprecated FFI search and retrieval through astroquery, so this function is now deprecated"""
     with pytest.raises(SearchDeprecationError) as exc:
-        results = TESSSearch("Kepler 16b").search_sector_ffis(14)
+        TESSSearch("Kepler 16b").search_sector_ffis(14)
     assert "deprecated" in exc.value.args[0]
 
 
@@ -600,7 +597,7 @@ def test_tess_clouduris():
     # 12 products should be returned
     assert len(toi.cloud_uri) == 12
     # 6 of them should have cloud uris
-    assert np.sum((toi.cloud_uri.values != None).astype(int)) == 6
+    assert np.sum((toi.cloud_uri.values is not None).astype(int)) == 6
 
 
 def test_tess_return_clouduri_not_download():
