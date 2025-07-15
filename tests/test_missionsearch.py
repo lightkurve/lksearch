@@ -15,7 +15,7 @@ import pandas as pd
 
 from lksearch.utils import SearchError, SearchWarning, SearchDeprecationError
 from lksearch import MASTSearch, TESSSearch, KeplerSearch, K2Search
-from lksearch import conf
+from lksearch import config
 
 
 def test_search_cubedata():
@@ -607,8 +607,8 @@ def test_tess_return_clouduri_not_download():
     `~conf.DOWNLOAD_CLOUD` = False
     """
     # reload the config, set download_cloud = False
-    conf.reload()
-    conf.DOWNLOAD_CLOUD = False
+    config.reload()
+    config.DOWNLOAD_CLOUD = False
     # Try to download a file without a S3 bucket, and one with
     # Search for TESS data only. This by default includes both HLSPs and FFI cutouts.
     toi = TESSSearch("TOI 1161", sector=14)
@@ -633,8 +633,8 @@ def test_cached_files_no_filesize_check():
     files = toi.timeseries[0:2]
 
     # test if we can download a file
-    conf.reload()
-    conf.CHECK_CACHED_FILE_SIZES = True
+    config.reload()
+    config.CHECK_CACHED_FILE_SIZES = True
     manifest = file.download()
     assert manifest["Status"].str.contains("COMPLETE").values
 
@@ -643,8 +643,8 @@ def test_cached_files_no_filesize_check():
     assert False not in files_man["Status"].str.contains("COMPLETE")
 
     # Test if we can check a downloaded local file in our cache without a astroquery Call
-    conf.reload()
-    conf.CHECK_CACHED_FILE_SIZES = False
+    config.reload()
+    config.CHECK_CACHED_FILE_SIZES = False
     manifest = file.download()
     assert manifest["Status"].str.contains("UNKNOWN").values
 
@@ -653,8 +653,8 @@ def test_cached_files_no_filesize_check():
     assert False not in files_man["Status"].str.contains("UNKNOWN")
 
     # Test if we can mix cloud S3 file links and downloaded files
-    conf.reload()
-    conf.DOWNLOAD_CLOUD = False
+    config.reload()
+    config.DOWNLOAD_CLOUD = False
     mixed_man = toi[0:2].download()
     # Astroquery download manifest can return in a different order than the requested items
     # check to make sure index is preserved
@@ -667,9 +667,9 @@ def test_cached_files_no_filesize_check():
     assert os.path.isfile(mixed_man["Local Path"][1])
 
     # Test if we can check a downloaded local file that exists and download a new file
-    conf.reload()
+    config.reload()
     files_man = files.download()
-    conf.CHECK_CACHED_FILE_SIZES = False
+    config.CHECK_CACHED_FILE_SIZES = False
     os.remove(files_man["Local Path"][0])
 
     files_man2 = files.download()
@@ -686,9 +686,9 @@ def test_cached_files_no_filesize_check():
     assert files_man2["Status"][1] == "UNKNOWN"
 
     files.download()
-    conf.reload()
-    conf.CHECK_CACHED_FILE_SIZES = False
-    conf.DOWNLOAD_CLOUD = False
+    config.reload()
+    config.CHECK_CACHED_FILE_SIZES = False
+    config.DOWNLOAD_CLOUD = False
     manifest = files.download()
     # This should return a minefest with 1 TESS-SPOC HLSP that is not on the cloud
     # and one item from SPOC that is on the cloud
