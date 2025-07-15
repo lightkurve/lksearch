@@ -14,11 +14,11 @@ from astroquery.mast import Tesscut
 from tqdm import tqdm
 
 from .mast import MASTSearch
-from . import conf, config, log, REPR_COLUMNS
+from . import config, get_cache_dir, log, REPR_COLUMNS
 from .utils import SearchDeprecationError, SearchError, table_keys
 
-PREFER_CLOUD = conf.PREFER_CLOUD
-DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
+PREFER_CLOUD = config.PREFER_CLOUD
+DOWNLOAD_CLOUD = config.DOWNLOAD_CLOUD
 
 pd.options.display.max_rows = 10
 
@@ -393,10 +393,10 @@ class TESSSearch(MASTSearch):
 
     def download(
         self,
-        cloud: bool = conf.PREFER_CLOUD,
+        cloud: bool = config.PREFER_CLOUD,
         cache: bool = True,
-        cloud_only: bool = conf.CLOUD_ONLY,
-        download_dir: str = config.get_cache_dir(),
+        cloud_only: bool = config.CLOUD_ONLY,
+        download_dir: str = get_cache_dir(),
         # TESScut_product="SPOC",
         TESScut_size: Union[int, tuple] = 10,
     ):
