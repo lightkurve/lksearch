@@ -134,7 +134,7 @@ class K2Search(MASTSearch):
                 if f"c{row['sequence_number']}{half}" in row["productFilename"]:
                     seq_num[index] = f"{int(row['sequence_number']):02d}{letter}"
 
-        self.table["campaign"] = seq_num.astype(int)
+        self.table["campaign"] = seq_num
 
     def _sort_K2(self):
         # No specific preference for K2 HLSPs
