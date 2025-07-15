@@ -13,8 +13,8 @@ from astroquery.mast import Tesscut
 
 from tqdm import tqdm
 
-from .MASTSearch import MASTSearch
-from . import conf, config, log
+from .mast import MASTSearch
+from . import conf, config, log, REPR_COLUMNS
 from .utils import SearchDeprecationError, SearchError, table_keys
 
 PREFER_CLOUD = conf.PREFER_CLOUD
@@ -57,16 +57,7 @@ class TESSSearch(MASTSearch):
         TESS Observing Sector(s) for which to search for data.
     """
 
-    _REPR_COLUMNS = [
-        "target_name",
-        "pipeline",
-        "mission",
-        "sector",
-        "exptime",
-        "distance",
-        "year",
-        "description",
-    ]
+    REPR_COLUMNS.insert(3, "sector")
 
     def __init__(
         self,
@@ -119,7 +110,7 @@ class TESSSearch(MASTSearch):
         return self.table["sector"].values
 
     @property
-    def HLSPs(self):
+    def hlsps(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""
         mask = self.table["mission_product"]
         return self._mask(~mask)

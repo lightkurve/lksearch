@@ -12,13 +12,13 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 from astropy.time import Time
-from tqdm import tqdm
 
 from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from . import conf, config, log
+from astropy.config import get_cache_dir
+from . import config, log, REPR_COLUMNS
 
 pd.options.display.max_rows = 10
 
@@ -57,16 +57,6 @@ class MASTSearch(object):
         Mission Specific Survey value that corresponds to Sector (TESS) AND Campaign (K2). Not valid for Kepler.
         Setting sequence is not recommented for MASTSearch.
     """
-
-    _REPR_COLUMNS = [
-        "target_name",
-        "pipeline",
-        "mission",
-        "exptime",
-        "distance",
-        "year",
-        "description",
-    ]
 
     table = None
 
@@ -130,7 +120,7 @@ class MASTSearch(object):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
                 out = f"{self.__class__.__name__} object containing {len(self.table)} data products \n"
-                return out + self.table[self._REPR_COLUMNS].__repr__()
+                return out + self.table[REPR_COLUMNS].__repr__()
             else:
                 return "No results found"
         else:
@@ -141,7 +131,7 @@ class MASTSearch(object):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
                 out = f"{self.__class__.__name__} object containing {len(self.table)} data products \n"
-                return out + self.table[self._REPR_COLUMNS]._repr_html_()
+                return out + self.table[REPR_COLUMNS]._repr_html_()
             else:
                 return "No results found"
         else:
@@ -215,7 +205,7 @@ class MASTSearch(object):
         """Location Information of the products in the table"""
         uris = self.table["dataURI"].values
 
-        if conf.PREFER_CLOUD:
+        if config.PREFER_CLOUD:
             # Could optionally suppress warnings for no cloud data. Leave for now
             # with warnings.catch_warnings():
             #    warnings.filterwarnings("ignore", category=NoResultsWarning)
@@ -1103,9 +1093,7 @@ class MASTSearch(object):
 
     def _check_local_cache(self):
         local_paths = [
-            "/".join(
-                [config.get_cache_dir(), "mastDownload", obs_col, obs_id, prodFile]
-            )
+            "/".join([get_cache_dir(), "mastDownload", obs_col, obs_id, prodFile])
             for obs_col, obs_id, prodFile in zip(
                 self.table["obs_collection"],
                 self.table["obs_id"],
@@ -1124,7 +1112,7 @@ class MASTSearch(object):
     ) -> pd.DataFrame:
         """Helper function that downloads an entire table via astroquery.
         This will require internet access and check file sizes against MAST
-        to validate completeness, unless conf.CHECK_CACHED_FILE_SIZES is `False`
+        to validate completeness, unless config.CHECK_CACHED_FILE_SIZES is `False`
         """
 
         # Make sure astroquery uses the same level of verbosity
@@ -1136,7 +1124,7 @@ class MASTSearch(object):
         local_manifest = None
         download_manifest = None
 
-        if not conf.DOWNLOAD_CLOUD:
+        if not config.DOWNLOAD_CLOUD:
             # If we are on a cloud platform, and do not want to download items with cloud_uris
             # E.G. DOWNLOAD_CLOUD = FALSE
             # Then cloud_uris should have already been queried
@@ -1158,7 +1146,7 @@ class MASTSearch(object):
                 )
             files_to_check = ~cloud_uri_exists
 
-        if not conf.CHECK_CACHED_FILE_SIZES:
+        if not config.CHECK_CACHED_FILE_SIZES:
             # If this configuration parameter is `False` and the file exists
             # in the cache, we do not search for it
             files_in_cache, local_paths = self._check_local_cache()
@@ -1216,10 +1204,10 @@ class MASTSearch(object):
 
     def download(
         self,
-        cloud: bool = conf.PREFER_CLOUD,
+        cloud: bool = config.PREFER_CLOUD,
         cache: bool = True,
-        cloud_only: bool = conf.CLOUD_ONLY,
-        download_dir: str = config.get_cache_dir(),
+        cloud_only: bool = config.CLOUD_ONLY,
+        download_dir: str = get_cache_dir(),
         remove_incomplete: str = True,
     ) -> pd.DataFrame:
         """downloads products in self.table to the local hard-drive
@@ -1255,12 +1243,12 @@ class MASTSearch(object):
             logging.getLogger("astroquery").setLevel(log.getEffectiveLevel())
             Observations.enable_cloud_dataset()
 
-        if (not conf.DOWNLOAD_CLOUD) and ("cloud_uri" not in self.table.columns):
+        if (not config.DOWNLOAD_CLOUD) and ("cloud_uri" not in self.table.columns):
             self.table = self._add_s3_url_column(self.table)
 
         manifest = self._download_manifest(cloud_only, cache, download_dir)
 
-        if conf.CHECK_CACHED_FILE_SIZES:
+        if config.CHECK_CACHED_FILE_SIZES:
             status = manifest["Status"] != "COMPLETE"
             if np.any(status):
                 warnings.warn(
