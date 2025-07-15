@@ -252,7 +252,7 @@ def test_properties():
     assert (result.pipeline == "SPOC").all()
 
     with pytest.raises(AttributeError, match="no attibute"):
-        MASTSearch("EPIC 205998445", mission='TESS', search_radius=900).cubedata.sector
+        MASTSearch("EPIC 205998445", mission="TESS", search_radius=900).cubedata.sector
 
 
 def test_source_confusion():
