@@ -251,7 +251,7 @@ def test_properties():
     assert (result.mission == "TESS").all()
     assert (result.pipeline == "SPOC").all()
 
-    with pytest.raises(AttributeError, match="no attibute"):
+    with pytest.raises(AttributeError, match="no attribute"):
         MASTSearch("EPIC 205998445", mission="TESS", search_radius=900).cubedata.sector
 
 
