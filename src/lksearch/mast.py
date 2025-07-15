@@ -72,6 +72,8 @@ class MASTSearch(object):
         pipeline: Optional[Union[str, list[str]]] = ["Kepler", "K2", "SPOC"],
         sequence: Optional[Union[int, list[int]]] = None,
     ):
+        if not hasattr(self, "REPR_COLUMNS"):
+            self.REPR_COLUMNS = REPR_COLUMNS
         self.search_radius = search_radius
         self.search_exptime = exptime
         self.search_mission = np.atleast_1d(mission).tolist()
@@ -120,7 +122,7 @@ class MASTSearch(object):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
                 out = f"{self.__class__.__name__} object containing {len(self.table)} data products \n"
-                return out + self.table[REPR_COLUMNS].__repr__()
+                return out + self.table[self.REPR_COLUMNS].__repr__()
             else:
                 return "No results found"
         else:
@@ -131,7 +133,7 @@ class MASTSearch(object):
         if isinstance(self.table, pd.DataFrame):
             if len(self.table) > 0:
                 out = f"{self.__class__.__name__} object containing {len(self.table)} data products \n"
-                return out + self.table[REPR_COLUMNS]._repr_html_()
+                return out + self.table[self.REPR_COLUMNS]._repr_html_()
             else:
                 return "No results found"
         else:

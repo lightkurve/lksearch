@@ -11,8 +11,6 @@ from . import PACKAGEDIR, REPR_COLUMNS
 
 pd.options.display.max_rows = 10
 
-REPR_COLUMNS.insert(3, "quarter")
-
 
 class KeplerSearch(MASTSearch):
     """
@@ -50,17 +48,6 @@ class KeplerSearch(MASTSearch):
         Observation month for Kepler
     """
 
-    _REPR_COLUMNS = [
-        "target_name",
-        "pipeline",
-        "mission",
-        "quarter",
-        "exptime",
-        "distance",
-        "year",
-        "description",
-    ]
-
     def __init__(
         self,
         target: [Union[str, tuple[float], SkyCoord]],
@@ -74,6 +61,10 @@ class KeplerSearch(MASTSearch):
         month: Optional[int] = None,
         hlsp: bool = True,
     ):
+        repr_columns = REPR_COLUMNS.copy()
+        repr_columns.insert(3, "quarter")
+        self.REPR_COLUMNS = repr_columns
+
         if hlsp is False:
             pipeline = ["Kepler"]
             self.mission_search = ["Kepler"]

@@ -57,8 +57,6 @@ class TESSSearch(MASTSearch):
         TESS Observing Sector(s) for which to search for data.
     """
 
-    REPR_COLUMNS.insert(3, "sector")
-
     def __init__(
         self,
         target: Optional[Union[str, tuple[float], SkyCoord]] = None,
@@ -71,6 +69,10 @@ class TESSSearch(MASTSearch):
         sector: Optional[Union[int, list[int]]] = None,
         hlsp: bool = True,
     ):
+        repr_columns = REPR_COLUMNS.copy()
+        repr_columns.insert(3, "sector")
+        self.REPR_COLUMNS = repr_columns
+
         if hlsp is False:
             pipeline = ["SPOC", "TESS-SPOC", "TESScut"]
             self.mission_search = ["TESS"]

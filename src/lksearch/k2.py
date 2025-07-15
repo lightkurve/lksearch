@@ -46,8 +46,6 @@ class K2Search(MASTSearch):
         K2 Observing Campaign(s) for which to search for data.
     """
 
-    REPR_COLUMNS.insert(3, "campaign")
-
     def __init__(
         self,
         target: [Union[str, tuple[float], SkyCoord]],
@@ -60,6 +58,10 @@ class K2Search(MASTSearch):
         campaign: Optional[Union[int, list[int]]] = None,
         hlsp: bool = True,
     ):
+        repr_columns = REPR_COLUMNS.copy()
+        repr_columns.insert(3, "campaign")
+        self.REPR_COLUMNS = repr_columns
+
         if hlsp is False:
             pipeline = ["K2"]
             self.mission_search = ["K2"]
