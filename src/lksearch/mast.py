@@ -17,8 +17,8 @@ from copy import deepcopy
 
 from .utils import SearchError, SearchWarning, suppress_stdout
 
-from astropy.config import get_cache_dir
-from . import config, log, REPR_COLUMNS
+# from astropy.config import get_cache_dir
+from . import config, log, REPR_COLUMNS, get_cache_dir
 
 pd.options.display.max_rows = 10
 
