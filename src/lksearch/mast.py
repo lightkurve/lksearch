@@ -1102,7 +1102,7 @@ class MASTSearch(object):
                 self.table["productFilename"],
             )
         ]
-        files_exist = [os.path.isfile(path) for path in local_paths]
+        files_exist = np.array([os.path.isfile(path) for path in local_paths])
         return files_exist, np.array(local_paths, dtype=str)
 
     # @suppress_stdout

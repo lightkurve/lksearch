@@ -621,6 +621,7 @@ def test_tess_return_clouduri_not_download():
     # A SPOC TPF is on the cloud, this should return a S3 bucket
     mask = toi.timeseries.pipeline == "SPOC"
     lc_man = toi.timeseries[mask][0].download()
+
     assert lc_man["Local Path"][0].startswith("s3://")
 
 
@@ -688,7 +689,6 @@ def test_cached_files_no_filesize_check():
     assert files_man2["Status"][0] == "COMPLETE"
     assert files_man2["Status"][1] == "UNKNOWN"
 
-    files.download()
     config.reload()
     config.CHECK_CACHED_FILE_SIZES = False
     config.DOWNLOAD_CLOUD = False
@@ -696,6 +696,7 @@ def test_cached_files_no_filesize_check():
     # This should return a manifest with 1 TESS-SPOC HLSP that is not on the cloud
     # and one item from SPOC that is on the cloud
     # UPDATE: this TESS-SPOC lc is now in the cloud, so modifying the test to reflect this
+
     assert manifest["Local Path"][0].startswith("s3://")
     # assert manifest["Local Path"][1].startswith("/")
     assert manifest["Local Path"][1].startswith("s3://")

@@ -18,7 +18,6 @@ from . import config, get_cache_dir, log, REPR_COLUMNS
 from .utils import SearchDeprecationError, SearchError, table_keys
 
 PREFER_CLOUD = config.PREFER_CLOUD
-DOWNLOAD_CLOUD = config.DOWNLOAD_CLOUD
 
 pd.options.display.max_rows = 10
 
