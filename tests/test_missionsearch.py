@@ -695,11 +695,9 @@ def test_cached_files_no_filesize_check():
     manifest = files.download()
     # This should return a manifest with 1 TESS-SPOC HLSP that is not on the cloud
     # and one item from SPOC that is on the cloud
-    # UPDATE: this TESS-SPOC lc is now in the cloud, so modifying the test to reflect this
 
     assert manifest["Local Path"][0].startswith("s3://")
-    # assert manifest["Local Path"][1].startswith("/")
-    assert manifest["Local Path"][1].startswith("s3://")
+    assert manifest["Local Path"][1].startswith("/")
 
     assert manifest["Status"][0] == "COMPLETE"
     assert manifest["Status"][1] == "COMPLETE"
