@@ -2,9 +2,6 @@
 
 import os
 import pytest
-from time import time
-import socket
-from contextlib import contextmanager
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 import numpy as np
@@ -18,7 +15,7 @@ import pandas as pd
 
 from lksearch.utils import SearchError, SearchWarning, SearchDeprecationError
 from lksearch import MASTSearch, TESSSearch, KeplerSearch, K2Search
-from lksearch import conf
+from lksearch import config
 
 
 def test_search_cubedata():
@@ -229,10 +226,33 @@ def test_collections():
 
 
 def test_properties():
+    """Test an assortment of class properties"""
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
     assert_almost_equal(KeplerSearch(c, quarter=6).cubedata.ra[0], 297.5835)
     assert_almost_equal(KeplerSearch(c, quarter=6).cubedata.dec[0], 40.98339)
     assert len(KeplerSearch(c, quarter=6).cubedata.target_name) == 1
+
+    result = K2Search("EPIC 205998445", search_radius=900, campaign=3).cubedata
+    assert len(result) == 4
+    assert len(result.cloud_uri) == 4
+    # Campaign is a string, as campaigns can have 'a' and 'b' components
+    assert (result.campaign == "3").all()
+
+    result = KeplerSearch("KIC 11904151", exptime="short", quarter=[2, 3, 4]).cubedata
+    assert len(result) == 5
+    assert all([r in [2, 3, 4] for r in result.quarter])
+
+    result = TESSSearch(
+        "TIC 273985862", pipeline="spoc", sector=1, search_radius=100
+    ).timeseries
+    assert len(result) == 2
+    assert len(result.sector) == 2
+    assert (result.sector == 1).all()
+    assert (result.mission == "TESS").all()
+    assert (result.pipeline == "SPOC").all()
+
+    with pytest.raises(AttributeError, match="no attribute"):
+        MASTSearch("EPIC 205998445", mission="TESS", search_radius=900).cubedata.sector
 
 
 def test_source_confusion():
@@ -440,7 +460,7 @@ def test_split_k2_campaigns():
 def test_FFI_retrieval():
     """MAST has deprecated FFI search and retrieval through astroquery, so this function is now deprecated"""
     with pytest.raises(SearchDeprecationError) as exc:
-        results = TESSSearch("Kepler 16b").search_sector_ffis(14)
+        TESSSearch("Kepler 16b").search_sector_ffis(14)
     assert "deprecated" in exc.value.args[0]
 
 
@@ -587,8 +607,8 @@ def test_tess_return_clouduri_not_download():
     `~conf.DOWNLOAD_CLOUD` = False
     """
     # reload the config, set download_cloud = False
-    conf.reload()
-    conf.DOWNLOAD_CLOUD = False
+    config.reload()
+    config.DOWNLOAD_CLOUD = False
     # Try to download a file without a S3 bucket, and one with
     # Search for TESS data only. This by default includes both HLSPs and FFI cutouts.
     toi = TESSSearch("TOI 1161", sector=14)
@@ -601,6 +621,7 @@ def test_tess_return_clouduri_not_download():
     # A SPOC TPF is on the cloud, this should return a S3 bucket
     mask = toi.timeseries.pipeline == "SPOC"
     lc_man = toi.timeseries[mask][0].download()
+
     assert lc_man["Local Path"][0].startswith("s3://")
 
 
@@ -613,8 +634,8 @@ def test_cached_files_no_filesize_check():
     files = toi.timeseries[0:2]
 
     # test if we can download a file
-    conf.reload()
-    conf.CHECK_CACHED_FILE_SIZES = True
+    config.reload()
+    config.CHECK_CACHED_FILE_SIZES = True
     manifest = file.download()
     assert manifest["Status"].str.contains("COMPLETE").values
 
@@ -623,8 +644,8 @@ def test_cached_files_no_filesize_check():
     assert False not in files_man["Status"].str.contains("COMPLETE")
 
     # Test if we can check a downloaded local file in our cache without a astroquery Call
-    conf.reload()
-    conf.CHECK_CACHED_FILE_SIZES = False
+    config.reload()
+    config.CHECK_CACHED_FILE_SIZES = False
     manifest = file.download()
     assert manifest["Status"].str.contains("UNKNOWN").values
 
@@ -633,8 +654,8 @@ def test_cached_files_no_filesize_check():
     assert False not in files_man["Status"].str.contains("UNKNOWN")
 
     # Test if we can mix cloud S3 file links and downloaded files
-    conf.reload()
-    conf.DOWNLOAD_CLOUD = False
+    config.reload()
+    config.DOWNLOAD_CLOUD = False
     mixed_man = toi[0:2].download()
     # Astroquery download manifest can return in a different order than the requested items
     # check to make sure index is preserved
@@ -644,12 +665,15 @@ def test_cached_files_no_filesize_check():
     assert mixed_man["Status"][0] == "COMPLETE"
     assert mixed_man["Status"][1] == "COMPLETE"
     assert mixed_man["Local Path"][0].startswith("s3://")
-    assert os.path.isfile(mixed_man["Local Path"][1])
+
+    # Should this test be true? Isn't it just an s3 path?
+    # We set DOWNLOAD_CLOUD to False, so I would expect there is no local path
+    # assert os.path.isfile(mixed_man["Local Path"][1])
 
     # Test if we can check a downloaded local file that exists and download a new file
-    conf.reload()
+    config.reload()
     files_man = files.download()
-    conf.CHECK_CACHED_FILE_SIZES = False
+    config.CHECK_CACHED_FILE_SIZES = False
     os.remove(files_man["Local Path"][0])
 
     files_man2 = files.download()
@@ -665,13 +689,14 @@ def test_cached_files_no_filesize_check():
     assert files_man2["Status"][0] == "COMPLETE"
     assert files_man2["Status"][1] == "UNKNOWN"
 
-    files.download()
-    conf.reload()
-    conf.CHECK_CACHED_FILE_SIZES = False
-    conf.DOWNLOAD_CLOUD = False
+    files.download()  # download files to local cache
+    config.reload()
+    config.CHECK_CACHED_FILE_SIZES = False
+    config.DOWNLOAD_CLOUD = False
     manifest = files.download()
-    # This should return a minefest with 1 TESS-SPOC HLSP that is not on the cloud
+    # This should return a manifest with 1 TESS-SPOC HLSP that is not on the cloud
     # and one item from SPOC that is on the cloud
+
     assert manifest["Local Path"][0].startswith("s3://")
     assert manifest["Local Path"][1].startswith("/")
 

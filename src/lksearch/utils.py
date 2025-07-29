@@ -3,9 +3,9 @@ import sys
 import numpy as np
 from functools import wraps
 
-from . import config
+from . import get_cache_dir
 
-default_download_dir = config.get_cache_dir()
+default_download_dir = get_cache_dir()
 
 
 class SearchError(Exception):
