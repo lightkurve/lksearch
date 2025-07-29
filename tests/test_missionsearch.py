@@ -689,6 +689,7 @@ def test_cached_files_no_filesize_check():
     assert files_man2["Status"][0] == "COMPLETE"
     assert files_man2["Status"][1] == "UNKNOWN"
 
+    files.download() # download files to local cache
     config.reload()
     config.CHECK_CACHED_FILE_SIZES = False
     config.DOWNLOAD_CLOUD = False
