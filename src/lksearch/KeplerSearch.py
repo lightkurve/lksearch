@@ -97,6 +97,11 @@ class KeplerSearch(MASTSearch):
             self.table = self.table[self._filter_kepler(quarter, month)]
 
     @property
+    def quarter(self):
+        """Kepler Observing quarter for each data product found."""
+        return self.table["quarter"].values
+
+    @property
     def HLSPs(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""
         mask = self.table["mission_product"]

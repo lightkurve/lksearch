@@ -2,9 +2,6 @@
 
 import os
 import pytest
-from time import time
-import socket
-from contextlib import contextmanager
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 import numpy as np
@@ -229,10 +226,33 @@ def test_collections():
 
 
 def test_properties():
+    """Test an assortment of class properties"""
     c = SkyCoord("297.5835 40.98339", unit=(u.deg, u.deg))
     assert_almost_equal(KeplerSearch(c, quarter=6).cubedata.ra[0], 297.5835)
     assert_almost_equal(KeplerSearch(c, quarter=6).cubedata.dec[0], 40.98339)
     assert len(KeplerSearch(c, quarter=6).cubedata.target_name) == 1
+
+    result = K2Search("EPIC 205998445", search_radius=900, campaign=3).cubedata
+    assert len(result) == 4
+    assert len(result.cloud_uri) == 4
+    # Campaign is a string, as campaigns can have 'a' and 'b' components
+    assert (result.campaign == "3").all()
+
+    result = KeplerSearch("KIC 11904151", exptime="short", quarter=[2, 3, 4]).cubedata
+    assert len(result) == 5
+    assert all([r in [2, 3, 4] for r in result.quarter])
+
+    result = TESSSearch(
+        "TIC 273985862", pipeline="spoc", sector=1, search_radius=100
+    ).timeseries
+    assert len(result) == 2
+    assert len(result.sector) == 2
+    assert (result.sector == 1).all()
+    assert (result.mission == "TESS").all()
+    assert (result.pipeline == "SPOC").all()
+
+    with pytest.raises(AttributeError, match="no attribute"):
+        MASTSearch("EPIC 205998445", mission="TESS", search_radius=900).cubedata.sector
 
 
 def test_source_confusion():
@@ -440,7 +460,7 @@ def test_split_k2_campaigns():
 def test_FFI_retrieval():
     """MAST has deprecated FFI search and retrieval through astroquery, so this function is now deprecated"""
     with pytest.raises(SearchDeprecationError) as exc:
-        results = TESSSearch("Kepler 16b").search_sector_ffis(14)
+        TESSSearch("Kepler 16b").search_sector_ffis(14)
     assert "deprecated" in exc.value.args[0]
 
 
