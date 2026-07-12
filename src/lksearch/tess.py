@@ -13,12 +13,11 @@ from astroquery.mast import Tesscut
 
 from tqdm import tqdm
 
-from .MASTSearch import MASTSearch
-from . import conf, config, log
+from .mast import MASTSearch
+from . import config, get_cache_dir, log, REPR_COLUMNS
 from .utils import SearchDeprecationError, SearchError, table_keys
 
-PREFER_CLOUD = conf.PREFER_CLOUD
-DOWNLOAD_CLOUD = conf.DOWNLOAD_CLOUD
+PREFER_CLOUD = config.PREFER_CLOUD
 
 pd.options.display.max_rows = 10
 
@@ -57,17 +56,6 @@ class TESSSearch(MASTSearch):
         TESS Observing Sector(s) for which to search for data.
     """
 
-    _REPR_COLUMNS = [
-        "target_name",
-        "pipeline",
-        "mission",
-        "sector",
-        "exptime",
-        "distance",
-        "year",
-        "description",
-    ]
-
     def __init__(
         self,
         target: Optional[Union[str, tuple[float], SkyCoord]] = None,
@@ -80,6 +68,10 @@ class TESSSearch(MASTSearch):
         sector: Optional[Union[int, list[int]]] = None,
         hlsp: bool = True,
     ):
+        repr_columns = REPR_COLUMNS.copy()
+        repr_columns.insert(3, "sector")
+        self.REPR_COLUMNS = repr_columns
+
         if hlsp is False:
             pipeline = ["SPOC", "TESS-SPOC", "TESScut"]
             self.mission_search = ["TESS"]
@@ -119,7 +111,7 @@ class TESSSearch(MASTSearch):
         return self.table["sector"].values
 
     @property
-    def HLSPs(self):
+    def hlsps(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""
         mask = self.table["mission_product"]
         return self._mask(~mask)
@@ -402,10 +394,10 @@ class TESSSearch(MASTSearch):
 
     def download(
         self,
-        cloud: bool = conf.PREFER_CLOUD,
+        cloud: bool = config.PREFER_CLOUD,
         cache: bool = True,
-        cloud_only: bool = conf.CLOUD_ONLY,
-        download_dir: str = config.get_cache_dir(),
+        cloud_only: bool = config.CLOUD_ONLY,
+        download_dir: str = get_cache_dir(),
         # TESScut_product="SPOC",
         TESScut_size: Union[int, tuple] = 10,
     ):

@@ -6,8 +6,8 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
-from .MASTSearch import MASTSearch
-from . import PACKAGEDIR
+from .mast import MASTSearch
+from . import PACKAGEDIR, REPR_COLUMNS
 
 pd.options.display.max_rows = 10
 
@@ -48,17 +48,6 @@ class KeplerSearch(MASTSearch):
         Observation month for Kepler
     """
 
-    _REPR_COLUMNS = [
-        "target_name",
-        "pipeline",
-        "mission",
-        "quarter",
-        "exptime",
-        "distance",
-        "year",
-        "description",
-    ]
-
     def __init__(
         self,
         target: [Union[str, tuple[float], SkyCoord]],
@@ -72,6 +61,10 @@ class KeplerSearch(MASTSearch):
         month: Optional[int] = None,
         hlsp: bool = True,
     ):
+        repr_columns = REPR_COLUMNS.copy()
+        repr_columns.insert(3, "quarter")
+        self.REPR_COLUMNS = repr_columns
+
         if hlsp is False:
             pipeline = ["Kepler"]
             self.mission_search = ["Kepler"]
@@ -102,7 +95,7 @@ class KeplerSearch(MASTSearch):
         return self.table["quarter"].values
 
     @property
-    def HLSPs(self):
+    def hlsps(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""
         mask = self.table["mission_product"]
         return self._mask(~mask)

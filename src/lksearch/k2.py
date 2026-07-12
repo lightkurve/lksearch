@@ -6,7 +6,8 @@ import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
-from .MASTSearch import MASTSearch
+from .mast import MASTSearch
+from . import REPR_COLUMNS
 
 pd.options.display.max_rows = 10
 
@@ -45,17 +46,6 @@ class K2Search(MASTSearch):
         K2 Observing Campaign(s) for which to search for data.
     """
 
-    _REPR_COLUMNS = [
-        "target_name",
-        "pipeline",
-        "mission",
-        "campaign",
-        "exptime",
-        "distance",
-        "year",
-        "description",
-    ]
-
     def __init__(
         self,
         target: [Union[str, tuple[float], SkyCoord]],
@@ -68,6 +58,10 @@ class K2Search(MASTSearch):
         campaign: Optional[Union[int, list[int]]] = None,
         hlsp: bool = True,
     ):
+        repr_columns = REPR_COLUMNS.copy()
+        repr_columns.insert(3, "campaign")
+        self.REPR_COLUMNS = repr_columns
+
         if hlsp is False:
             pipeline = ["K2"]
             self.mission_search = ["K2"]
@@ -96,7 +90,7 @@ class K2Search(MASTSearch):
         return self.table["campaign"].values
 
     @property
-    def HLSPs(self):
+    def hlsps(self):
         """return a MASTSearch object with self.table only containing High Level Science Products"""
         mask = self.table["mission_product"]
         return self._mask(~mask)
