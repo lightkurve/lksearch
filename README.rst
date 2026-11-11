@@ -113,6 +113,9 @@ Please include a self-contained example that fully demonstrates your problem or 
 Changelog:
 ==========
 v1.2.2
+  - Replacing deprecated `numpy.in1d` with `numpy.isin`
+  - Updating GH action packages to newer versions (`actions/checkout@v6`, `actions/setup-python@v7`)
+v1.2.1
   - Updated the logic surrounding TESScut searches to allow only TESScut results [#32]
   - filter TESScut results by exposure time keyword [#43]
   - Remove DUPLICATE and SPLIT results from TIC8.2 [#50]
