@@ -162,11 +162,11 @@ class MASTSearch(object):
 
         if isinstance(key, (slice, int)) or (intlist):
             if not intlist:
-                mask = np.in1d(
+                mask = np.isin(
                     np.arange(len(self.table)), np.arange(len(self.table))[key]
-                )
+                ).ravel()
             else:
-                mask = np.in1d(self.table.index, key)
+                mask = np.isin(self.table.index, key).ravel()
             return self._mask(mask)
         if isinstance(key, str) or strlist:
             # Return a column as a series, or a dataframe of columns
