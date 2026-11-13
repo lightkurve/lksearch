@@ -1112,7 +1112,7 @@ class MASTSearch(object):
             )
         ]
         files_exist = [os.path.isfile(path) for path in local_paths]
-        return files_exist, np.array(local_paths, dtype=str)
+        return np.array(files_exist, dtype=bool), np.array(local_paths, dtype=str)
 
     # @suppress_stdout
     def _download_manifest(
